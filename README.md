@@ -216,3 +216,18 @@ npm run test:watch
 * Interactive API exploration for authentication, users, patients, appointments, billing, and metrics
 
 ---
+## Continuous Integration / Continuous Delivery (CI/CD)
+![CICD](https://github.com/olubusade/emr-suite-backend/actions/workflows/ci.yml/badge.svg)
+
+
+---
+📜 License
+
+This project is licensed under the MIT License.
+You are free to use, modify, and distribute it, provided proper attribution is given.
+
+MIT License
+
+Copyright (c) 2025 Busade Adedayo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy...
