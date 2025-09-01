@@ -1,11 +1,18 @@
-const { AuditLog, User } = require('../models');
+import { AuditLog, User } from '../models/index.js';
 
 /**
- * Low-level creator used by middleware and controllers.
+ * Low-level audit log creator
+ * Used by middleware and controllers
  */
-async function logAudit({ userId, action, resource, resourceId = null, metadata = {} }) {
+export async function logAudit({ userId, action, entity, entityId = null, metadata = {} }) {
   try {
-    await AuditLog.create({ userId, action, resource, resourceId, metadata });
+    await AuditLog.create({
+      userId,
+      action,
+      entity,     // renamed from 'resource' → 'entity' for consistency
+      entityId,   // renamed from 'resourceId' → 'entityId'
+      metadata,
+    });
   } catch (err) {
     console.error('Audit log error:', err.message);
   }
@@ -13,25 +20,50 @@ async function logAudit({ userId, action, resource, resourceId = null, metadata 
 
 /**
  * List audit logs with filters & pagination
+ * @param {object} params
+ * @param {number} params.page - Current page
+ * @param {number} params.pageSize - Items per page
+ * @param {object} params.filters - Optional filters { userId, action, entity }
  */
-async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
-  const limit = pageSize;
-  const offset = (page - 1) * pageSize;
+export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
+  const limit = Math.min(Number(pageSize) || 50, 1000); // optional max limit
+  const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
 
   const where = {};
   if (filters.userId) where.userId = filters.userId;
   if (filters.action) where.action = filters.action;
-  if (filters.resource) where.resource = filters.resource;
+  if (filters.entity) where.entity = filters.entity;
 
   const { count, rows } = await AuditLog.findAndCountAll({
     where,
-    include: [{ model: User, attributes: ['id', 'email', 'full_name'] }],
-    order: [['createdAt', 'DESC']], // adjust if your model uses underscored timestamps
+    include: [
+      { model: User, attributes: ['id', 'email', 'fullName'] } // map DB field in model to camelCase
+    ],
+    order: [['createdAt', 'DESC']],
     limit,
-    offset
+    offset,
   });
 
-  return { count, rows, page, pageSize, pages: Math.ceil(count / pageSize) };
-}
+  // Map DB snake_case to camelCase for JS
+  const mappedRows = rows.map((log) => ({
+    id: log.id,
+    userId: log.userId,
+    action: log.action,
+    entity: log.entity,
+    entityId: log.entityId,
+    metadata: log.metadata,
+    createdAt: log.createdAt,
+    updatedAt: log.updatedAt,
+    user: log.User
+      ? { id: log.User.id, email: log.User.email, fullName: log.User.fullName }
+      : null,
+  }));
 
-module.exports = { logAudit, listAuditLogs };
+  return {
+    count,
+    rows: mappedRows,
+    page: Math.max(Number(page) || 1, 1),
+    pageSize: limit,
+    pages: Math.ceil(count / limit),
+  };
+}

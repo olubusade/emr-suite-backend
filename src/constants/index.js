@@ -4,10 +4,10 @@ module.exports = {
         ADMIN: 'admin',
         DOCTOR: 'doctor',
         NURSE: 'nurse',
-        RECEPTION: 'reception',
-        BILLING: 'billing',
-        LAB: 'lab',
-        PHARMACY: 'pharmacy',
+        RECEPTION: 'receptionist',
+        BILLING: 'biller',
+        LAB: 'lab_technician',
+        PHARMACY: 'pharmacist',
     },
     PERMISSIONS: {
         // Users

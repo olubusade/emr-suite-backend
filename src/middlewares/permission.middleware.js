@@ -1,9 +1,12 @@
-// middleware/permission.js
-const ApiError = require('../utils/ApiError');
-const rbacService = require('../services/rbac.service');
-const AuditService = require('../services/audit.service');
+import ApiError from '../utils/ApiError.js';
+import * as rbacService from '../services/rbac.service.js';
+import { logAudit } from '../services/audit.service.js';
 
-function authorize(permissionKey) {
+/**
+ * Middleware to authorize user based on a specific permission key
+ * @param {string} permissionKey - The permission required to access the route
+ */
+export function authorize(permissionKey) {
   return async (req, res, next) => {
     try {
       if (!req.user) throw new ApiError(401, 'Unauthorized');
@@ -11,13 +14,19 @@ function authorize(permissionKey) {
       const hasPermission = await rbacService.userHasPermission(req.user.id, permissionKey);
 
       if (!hasPermission) {
-        await AuditService.log({
+        await logAudit({
           userId: req.user.id,
-          action: "ACCESS_DENIED",
+          action: 'ACCESS_DENIED',
           resource: permissionKey,
-          status: "FAILED",
-          ipAddress: req.ip,
+          status: 'FAILED',
+          metadata: {
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'] || '',
+            route: req.originalUrl,
+            method: req.method
+          }
         });
+
         throw new ApiError(403, 'Forbidden: insufficient permissions');
       }
 
@@ -27,5 +36,3 @@ function authorize(permissionKey) {
     }
   };
 }
-
-module.exports = { authorize };

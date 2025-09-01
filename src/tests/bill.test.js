@@ -1,3 +1,4 @@
+// src/test/bill.test.js
 import request from 'supertest';
 import app from '../app.js';
 import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
@@ -18,32 +19,42 @@ afterAll(async () => {
 describe('Bill Module CRUD', () => {
   it('should create a bill', async () => {
     const res = await request(app)
-      .post('/bills')
+      .post('/api/bills')
       .set('Authorization', `Bearer ${tokens.reception}`)
       .send({ patientId: 1, amount: 500 });
+
     expect(res.status).toBe(201);
-    billId = res.body.id;
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data.id).toBeDefined();
+    billId = res.body.data.id;
   });
 
-  it('should get bill', async () => {
+  it('should get a bill', async () => {
     const res = await request(app)
-      .get(`/bills/${billId}`)
+      .get(`/api/bills/${billId}`)
       .set('Authorization', `Bearer ${tokens.reception}`);
+
     expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data.id).toBe(billId);
   });
 
-  it('should update bill', async () => {
+  it('should update a bill', async () => {
     const res = await request(app)
-      .patch(`/bills/${billId}`)
+      .patch(`/api/bills/${billId}`)
       .set('Authorization', `Bearer ${tokens.reception}`)
       .send({ amount: 600 });
+
     expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data.amount).toBe(600);
   });
 
-  it('should delete bill', async () => {
+  it('should delete a bill', async () => {
     const res = await request(app)
-      .delete(`/bills/${billId}`)
+      .delete(`/api/bills/${billId}`)
       .set('Authorization', `Bearer ${tokens.reception}`);
+
     expect([200, 204]).toContain(res.status);
   });
 });

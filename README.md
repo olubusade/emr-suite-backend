@@ -1,4 +1,3 @@
-Absolutely! I’ve regenerated the **README.md** with your requested updates. It now includes **badges at the top**, a clear explanation that this is a demo to protect IP, and emphasizes that the frontend will come later. Here’s the full, polished version:
 
 ---
 
@@ -8,56 +7,24 @@ Absolutely! I’ve regenerated the **README.md** with your requested updates. It
 
 **Electronic Medical Records (EMR) Suite – Backend Demo**
 
-> ⚠️ **Note for recruiters:** To protect the intellectual property of the company, this repository is a **demo** showcasing the backend sophistication of the **wiCare EMR** system in a controlled environment. It is a simulation of production-grade features available to clients. The frontend will be developed and documented later to complete the full EMR experience.
-
-This project demonstrates a production-ready backend built with **Node.js**, **Express**, **Sequelize ORM**, and **PostgreSQL**, incorporating **JWT-based authentication**, **role-based access control (RBAC)**, **audit logging**, and **automated testing**. Docker support is included for seamless development and deployment.
+> ⚠️ **Note for recruiters:** This repository is a **demo** to showcase the backend sophistication of the **wiCare EMR** system. It is a production-grade simulation in a controlled environment to protect IP. The frontend development is in progress.
 
 ---
 
 ## 🌟 Key Features
 
-* **User & Role Management**
-
-  * Full CRUD for users
-  * Role-based and direct permissions
-  * Admin and non-admin segregation
-
-* **Authentication & Security**
-
-  * Login, logout, and token refresh flows
-  * Password hashing with bcrypt
-  * JWT access & refresh tokens
-  * Audit logs for all sensitive actions
-
-* **RBAC & Permissions**
-
-  * Centralized middleware for permissions enforcement
-  * Dynamic role and permission assignment
-  * Admin-only routes for sensitive operations
-
-* **Database & ORM**
-
-  * PostgreSQL database
-  * Sequelize ORM with models, migrations, and relationships
-
-* **Testing & Quality Assurance**
-
-  * Integration tests using Jest + Supertest
-  * Coverage includes authentication, users, patients, appointments, billing, audit, and metrics
-
-* **Docker Ready**
-
-  * Run backend and PostgreSQL via Docker Compose
-  * Works in dev and cloud environments
-
-* **Audit & Metrics**
-
-  * Tracks user actions (LOGIN, LOGOUT, CREATE, UPDATE, DELETE)
-  * Metrics ready for Prometheus integration
+* **User & Role Management** – CRUD for users, roles, and permissions.
+* **Authentication & Security** – JWT-based access & refresh tokens, password hashing, token revocation.
+* **RBAC Enforcement** – Dynamic permissions and centralized middleware.
+* **Audit Logging** – Tracks all sensitive actions (`CREATE`, `UPDATE`, `DELETE`, `LOGIN`, `LOGOUT`).
+* **Database & ORM** – PostgreSQL + Sequelize with relations, migrations, and seeds.
+* **Testing** – Full integration and RBAC tests using Jest + Supertest.
+* **Docker Ready** – Backend and DB via Docker Compose.
+* **Metrics Ready** – Prometheus integration supported.
 
 ---
 
-## 📁 Project Structure
+## 🏗️ Project Structure
 
 ```
 emr-suite-backend/
@@ -67,19 +34,70 @@ emr-suite-backend/
 │  ├─ services/             # Business logic
 │  ├─ middlewares/          # Auth, RBAC, audit
 │  ├─ routes/               # API endpoints
-│  ├─ validation/           # Input schemas
+│  ├─ validation/           # Input validation schemas
+│  ├─ seed/                 # Seed scripts for roles, users, permissions
+│  │   └─ seed.js
 │  ├─ test/                 # Jest + Supertest integration tests
 │  ├─ app.js                # Express app
 │  └─ server.js             # App bootstrap
-├─ docker/                  # Dockerfiles & Compose
+├─ docker/                  # Dockerfiles & docker-compose.yml
 ├─ .env                     # Environment variables
 ├─ package.json
-├─ README.md
-└─ ...
+└─ README.md
 ```
 
 ---
 
+## 🧭 Conventions & Best Practices
+
+* **camelCase** for all API response keys – ensures consistent frontend consumption.
+* **RBAC Enforcement** – Permissions enforced at middleware level for all protected routes.
+* **Audit Logging** – Every sensitive action logs user, timestamp, action type, and entity.
+* **JWT Handling** – Access token short-lived, refresh token revocable, SHA-256 hashed in DB.
+* **Error Handling** – Standardized errors with statusCode and message, centralized error middleware.
+* **Database Relations** – Sequelize models reflect clear relations (User ↔ Role ↔ Permission).
+* **Testing** – All critical flows including authentication, RBAC, and business logic are tested.
+
+---
+
+## 🖼️ Architecture Diagram
+
+```mermaid
+flowchart TD
+    A[API Request] --> B[Middleware Layer]
+    B -->|Auth & JWT Validation| C[Controllers]
+    B -->|RBAC Enforcement| C
+    B -->|Audit Logging| C
+    C --> D[Services Layer]
+    D --> E[Sequelize ORM]
+    E --> F[PostgreSQL Database]
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
+    style D fill:#ffb,stroke:#333,stroke-width:2px
+    style E fill:#fbf,stroke:#333,stroke-width:2px
+    style F fill:#fbb,stroke:#333,stroke-width:2px
+```
+
+---
+## ⚙️ Conventions & Best Practices
+
+* camelCase for all API response keys to match frontend expectations
+
+* RBAC Enforcement via middleware in all protected routes
+
+* Audit Logging for create, update, delete, login, logout actions
+
+* JWT Handling with access & refresh tokens; revocation supported
+
+* Error Handling consistent via ApiError and structured responses
+
+* Sequelize ORM: snake_case in DB, camelCase in API responses
+
+* Testing: Jest + Supertest integration tests cover all critical flows
+
+---
 ## 🚀 Installation & Local Development
 
 ### Prerequisites
@@ -90,20 +108,13 @@ emr-suite-backend/
 
 ### Steps
 
-1. Clone the repository:
-
 ```bash
-git clone https://github.com/<your-username>/emr-suite-backend.git
+git clone https://github.com/olubusade/emr-suite-backend.git
 cd emr-suite-backend
-```
-
-2. Install dependencies:
-
-```bash
 npm install
 ```
 
-3. Create `.env` file (based on `.env.example`):
+Create `.env` :
 
 ```env
 PORT=3000
@@ -115,25 +126,23 @@ JWT_SECRET=supersecret
 JWT_REFRESH_SECRET=superrefreshsecret
 ```
 
-4. Seed the database:
+Seed initial roles, users, and permissions:
 
 ```bash
 npm run seed
 ```
 
-5. Run the backend:
+Run development server:
 
 ```bash
 npm run dev
 ```
 
-> Server will run at `http://localhost:3000`.
+> Server runs at `http://localhost:3000`.
 
 ---
 
 ## 🐳 Docker Setup (Optional)
-
-Run the backend with Docker and PostgreSQL for isolated dev or cloud deployment.
 
 ```bash
 cd docker
@@ -149,8 +158,6 @@ Stop containers:
 docker compose down
 ```
 
-> Docker allows running the backend **with or without Docker**, making deployment flexible.
-
 ---
 
 ## 🔐 Authentication & RBAC
@@ -160,74 +167,135 @@ docker compose down
 * **Change password:** `POST /api/auth/change-password`
 
 Roles: `super_admin`, `admin`, `doctor`, `nurse`, `reception`, `billing`, `lab`, `pharmacy`.
-Permissions are enforced dynamically with middleware for all protected routes.
+
+Middleware enforces permissions dynamically for protected endpoints.
 
 ---
 
 ## 🧪 Testing
 
-All modules are fully tested using **Jest** + **Supertest**.
-
-### Run tests
+Run all tests:
 
 ```bash
 npm run test
 ```
 
-### Run RBAC-only tests
+RBAC-specific tests:
 
 ```bash
 npm run test:rbac
 ```
 
-### Watch mode
+Watch mode:
 
 ```bash
 npm run test:watch
 ```
-
-> Tests cover authentication, users, patients, appointments, billing, metrics, and audit logs. Full system reliability is validated.
 
 ---
 
 ## 💾 Database
 
 * PostgreSQL with Sequelize ORM
-* Tables: Users, Roles, Permissions, RefreshTokens, Patients, Appointments, Bills, AuditLogs, Metrics
+* Tables: `Users`, `Roles`, `Permissions`, `RefreshTokens`, `Patients`, `Appointments`, `Bills`, `AuditLogs`, `Metrics`
+
+Seed scripts are located at `src/seed/seed.js`:
+
+```javascript
+import { Role, Permission, User } from '../models/index.js';
+import { hash } from '../utils/passwords.js';
+
+async function seed() {
+  const roles = await Role.bulkCreate([
+    { name: 'super_admin' },
+    { name: 'admin' },
+    { name: 'doctor' },
+    { name: 'nurse' },
+  ]);
+
+  const perms = await Permission.bulkCreate([
+    { name: 'CREATE_PATIENT' },
+    { name: 'UPDATE_PATIENT' },
+    { name: 'DELETE_PATIENT' },
+    { name: 'VIEW_PATIENT' },
+  ]);
+
+  const passwordHash = await hash('admin@123');
+  await User.create({ email: 'admin@busade-emr-demo.com', name: 'Admin User', passwordHash });
+  console.log('Database seeded successfully.');
+}
+
+seed();
+```
 
 ---
 
 ## ⚙️ NPM Scripts
 
-| Script               | Description                          |
-| -------------------- | ------------------------------------ |
-| `npm run dev`        | Start backend in development mode    |
-| `npm start`          | Start backend in production mode     |
-| `npm run seed`       | Seed initial roles, users, and perms |
-| `npm run test`       | Run all tests                        |
-| `npm run test:watch` | Watch mode for tests                 |
-| `npm run test:rbac`  | Run RBAC module-specific tests       |
+| Script               | Description                            |
+| -------------------- | -------------------------------------- |
+| `npm run dev`        | Start backend in development mode      |
+| `npm start`          | Start backend in production mode       |
+| `npm run seed`       | Seed initial roles, users, permissions |
+| `npm run test`       | Run all tests                          |
+| `npm run test:watch` | Watch mode for tests                   |
+| `npm run test:rbac`  | Run RBAC module-specific tests         |
 
 ---
 
 ## 🌐 API Documentation
 
-* **Swagger UI:** `/api-docs`
-* Interactive API exploration for authentication, users, patients, appointments, billing, and metrics
+* **Swagger UI:** `/api-docs` – Interactive exploration of all endpoints.
 
 ---
-## Continuous Integration / Continuous Delivery (CI/CD)
-![CICD](https://github.com/olubusade/emr-suite-backend/actions/workflows/ci.yml/badge.svg)
 
+## ⚡ CI/CD (GitHub Actions)
+
+Example `.github/workflows/ci.yml`:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: emr_suite
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run seed
+      - run: npm test
+```
+
+> This workflow installs dependencies, seeds the database, and runs tests on every push or PR to `main`.
 
 ---
+
 📜 License
 
-This project is licensed under the MIT License.
-You are free to use, modify, and distribute it, provided proper attribution is given.
-
-MIT License
-
-Copyright (c) 2025 Busade Adedayo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy...
+MIT License © 2025 Busade Adedayo

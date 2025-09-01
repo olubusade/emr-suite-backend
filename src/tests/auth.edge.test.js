@@ -21,25 +21,28 @@ describe('Auth Edge Cases', () => {
       .post('/api/auth/refresh')
       .send({ refreshToken: userLogin.refreshToken });
 
-    // Attempt using same token again
+    // Attempt using the same revoked token
     const res = await request(app)
       .post('/api/auth/refresh')
       .send({ refreshToken: userLogin.refreshToken });
 
     expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty('data', null);
+    expect(res.body.message).toMatch(/invalid or revoked refresh token/i);
   });
 
   it('should logout user and revoke tokens', async () => {
     // Login again to get fresh tokens
     const loginRes = await loginTestUser('user@test.com', 'User123!');
-    
+
     const res = await request(app)
       .post('/api/auth/logout')
       .set('Authorization', `Bearer ${loginRes.token}`)
       .send({ refreshToken: loginRes.refreshToken });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('success', true);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('success', true);
 
     // Attempt refresh after logout
     const refreshRes = await request(app)
@@ -47,6 +50,7 @@ describe('Auth Edge Cases', () => {
       .send({ refreshToken: loginRes.refreshToken });
 
     expect(refreshRes.statusCode).toBe(401);
+    expect(refreshRes.body).toHaveProperty('data', null);
   });
 
   it('should prevent access to protected route after logout', async () => {
@@ -63,5 +67,7 @@ describe('Auth Edge Cases', () => {
       .set('Authorization', `Bearer ${loginRes.token}`);
 
     expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty('data', null);
+    expect(res.body.message).toMatch(/unauthorized/i);
   });
 });

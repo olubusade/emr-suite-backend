@@ -18,32 +18,43 @@ afterAll(async () => {
 describe('Appointment Module CRUD', () => {
   it('should create an appointment', async () => {
     const res = await request(app)
-      .post('/appointments')
+      .post('/api/appointments')
       .set('Authorization', `Bearer ${tokens.doctor}`)
       .send({ patientId: 1, date: '2025-08-25T10:00:00Z' });
+
     expect(res.status).toBe(201);
-    appointmentId = res.body.id;
+    expect(res.body.data).toHaveProperty('id');
+    appointmentId = res.body.data.id;
   });
 
   it('should get appointment', async () => {
     const res = await request(app)
-      .get(`/appointments/${appointmentId}`)
+      .get(`/api/appointments/${appointmentId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`);
+
     expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('id', appointmentId);
+    expect(res.body.data).toHaveProperty('patientId');
+    expect(res.body.data).toHaveProperty('date');
   });
 
   it('should update appointment', async () => {
     const res = await request(app)
-      .patch(`/appointments/${appointmentId}`)
+      .patch(`/api/appointments/${appointmentId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`)
       .send({ date: '2025-08-25T12:00:00Z' });
+
     expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('id', appointmentId);
+    expect(res.body.data.date).toBe('2025-08-25T12:00:00.000Z');
   });
 
   it('should delete appointment', async () => {
     const res = await request(app)
-      .delete(`/appointments/${appointmentId}`)
+      .delete(`/api/appointments/${appointmentId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`);
-    expect([200, 204]).toContain(res.status);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ success: true });
   });
 });

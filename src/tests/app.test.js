@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app from '../app.js';
 import { seedTestData, loginTestUser, teardownTestDB } from './testHelper.js';
-import { User, Role, Permission } from '../models/index.js';
+import { User } from '../models/index.js';
 
 let admin, user;
 let adminToken, userToken, adminRefresh, userRefresh;
@@ -11,12 +11,12 @@ beforeAll(async () => {
   admin = seeded.admin;
   user = seeded.user;
 
-  const adminLogin = await loginTestUser(admin.email, 'Admin123!');
-  adminToken = adminLogin.token;
+  const adminLogin = await loginTestUser(admin.email, 'admin@123');
+  adminToken = adminLogin.accessToken;
   adminRefresh = adminLogin.refreshToken;
 
   const userLogin = await loginTestUser(user.email, 'User123!');
-  userToken = userLogin.token;
+  userToken = userLogin.accessToken;
   userRefresh = userLogin.refreshToken;
 });
 
@@ -29,29 +29,32 @@ describe('Auth Endpoints', () => {
   test('Login success', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: admin.email, password: 'Admin123!' });
+      .send({ email: admin.email, password: 'admin@123' });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.user.email).toBe(admin.email);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
+    expect(res.body.data.user.email).toBe(admin.email);
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
   });
 
   test('Refresh token success', async () => {
     const res = await request(app)
       .post('/api/auth/refresh')
       .send({ refreshToken: adminRefresh });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
   });
 
   test('Change password success', async () => {
     const res = await request(app)
       .post('/api/auth/change-password')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ oldPassword: 'Admin123!', newPassword: 'NewAdmin123!' });
+      .send({ oldPassword: 'admin@123', newPassword: 'Newadmin@123' });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.success).toBe(true);
+    expect(res.body.data.success).toBe(true);
   });
 
   test('Logout success', async () => {
@@ -59,8 +62,9 @@ describe('Auth Endpoints', () => {
       .post('/api/auth/logout')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ refreshToken: adminRefresh });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.success).toBe(true);
+    expect(res.body.data.success).toBe(true);
   });
 });
 
@@ -70,56 +74,70 @@ describe('User Endpoints', () => {
     const res = await request(app)
       .get('/api/users/me')
       .set('Authorization', `Bearer ${userToken}`);
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.email).toBe(user.email);
+    expect(res.body.data.email).toBe(user.email);
   });
 
   test('Update profile', async () => {
     const res = await request(app)
       .patch('/api/users/me')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ full_name: 'Updated User' });
+      .send({ fullName: 'Updated User' });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.name).toBe('Updated User');
+    expect(res.body.data.fullName).toBe('Updated User');
   });
 
   test('Admin: list users', async () => {
     const res = await request(app)
       .get('/api/users')
       .set('Authorization', `Bearer ${adminToken}`);
+
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   test('Admin: create user', async () => {
     const res = await request(app)
       .post('/api/users')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ email: 'new@test.com', full_name: 'New User', password: 'New123!', role_id: admin.role_id });
+      .send({
+        email: 'new@test.com',
+        fullName: 'New User',
+        password: 'New123!',
+        roleIds: [admin.roles[0].id]
+      });
+
     expect(res.statusCode).toBe(201);
-    expect(res.body.email).toBe('new@test.com');
+    expect(res.body.data.email).toBe('new@test.com');
   });
 
   test('Admin: update user', async () => {
     const res = await request(app)
       .patch(`/api/users/${user.id}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ full_name: 'Patched User' });
+      .send({ fullName: 'Patched User' });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.full_name).toBe('Patched User');
+    expect(res.body.data.fullName).toBe('Patched User');
   });
 
   test('Admin: delete user', async () => {
     const newUser = await User.create({
       email: 'delete@test.com',
-      full_name: 'To Delete',
-      password_hash: 'hashedpw',
-      role_id: admin.role_id,
+      fullName: 'To Delete',
+      passwordHash: 'hashedpw',
       active: true
     });
+
+    await newUser.setRoles([admin.roles[0]]);
+
     const res = await request(app)
       .delete(`/api/users/${newUser.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.statusCode).toBe(204);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.success).toBe(true);
   });
 });

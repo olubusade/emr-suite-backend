@@ -1,9 +1,10 @@
-// src/middleware/audit.middleware.js
-const { logAudit } = require('../services/audit.service');
+import { logAudit } from '../services/audit.service.js';
 
-// Infer action from HTTP method for auto-logging
+/**
+ * Infer default action based on HTTP method
+ */
 function inferAction(method) {
-  switch (method) {
+  switch (method.toUpperCase()) {
     case 'POST': return 'CREATE';
     case 'PUT':
     case 'PATCH': return 'UPDATE';
@@ -14,10 +15,15 @@ function inferAction(method) {
 }
 
 /**
- * Controller helper – call this inside controllers when you want a custom action.
- * Sets a flag so route-level auto audit won't duplicate the entry.
+ * Attach a custom audit entry from controller
+ * Prevents auto middleware from duplicating the audit.
+ * @param {object} req - Express request object
+ * @param {string} action - Action name (e.g., CREATE, UPDATE)
+ * @param {string} resource - Resource name (e.g., 'user', 'bill')
+ * @param {string|number|null} resourceId - ID of the resource
+ * @param {object} metadata - Additional info to log
  */
-async function attachAudit(req, action, resource, resourceId = null, metadata = {}) {
+export async function attachAudit(req, action, resource, resourceId = null, metadata = {}) {
   try {
     await logAudit({
       userId: req.user?.id || null,
@@ -26,11 +32,12 @@ async function attachAudit(req, action, resource, resourceId = null, metadata = 
       resourceId,
       metadata: {
         ip: req.ip,
-        ua: req.headers['user-agent'] || '',
+        userAgent: req.headers['user-agent'] || '',
         ...metadata
       }
     });
-    // Prevent auto middleware from logging a duplicate for this request
+
+    // Flag to skip auto audit for this request
     req._skipAutoAudit = true;
   } catch (err) {
     console.error('attachAudit failed:', err);
@@ -38,16 +45,19 @@ async function attachAudit(req, action, resource, resourceId = null, metadata = 
 }
 
 /**
- * Route middleware – auto audit based on HTTP method.
- * Safe with attachAudit(): will skip if controller already logged.
+ * Route-level middleware to automatically log audit entries
+ * Based on HTTP method and resource name
+ * Skips logging if attachAudit() was called in controller
+ * @param {string} resource - Name of the resource (e.g., 'user', 'bill')
  */
-function auditTrail(resource) {
+export function auditTrail(resource) {
   return (req, res, next) => {
     const action = inferAction(req.method);
     const userId = req.user?.id || null;
 
-    const oldJson = res.json;
-    res.json = async function (body) {
+    // Intercept res.json to log after response data is ready
+    const originalJson = res.json.bind(res);
+    res.json = async (body) => {
       try {
         if (!req._skipAutoAudit) {
           await logAudit({
@@ -63,13 +73,11 @@ function auditTrail(resource) {
           });
         }
       } catch (err) {
-        console.error('Audit auto-log failed:', err);
+        console.error('Auto audit log failed:', err);
       }
-      return oldJson.call(this, body);
+      return originalJson(body);
     };
 
     next();
   };
 }
-
-module.exports = { auditTrail, attachAudit };

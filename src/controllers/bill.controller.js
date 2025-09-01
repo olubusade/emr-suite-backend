@@ -1,45 +1,101 @@
 import * as billService from '../services/bill.service.js';
-import { ok, created, fail, error } from '../utils/response.js';
+import { ok, created, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 
+/**
+ * List bills
+ */
 export async function listBills(req, res) {
   try {
-    const result = await billService.listBills(req.query);
+    const { page, pageSize, ...filters } = req.query;
+
+    const result = await billService.listBills({
+      page: parseInt(page, 10) || 1,
+      pageSize: parseInt(pageSize, 10) || 50,
+      filters,
+    });
+
     await attachAudit(req, 'VIEW_BILL', 'bill', null, { query: req.query });
-    return ok(res, result.rows, { total: result.total, page: result.page, pageSize: result.pageSize });
+
+    // Map DB snake_case to camelCase
+    const rows = result.rows.map((bill) => ({
+      id: bill.id,
+      customerId: bill.customerId,
+      amount: bill.amount,
+      status: bill.status,
+      dueDate: bill.dueDate,
+      createdAt: bill.createdAt,
+      updatedAt: bill.updatedAt,
+    }));
+
+    return ok(res, rows, 'Bills retrieved successfully', {
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      pages: Math.ceil(result.total / result.pageSize),
+    });
   } catch (err) {
     console.error('bills.list', err);
     return error(res, 500, err.message || 'Server error');
   }
 }
 
+/**
+ * Create a new bill
+ */
 export async function createBill(req, res) {
   try {
     const bill = await billService.createBill(req.body);
     await attachAudit(req, 'CREATE_BILL', 'bill', bill.id, req.body);
-    return created(res, bill);
+
+    return created(res, {
+      id: bill.id,
+      customerId: bill.customerId,
+      amount: bill.amount,
+      status: bill.status,
+      dueDate: bill.dueDate,
+      createdAt: bill.createdAt,
+      updatedAt: bill.updatedAt,
+    }, 'Bill created successfully');
   } catch (err) {
     console.error('bills.create', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
   }
 }
 
+/**
+ * Update a bill
+ */
 export async function updateBill(req, res) {
   try {
     const bill = await billService.updateBill(req.params.id, req.body);
     await attachAudit(req, 'UPDATE_BILL', 'bill', bill.id, req.body);
-    return ok(res, bill);
+
+    return ok(res, {
+      id: bill.id,
+      customerId: bill.customerId,
+      amount: bill.amount,
+      status: bill.status,
+      dueDate: bill.dueDate,
+      createdAt: bill.createdAt,
+      updatedAt: bill.updatedAt,
+    }, 'Bill updated successfully');
   } catch (err) {
     console.error('bills.update', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
   }
 }
 
+/**
+ * Delete a bill
+ */
 export async function deleteBill(req, res) {
   try {
-    await billService.deleteBill(req.params.id);
-    await attachAudit(req, 'DELETE_BILL', 'bill', req.params.id);
-    return ok(res, { ok: true });
+    const billId = req.params.id;
+    await billService.deleteBill(billId);
+    await attachAudit(req, 'DELETE_BILL', 'bill', billId);
+
+    return ok(res, { success: true }, 'Bill deleted successfully');
   } catch (err) {
     console.error('bills.delete', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');

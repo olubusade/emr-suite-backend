@@ -1,15 +1,41 @@
-module.exports = (sequelize, DataTypes) => {
-    const UserPermission = sequelize.define('UserPermission', {
-      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-      userId: { type: DataTypes.INTEGER, allowNull: false },
-      permissionId: { type: DataTypes.INTEGER, allowNull: false },
-    }, { tableName: 'user_permissions', timestamps: false });
-  
-    UserPermission.associate = (models) => {
-      UserPermission.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      UserPermission.belongsTo(models.Permission, { foreignKey: 'permissionId', as: 'permission' });
-    };
-  
-    return UserPermission;
+export const UserPermissionModel = (sequelize, DataTypes) => {
+  const UserPermission = sequelize.define('UserPermission', {
+    id: { 
+      type: DataTypes.INTEGER, 
+      primaryKey: true, 
+      autoIncrement: true 
+    },
+    user_id: { 
+      type: DataTypes.UUID, 
+      allowNull: false,
+      references: { model: 'users', key: 'id' },
+      onDelete: 'CASCADE',
+    },
+    permission_id: { 
+      type: DataTypes.UUID, 
+      allowNull: false,
+      references: { model: 'permissions', key: 'id' },
+      onDelete: 'CASCADE',
+    },
+  }, { 
+    tableName: 'user_permissions', 
+    underscored: true, 
+    timestamps: false,
+    indexes: [
+      { unique: true, fields: ['user_id', 'permission_id'] }, // prevent duplicates
+    ],
+  });
+
+  UserPermission.associate = (models) => {
+    UserPermission.belongsTo(models.User, { 
+      foreignKey: 'user_id', 
+      as: 'user' 
+    });
+    UserPermission.belongsTo(models.Permission, { 
+      foreignKey: 'permission_id', 
+      as: 'permission' 
+    });
   };
-  
+
+  return UserPermission;
+};

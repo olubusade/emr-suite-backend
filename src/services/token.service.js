@@ -1,23 +1,42 @@
-const jwtUtil = require('../utils/jwt');
-const ApiError = require('../utils/ApiError');
+// utils/jwtService.js
+import * as jwtUtil from './jwt.js';
+import ApiError from './ApiError.js';
 
-function generateAuthTokens(payload) {
-    const accessToken = jwtUtil.signAccess(payload);
-    const refreshToken = jwtUtil.signRefresh(payload);
-    return { accessToken, refreshToken };
+/**
+ * Generate access and refresh tokens
+ * @param {Object} payload - JWT payload
+ * @returns {{ accessToken: string, refreshToken: string }}
+ */
+export function generateAuthTokens(payload) {
+  const accessToken = jwtUtil.signAccess(payload);
+  const refreshToken = jwtUtil.signRefresh(payload);
+  return { accessToken, refreshToken };
 }
 
-
-function verifyAccess(token) {
-    try { return jwtUtil.verifyAccess(token); }
-    catch (e) { throw new ApiError(401, 'Invalid or expired access token'); }
+/**
+ * Verify access token
+ * @param {string} token
+ * @returns {Object} decoded payload
+ * @throws {ApiError} if token is invalid or expired
+ */
+export function verifyAccess(token) {
+  try {
+    return jwtUtil.verifyAccess(token);
+  } catch (err) {
+    throw new ApiError(401, 'Invalid or expired access token');
+  }
 }
 
-
-function verifyRefresh(token) {
-    try { return jwtUtil.verifyRefresh(token); }
-    catch (e) { throw new ApiError(401, 'Invalid or expired refresh token'); }
+/**
+ * Verify refresh token
+ * @param {string} token
+ * @returns {Object} decoded payload
+ * @throws {ApiError} if token is invalid or expired
+ */
+export function verifyRefresh(token) {
+  try {
+    return jwtUtil.verifyRefresh(token);
+  } catch (err) {
+    throw new ApiError(401, 'Invalid or expired refresh token');
+  }
 }
-
-
-module.exports = { generateAuthTokens, verifyAccess, verifyRefresh };

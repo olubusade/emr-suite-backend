@@ -3,12 +3,12 @@ version: '3.9'
 services:
   postgres:
     image: postgres:15
-    container_name: emr_postgres
+    container_name: busade_emr_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: yourpassword
-      POSTGRES_DB: emr_demo
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: busade_emr_demo
     ports:
       - "5432:5432"
     volumes:

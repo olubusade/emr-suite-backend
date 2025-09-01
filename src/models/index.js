@@ -1,18 +1,21 @@
 // apps/backend/src/models/index.js
+
 import sequelize from '../config/sequelize.js';
 import { DataTypes } from 'sequelize';
 
-import UserModel from './user.model.js';
-import RoleModel from './role.model.js';
-import PermissionModel from './permission.model.js';
-import RolePermissionModel from './rolePermission.model.js';
-import UserPermissionModel from './userPermission.model.js';
-import PatientModel from './patient.model.js';
-import BillModel from './bill.model.js';
-import AuditLogModel from './auditLog.model.js';
-import RefreshTokenModel from './refreshToken.model.js';
-import AppointmentModel from './appointment.model.js';
+// Import models
+import { UserModel } from './user.model.js';
+import { RoleModel } from './role.model.js';
+import { PermissionModel } from './permission.model.js';
+import { RolePermissionModel } from './rolePermission.model.js';
+import { UserPermissionModel } from './userPermission.model.js';
+import { PatientModel } from './patient.model.js';
+import { BillModel } from './bill.model.js';
+import { AuditLogModel } from './auditLog.model.js';
+import { RefreshTokenModel } from './refreshToken.model.js';
+import { AppointmentModel } from './appointment.model.js';
 
+// Initialize models
 const User = UserModel(sequelize, DataTypes);
 const Role = RoleModel(sequelize, DataTypes);
 const Permission = PermissionModel(sequelize, DataTypes);
@@ -24,31 +27,61 @@ const AuditLog = AuditLogModel(sequelize, DataTypes);
 const RefreshToken = RefreshTokenModel(sequelize, DataTypes);
 const Appointment = AppointmentModel(sequelize, DataTypes);
 
-// Associations
-Role.hasMany(User, { foreignKey: 'role_id' });
-User.belongsTo(Role, { foreignKey: 'role_id' });
+// ----------------- Associations -----------------
 
-Role.belongsToMany(Permission, { through: RolePermission, foreignKey: 'role_id', otherKey: 'permission_id' });
-Permission.belongsToMany(Role, { through: RolePermission, foreignKey: 'permission_id', otherKey: 'role_id' });
+// Role ↔ User
+Role.hasMany(User, { foreignKey: 'role_id', as: 'users' });
+User.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
 
-User.belongsToMany(Permission, { through: UserPermission, foreignKey: 'user_id', otherKey: 'permission_id' });
-Permission.belongsToMany(User, { through: UserPermission, foreignKey: 'permission_id', otherKey: 'user_id' });
+// Role ↔ Permission (through RolePermission)
+Role.belongsToMany(Permission, {
+  through: RolePermission,
+  foreignKey: 'role_id',
+  otherKey: 'permission_id',
+  as: 'permissions'
+});
+Permission.belongsToMany(Role, {
+  through: RolePermission,
+  foreignKey: 'permission_id',
+  otherKey: 'role_id',
+  as: 'roles'
+});
 
-Patient.hasMany(Bill, { foreignKey: 'patient_id' });
-Bill.belongsTo(Patient, { foreignKey: 'patient_id' });
+// User ↔ Permission (through UserPermission)
+User.belongsToMany(Permission, {
+  through: UserPermission,
+  foreignKey: 'user_id',
+  otherKey: 'permission_id',
+  as: 'permissions'
+});
+Permission.belongsToMany(User, {
+  through: UserPermission,
+  foreignKey: 'permission_id',
+  otherKey: 'user_id',
+  as: 'users'
+});
 
-Patient.hasMany(Appointment, { foreignKey: 'patient_id' });
-Appointment.belongsTo(Patient, { foreignKey: 'patient_id' });
+// Patient ↔ Bill
+Patient.hasMany(Bill, { foreignKey: 'patient_id', as: 'bills' });
+Bill.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
-User.hasMany(Appointment, { foreignKey: 'doctor_id', as: 'DoctorAppointments' });
-Appointment.belongsTo(User, { foreignKey: 'doctor_id', as: 'Doctor' });
+// Patient ↔ Appointment
+Patient.hasMany(Appointment, { foreignKey: 'patient_id', as: 'appointments' });
+Appointment.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
-User.hasMany(AuditLog, { foreignKey: 'actor_id' });
-AuditLog.belongsTo(User, { foreignKey: 'actor_id' });
+// Staff (User) ↔ Appointment
+User.hasMany(Appointment, { foreignKey: 'staff_id', as: 'staffAppointments' });
+Appointment.belongsTo(User, { foreignKey: 'staff_id', as: 'staff' });
 
-User.hasMany(RefreshToken, { foreignKey: 'user_id' });
-RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
+// User ↔ AuditLog
+User.hasMany(AuditLog, { foreignKey: 'actor_id', as: 'auditLogs' });
+AuditLog.belongsTo(User, { foreignKey: 'actor_id', as: 'actor' });
 
+// User ↔ RefreshToken
+User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refreshTokens' });
+RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// ----------------- Exports -----------------
 export {
   sequelize,
   User,

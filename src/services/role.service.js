@@ -1,5 +1,9 @@
 import { Role, Permission } from '../models/index.js';
+import ApiError from '../utils/ApiError.js';
 
+/**
+ * Get role-permission matrix
+ */
 export async function getRoleMatrix() {
   const roles = await Role.findAll({ order: [['name', 'ASC']] });
   const permissions = await Permission.findAll({ order: [['name', 'ASC']] });
@@ -8,6 +12,7 @@ export async function getRoleMatrix() {
     roles.map(async (role) => {
       const rolePerms = await role.getPermissions();
       const enabledNames = rolePerms.map(p => p.name);
+
       return {
         role: role.name,
         permissions: permissions.map(p => ({
@@ -25,14 +30,24 @@ export async function getRoleMatrix() {
   };
 }
 
+/**
+ * Create a new role
+ */
 export async function createRole({ name, description }) {
   const exists = await Role.findOne({ where: { name } });
-  if (exists) throw { statusCode: 409, message: 'Role already exists' };
-  return Role.create({ name, description });
+  if (exists) throw new ApiError(409, 'Role already exists');
+
+  const role = await Role.create({ name, description });
+  return { id: role.id, name: role.name, description: role.description };
 }
 
+/**
+ * Create a new permission
+ */
 export async function createPermission({ name, description }) {
   const exists = await Permission.findOne({ where: { name } });
-  if (exists) throw { statusCode: 409, message: 'Permission already exists' };
-  return Permission.create({ name, description });
+  if (exists) throw new ApiError(409, 'Permission already exists');
+
+  const permission = await Permission.create({ name, description });
+  return { id: permission.id, name: permission.name, description: permission.description };
 }

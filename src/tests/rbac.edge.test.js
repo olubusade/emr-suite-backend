@@ -7,8 +7,8 @@ let adminToken, userToken;
 
 beforeAll(async () => {
   await seedTestData();
-  adminToken = (await loginTestUser('admin@test.com', 'Admin123!')).token;
-  userToken = (await loginTestUser('user@test.com', 'User123!')).token;
+  adminToken = (await loginTestUser('admin@test.com', 'admin@123')).accessToken;
+  userToken = (await loginTestUser('user@test.com', 'User123!')).accessToken;
 });
 
 afterAll(async () => {
@@ -16,23 +16,25 @@ afterAll(async () => {
 });
 
 describe('RBAC Edge Cases', () => {
-  it('should deny access if user has no permission', async () => {
+  it('should deny access if user lacks permission', async () => {
     const res = await request(app)
       .patch('/api/users/1')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ full_name: 'Hacker User' });
+      .send({ firstName: 'Hacker', lastName: 'User' });
 
     expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty('message');
   });
 
   it('should allow admin to update other user', async () => {
     const res = await request(app)
       .patch('/api/users/2')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ full_name: 'Updated by Admin' });
+      .send({ firstName: 'Updated', lastName: 'ByAdmin' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('full_name', 'Updated by Admin');
+    expect(res.body.data).toHaveProperty('firstName', 'Updated');
+    expect(res.body.data).toHaveProperty('lastName', 'ByAdmin');
   });
 
   it('should deny access without token', async () => {
@@ -40,13 +42,15 @@ describe('RBAC Edge Cases', () => {
       .get('/api/users');
 
     expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty('message');
   });
 
   it('should deny invalid token', async () => {
     const res = await request(app)
       .get('/api/users')
-      .set('Authorization', `Bearer invalidtoken`);
+      .set('Authorization', 'Bearer invalidtoken');
 
     expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty('message');
   });
 });

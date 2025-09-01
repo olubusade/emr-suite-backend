@@ -1,13 +1,16 @@
+// src/test/user.test.js
 import request from 'supertest';
 import app from '../app.js';
-import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
+import { setupDB, teardownDatabase, createTestUser } from './testHelper.js';
 
 let tokens = {};
-let userId;
+let createdUserId;
 
 beforeAll(async () => {
-  await setupDatabase();
-  const admin = await createTestUser({ role: 'admin' });
+  await setupDB();
+
+  // Create an admin user for testing
+  const admin = await createTestUser({ role: 'admin', full_name: 'Admin User', email: 'admin@busade-emr-demo.com' });
   tokens.admin = admin.accessToken;
 });
 
@@ -20,40 +23,51 @@ describe('User Module CRUD', () => {
     const res = await request(app)
       .post('/users')
       .set('Authorization', `Bearer ${tokens.admin}`)
-      .send({ email: 'newuser@example.com', full_name: 'New User', password: 'Password123!' });
+      .send({
+        email: 'newuser@busade-emr-demo.com',
+        fullName: 'New User',   // camelCase for API payload
+        password: 'Password123!',
+        roleId: 2               // Assuming roleId 2 exists for testing
+      });
+
     expect(res.status).toBe(201);
-    userId = res.body.id;
+    expect(res.body).toHaveProperty('id');
+    createdUserId = res.body.id;
   });
 
-  it('should get user profile', async () => {
+  it('should get admin profile', async () => {
     const res = await request(app)
       .get('/users/me')
       .set('Authorization', `Bearer ${tokens.admin}`);
+
     expect(res.status).toBe(200);
-    expect(res.body.email).toBe('admin@example.com');
+    expect(res.body.email).toBe('admin@busade-emr-demo.com');
   });
 
-  it('should update user', async () => {
+  it('should update created user', async () => {
     const res = await request(app)
-      .patch(`/users/${userId}`)
+      .patch(`/users/${createdUserId}`)
       .set('Authorization', `Bearer ${tokens.admin}`)
-      .send({ full_name: 'Updated User' });
+      .send({ fullName: 'Updated User' });
+
     expect(res.status).toBe(200);
-    expect(res.body.full_name).toBe('Updated User');
+    expect(res.body.fullName).toBe('Updated User');
   });
 
-  it('should list users', async () => {
+  it('should list all users', async () => {
     const res = await request(app)
       .get('/users')
       .set('Authorization', `Bearer ${tokens.admin}`);
+
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('should delete user', async () => {
+  it('should delete the created user', async () => {
     const res = await request(app)
-      .delete(`/users/${userId}`)
+      .delete(`/users/${createdUserId}`)
       .set('Authorization', `Bearer ${tokens.admin}`);
+
     expect([200, 204]).toContain(res.status);
   });
 });

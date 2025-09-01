@@ -1,3 +1,4 @@
+// src/test/testHelper.js
 import request from 'supertest';
 import app from '../app.js';
 import { sequelize, User, Role } from '../models/index.js';
@@ -12,7 +13,7 @@ export async function setupDB() {
 
   // Seed roles
   const roles = {};
-  const roleNames = ['super_admin', 'admin', 'doctor', 'nurse', 'reception', 'billing', 'lab', 'pharmacy'];
+  const roleNames = ['super_admin', 'admin', 'doctor', 'nurse', 'reception', 'biller', 'lab_technician', 'pharmacist'];
   for (const roleName of roleNames) {
     roles[roleName] = await Role.create({ name: roleName });
   }
@@ -23,9 +24,9 @@ export async function setupDB() {
     fname: 'Admin',
     lname: 'User',
     full_name: 'Admin User',
-    email: 'admin@example.com',
+    email: 'admin@busade-emr-demo.com',
     password_hash: adminPassword,
-    roleId: roles.admin.id, // adjust field if your DB uses role_id
+    role_id: roles.admin.id,
     active: true
   });
 
@@ -42,12 +43,14 @@ export async function teardownDatabase() {
 /**
  * Login helper to get tokens
  */
-export async function loginAs(email = 'admin@example.com', password = 'password123') {
+export async function loginAs(email = 'admin@busade-emr-demo.com', password = 'password123') {
   const res = await request(app)
     .post('/api/auth/login')
     .send({ email, password });
 
-  if (!res.body.accessToken) throw new Error('Login failed in testHelper');
+  if (!res.body.accessToken) {
+    throw new Error(`Login failed for ${email}. Check your test DB setup.`);
+  }
 
   return {
     accessToken: res.body.accessToken,
@@ -59,16 +62,25 @@ export async function loginAs(email = 'admin@example.com', password = 'password1
 /**
  * Create test user dynamically
  */
-export async function createTestUser({ email = 'user@example.com', full_name = 'Test User', role = 'doctor', password = 'password123' } = {}) {
+export async function createTestUser({
+  email = 'user@busade-emr-demo.com',
+  full_name = 'Test User',
+  role = 'doctor',
+  password = 'password123'
+} = {}) {
+  const [fname, lname] = full_name.split(' ');
   const hashed = await bcrypt.hash(password, 10);
   const roleRecord = await Role.findOne({ where: { name: role } });
+
+  if (!roleRecord) throw new Error(`Role "${role}" not found in DB`);
+
   const user = await User.create({
     email,
     full_name,
-    fname: full_name.split(' ')[0],
-    lname: full_name.split(' ')[1] || '',
+    fname: fname || 'Test',
+    lname: lname || 'User',
     password_hash: hashed,
-    roleId: roleRecord.id,
+    role_id: roleRecord.id,
     active: true
   });
 

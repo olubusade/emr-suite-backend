@@ -32,38 +32,36 @@ beforeAll(async () => {
   // Login admin user and store access token
   const adminToken = await loginAs(adminUser.email, 'password123');
   tokens.admin = adminToken;
-
-  // Optionally create other users for RBAC testing
 });
 
 afterAll(async () => {
   await teardownDatabase();
 });
 
-describe('AUTHENTICATION MODULE', () => {
-  test('Admin login with correct credentials', async () => {
+describe('AUTH MODULE', () => {
+  test('Admin login', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@example.com', password: 'password123' });
+      .send({ email: 'admin@busade-emr-demo.com', password: 'password123' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
-    expect(res.body.user.permissions).toContain(PERMISSIONS.USER_READ);
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
+    expect(res.body.data.user.permissions).toContain(PERMISSIONS.USER_READ);
   });
 
   test('Refresh token', async () => {
     const loginRes = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@example.com', password: 'password123' });
+      .send({ email: 'admin@busade-emr-demo.com', password: 'password123' });
 
     const res = await request(app)
       .post('/api/auth/refresh')
-      .send({ refreshToken: loginRes.body.refreshToken });
+      .send({ refreshToken: loginRes.body.data.refreshToken });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
   });
 
   test('Change password', async () => {
@@ -73,7 +71,7 @@ describe('AUTHENTICATION MODULE', () => {
       .send({ oldPassword: 'password123', newPassword: 'newpass123' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.success).toBe(true);
+    expect(res.body.data.success).toBe(true);
   });
 });
 
@@ -84,7 +82,7 @@ describe('USER MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.email).toBe('admin@example.com');
+    expect(res.body.data.email).toBe('admin@busade-emr-demo.com');
   });
 
   test('Admin can list users', async () => {
@@ -93,7 +91,7 @@ describe('USER MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   test('Create new user', async () => {
@@ -101,26 +99,26 @@ describe('USER MODULE', () => {
       .post('/api/users')
       .set('Authorization', `Bearer ${tokens.admin}`)
       .send({
-        fname: 'John',
-        lname: 'Doe',
-        email: 'johndoe@example.com',
-        password: 'pass1234',
-        roleId: 2 // admin role
+        firstName: 'Tope',
+        lastName: 'Ajala',
+        email: 'topeajala@busade-emr-demo.com',
+        password: 'user@123',
+        roleId: 2
       });
 
     expect(res.statusCode).toBe(201);
-    expect(res.body.id).toBeDefined();
-    createdIds.user = res.body.id;
+    expect(res.body.data.id).toBeDefined();
+    createdIds.user = res.body.data.id;
   });
 
   test('Update user', async () => {
     const res = await request(app)
       .patch(`/api/users/${createdIds.user}`)
       .set('Authorization', `Bearer ${tokens.admin}`)
-      .send({ fname: 'Johnny' });
+      .send({ firstName: 'Jimoh' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.fname).toBe('Johnny');
+    expect(res.body.data.firstName).toBe('Jimoh');
   });
 
   test('Delete user', async () => {
@@ -138,15 +136,15 @@ describe('PATIENT MODULE', () => {
       .post('/api/patients')
       .set('Authorization', `Bearer ${tokens.admin}`)
       .send({
-        firstName: 'Alice',
+        firstName: 'Elizabeth',
         lastName: 'Smith',
         dob: '1990-01-01',
         gender: 'female'
       });
 
     expect(res.statusCode).toBe(201);
-    expect(res.body.id).toBeDefined();
-    createdIds.patient = res.body.id;
+    expect(res.body.data.id).toBeDefined();
+    createdIds.patient = res.body.data.id;
   });
 
   test('Get patient details', async () => {
@@ -155,7 +153,7 @@ describe('PATIENT MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.firstName).toBe('Alice');
+    expect(res.body.data.firstName).toBe('Elizabeth');
   });
 });
 
@@ -172,8 +170,8 @@ describe('APPOINTMENTS MODULE', () => {
       });
 
     expect(res.statusCode).toBe(201);
-    expect(res.body.id).toBeDefined();
-    createdIds.appointment = res.body.id;
+    expect(res.body.data.id).toBeDefined();
+    createdIds.appointment = res.body.data.id;
   });
 });
 
@@ -189,8 +187,8 @@ describe('BILLING MODULE', () => {
       });
 
     expect(res.statusCode).toBe(201);
-    expect(res.body.id).toBeDefined();
-    createdIds.bill = res.body.id;
+    expect(res.body.data.id).toBeDefined();
+    createdIds.bill = res.body.data.id;
   });
 
   test('Get bill details', async () => {
@@ -199,7 +197,7 @@ describe('BILLING MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.amount).toBe(5000);
+    expect(res.body.data.amount).toBe(5000);
   });
 });
 
@@ -210,8 +208,8 @@ describe('METRICS MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('totalPatients');
-    expect(res.body).toHaveProperty('totalAppointments');
+    expect(res.body.data).toHaveProperty('totalPatients');
+    expect(res.body.data).toHaveProperty('totalAppointments');
   });
 });
 
@@ -222,6 +220,6 @@ describe('AUDIT MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 });

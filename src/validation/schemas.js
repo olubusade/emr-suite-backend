@@ -67,7 +67,7 @@ export const createBillSchema = z.object({
   body: z.object({
     patient_id: uuid(),
     amount: z.number().positive(),
-    status: z.enum(['PAID', 'PENDING']).optional()
+    status: z.enum(['paid', 'pending']).optional()
   })
 });
 
@@ -75,7 +75,7 @@ export const updateBillSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
     amount: z.number().positive().optional(),
-    status: z.enum(['PAID', 'PENDING']).optional()
+    status: z.enum(['paid', 'pending']).optional()
   })
 });
 
@@ -83,25 +83,26 @@ export const updateBillSchema = z.object({
 export const createAppointmentSchema = z.object({
   body: z.object({
     patient_id: uuid(),
-    doctor_id: uuid(),
-    scheduled_at: isoDateString(),
+    staff_id: uuid(),             // ✅ updated from doctor_id
+    appointment_date: isoDateString(), // ✅ updated from scheduled_at
     duration_minutes: z.number().int().positive().optional(),
     reason: z.string().max(255).optional(),
-    notes: z.string().optional()
+    notes: z.string().optional(),
   })
 });
 
 export const updateAppointmentSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
-    scheduled_at: isoDateString().optional(),
+    appointment_date: isoDateString().optional(), // ✅ updated
     duration_minutes: z.number().int().positive().optional(),
     reason: z.string().max(255).optional(),
     notes: z.string().optional(),
-    status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
-    doctor_id: uuid().optional()
+    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(), // match model enum
+    staff_id: uuid().optional(), // ✅ updated from doctor_id
   })
 });
+
 
 /* -------------------- Roles / Permissions -------------------- */
 export const createRoleSchema = z.object({
