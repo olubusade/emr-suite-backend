@@ -1,11 +1,14 @@
-const { ok, created, error } = require('../utils/response');
-const { attachAudit } = require('../middlewares/audit.middleware');
-const appointmentService = require('../services/appointment.service');
+// src/controllers/appointment.controller.js
+import { ok, created, error } from '../utils/response.js';
+import { attachAudit } from '../middlewares/audit.middleware.js';
+import * as appointmentService from '../services/appointment.service.js';
 
-async function listAppointments(req, res) {
+/**
+ * List appointments
+ */
+export async function listAppointments(req, res) {
   try {
     const limit = req.query.limit;
-    // Service will handle mapping snake_case DB fields to camelCase
     const appointments = await appointmentService.listAppointments({ limit });
     return ok(res, appointments);
   } catch (err) {
@@ -13,7 +16,10 @@ async function listAppointments(req, res) {
   }
 }
 
-async function getAppointment(req, res) {
+/**
+ * Get a single appointment
+ */
+export async function getAppointment(req, res) {
   try {
     const appointment = await appointmentService.getAppointmentById(req.params.id);
     if (!appointment) return error(res, 404, 'Appointment not found');
@@ -23,16 +29,18 @@ async function getAppointment(req, res) {
   }
 }
 
-async function createAppointment(req, res) {
+/**
+ * Create appointment
+ */
+export async function createAppointment(req, res) {
   try {
-    // JS uses camelCase, service converts to snake_case for DB
     const appointment = await appointmentService.createAppointment(req.body);
 
     await attachAudit(req, {
       action: 'CREATE_APPOINTMENT',
       entity: 'appointment',
       entityId: appointment.id,
-      metadata: { ...req.body }
+      metadata: { ...req.body },
     });
 
     return created(res, appointment, 'Appointment created');
@@ -41,7 +49,10 @@ async function createAppointment(req, res) {
   }
 }
 
-async function updateAppointment(req, res) {
+/**
+ * Update appointment
+ */
+export async function updateAppointment(req, res) {
   try {
     const appointment = await appointmentService.updateAppointment(req.params.id, req.body);
 
@@ -49,7 +60,7 @@ async function updateAppointment(req, res) {
       action: 'UPDATE_APPOINTMENT',
       entity: 'appointment',
       entityId: appointment.id,
-      metadata: { ...req.body }
+      metadata: { ...req.body },
     });
 
     return ok(res, appointment);
@@ -58,7 +69,10 @@ async function updateAppointment(req, res) {
   }
 }
 
-async function cancelAppointment(req, res) {
+/**
+ * Cancel appointment
+ */
+export async function cancelAppointment(req, res) {
   try {
     const appointment = await appointmentService.cancelAppointment(req.params.id);
 
@@ -66,7 +80,7 @@ async function cancelAppointment(req, res) {
       action: 'CANCEL_APPOINTMENT',
       entity: 'appointment',
       entityId: appointment.id,
-      metadata: { previousStatus: 'scheduled', newStatus: 'canceled' } // match enum
+      metadata: { previousStatus: 'scheduled', newStatus: 'canceled' },
     });
 
     return ok(res, { id: appointment.id, status: appointment.status }, 'Appointment cancelled');
@@ -74,12 +88,3 @@ async function cancelAppointment(req, res) {
     return error(res, 400, 'Error cancelling appointment', err.message);
   }
 }
-
-
-module.exports = {
-  listAppointments,
-  getAppointment,
-  createAppointment,
-  updateAppointment,
-  cancelAppointment
-};

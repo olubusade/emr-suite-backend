@@ -1,23 +1,21 @@
 # Use official Node.js LTS image
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copy package files and install dependencies
 COPY package*.json ./
+ARG NODE_ENV
+RUN if [ "$NODE_ENV" = "production" ]; \
+    then npm ci --only=production; \
+    else npm install; \
+    fi
 
-# Install dependencies
-RUN npm install --production
-
-# Copy source code
+# Copy source
 COPY ./src ./src
-
-# Copy .env file (optional in dev, required in production)
-# COPY .env .env
 
 # Expose port
 EXPOSE 5000
 
-# Start server
+# Default command: will be overridden by docker-compose
 CMD ["node", "src/server.js"]

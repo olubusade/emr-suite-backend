@@ -1,5 +1,24 @@
-import pkg from 'pg';
+import { Sequelize } from 'sequelize';
 import { config } from './config/config.js';
-const { Pool } = pkg;
-export const pool = new Pool(config.db);
-export const q = (text, params) => pool.query(text, params);
+
+export const sequelize = new Sequelize(
+  config.db.database,
+  config.db.username,
+  config.db.password,
+  {
+    host: config.db.host,
+    port: config.db.port,
+    dialect: config.db.dialect,
+    logging: config.db.logging,
+  }
+);
+
+// Optional: test connection
+export async function testDbConnection() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connected!');
+  } catch (err) {
+    console.error('❌ Database connection failed:', err);
+  }
+}

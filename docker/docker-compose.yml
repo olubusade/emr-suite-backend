@@ -6,9 +6,9 @@ services:
     container_name: busade_emr_postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: busade_emr_demo
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
@@ -16,18 +16,22 @@ services:
 
   backend:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    container_name: emr_backend
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
+    container_name: busade_emr_backend
     restart: always
     env_file:
-      - ../.env
+      - .env.${ENV}
     ports:
       - "5000:5000"
     depends_on:
       - postgres
+    volumes:
+      - ./src:/usr/src/app/src   # Live reload in dev
     command: >
-      sh -c "npm run seed && npm run dev"
+      sh -c "if [ '${ENV}' = 'dev' ]; then npm run dev; else node src/server.js; fi"
 
 volumes:
   postgres_data:

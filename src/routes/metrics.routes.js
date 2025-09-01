@@ -1,7 +1,7 @@
 import express from 'express';
 import * as metricsController from '../controllers/metrics.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
-import { authorize } from '../middlewares/permission.js';
+import { authorize } from '../middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../constants/index.js';
 
 const r = express.Router();

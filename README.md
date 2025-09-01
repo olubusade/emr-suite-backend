@@ -7,7 +7,7 @@
 
 **Electronic Medical Records (EMR) Suite – Backend Demo**
 
-> ⚠️ **Note for recruiters:** This repository is a **demo** to showcase the backend sophistication of the **wiCare EMR** system. It is a production-grade simulation in a controlled environment to protect IP. The frontend development is in progress.
+> ⚠️ **Note for recruiters:** This repository is a **demo** to showcase the backend sophistication of the **wiCare EMR** system. Production-grade simulation in a controlled environment to protect IP. Frontend development in progress.
 
 ---
 
@@ -29,6 +29,9 @@
 ```
 emr-suite-backend/
 ├─ src/
+│  ├─ config/               # Configuration files for env, JWT, DB
+│  │   ├─ config.js
+│  │   └─ db.js
 │  ├─ controllers/          # Request handlers
 │  ├─ models/               # Sequelize models
 │  ├─ services/             # Business logic
@@ -41,7 +44,8 @@ emr-suite-backend/
 │  ├─ app.js                # Express app
 │  └─ server.js             # App bootstrap
 ├─ docker/                  # Dockerfiles & docker-compose.yml
-├─ .env                     # Environment variables
+├─ .env.dev                 # Development environment variables
+├─ .env.prod                # Production environment variables
 ├─ package.json
 └─ README.md
 ```
@@ -50,13 +54,14 @@ emr-suite-backend/
 
 ## 🧭 Conventions & Best Practices
 
-* **camelCase** for all API response keys – ensures consistent frontend consumption.
-* **RBAC Enforcement** – Permissions enforced at middleware level for all protected routes.
-* **Audit Logging** – Every sensitive action logs user, timestamp, action type, and entity.
-* **JWT Handling** – Access token short-lived, refresh token revocable, SHA-256 hashed in DB.
-* **Error Handling** – Standardized errors with statusCode and message, centralized error middleware.
-* **Database Relations** – Sequelize models reflect clear relations (User ↔ Role ↔ Permission).
-* **Testing** – All critical flows including authentication, RBAC, and business logic are tested.
+* **camelCase** for all API response keys.
+* **RBAC Enforcement** via middleware for protected routes.
+* **Audit Logging** for create, update, delete, login, logout actions.
+* **JWT Handling** – short-lived access, revocable refresh tokens, SHA-256 hashed in DB.
+* **Error Handling** – standardized with `statusCode` and `message`.
+* **Database Relations** – Sequelize models with clear associations.
+* **Testing** – Jest + Supertest cover all critical flows.
+* **PM2 Support** – Dev and prod processes managed for reliability and scaling.
 
 ---
 
@@ -81,23 +86,7 @@ flowchart TD
 ```
 
 ---
-## ⚙️ Conventions & Best Practices
 
-* camelCase for all API response keys to match frontend expectations
-
-* RBAC Enforcement via middleware in all protected routes
-
-* Audit Logging for create, update, delete, login, logout actions
-
-* JWT Handling with access & refresh tokens; revocation supported
-
-* Error Handling consistent via ApiError and structured responses
-
-* Sequelize ORM: snake_case in DB, camelCase in API responses
-
-* Testing: Jest + Supertest integration tests cover all critical flows
-
----
 ## 🚀 Installation & Local Development
 
 ### Prerequisites
@@ -114,42 +103,63 @@ cd emr-suite-backend
 npm install
 ```
 
-Create `.env` :
+### Environment Variables
 
-```env
-PORT=3000
-DB_HOST=localhost
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=emr_suite
-JWT_SECRET=supersecret
-JWT_REFRESH_SECRET=superrefreshsecret
+Copy `.env.dev` for local development:
+
+```bash
+cp .env.dev .env
 ```
 
-Seed initial roles, users, and permissions:
+Sample `.env.dev`:
+
+```env
+ENV=dev
+NODE_ENV=development
+PORT=5000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=postgres
+DB_NAME=busade_emr_demo_db
+CORS_ORIGIN=http://localhost:4200
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_jwt_refresh_secret
+ACCESS_TTL=15m
+REFRESH_TTL=7d
+JWT_ISSUER=http://localhost:5000
+```
+
+---
+
+### Seed Initial Data
 
 ```bash
 npm run seed
 ```
 
-Run development server:
+---
+
+### Run Development Server
 
 ```bash
 npm run dev
 ```
 
-> Server runs at `http://localhost:3000`.
+> Runs server at `http://localhost:5000` with hot reload.
 
 ---
 
-## 🐳 Docker Setup (Optional)
+---
+
+## 🐳 Docker Setup
 
 ```bash
 cd docker
 docker compose up --build
 ```
 
-* Backend: `http://localhost:3000`
+* Backend: `http://localhost:5000`
 * PostgreSQL: `localhost:5432`
 
 Stop containers:
@@ -166,9 +176,9 @@ docker compose down
 * **Refresh token:** `POST /api/auth/refresh`
 * **Change password:** `POST /api/auth/change-password`
 
-Roles: `super_admin`, `admin`, `doctor`, `nurse`, `reception`, `billing`, `lab`, `pharmacy`.
+Roles: `super_admin`, `admin`, `doctor`, `nurse`, `reception`, `billing`, `lab`, `pharmacy`
 
-Middleware enforces permissions dynamically for protected endpoints.
+Middleware enforces permissions dynamically.
 
 ---
 
@@ -199,7 +209,7 @@ npm run test:watch
 * PostgreSQL with Sequelize ORM
 * Tables: `Users`, `Roles`, `Permissions`, `RefreshTokens`, `Patients`, `Appointments`, `Bills`, `AuditLogs`, `Metrics`
 
-Seed scripts are located at `src/seed/seed.js`:
+Seed scripts at `src/seed/seed.js`:
 
 ```javascript
 import { Role, Permission, User } from '../models/index.js';
@@ -232,14 +242,17 @@ seed();
 
 ## ⚙️ NPM Scripts
 
-| Script               | Description                            |
-| -------------------- | -------------------------------------- |
-| `npm run dev`        | Start backend in development mode      |
-| `npm start`          | Start backend in production mode       |
-| `npm run seed`       | Seed initial roles, users, permissions |
-| `npm run test`       | Run all tests                          |
-| `npm run test:watch` | Watch mode for tests                   |
-| `npm run test:rbac`  | Run RBAC module-specific tests         |
+| Script                | Description                            |
+| --------------------- | -------------------------------------- |
+| `npm run dev`         | Start backend in development mode      |
+| `npm start`           | Start backend in production mode       |
+| `npm run seed`        | Seed initial roles, users, permissions |
+| `npm run test`        | Run all tests                          |
+| `npm run test:watch`  | Watch mode for tests                   |
+| `npm run test:rbac`   | Run RBAC module-specific tests         |
+| `npm run docker:dev`  | Start dev environment via Docker       |
+| `npm run docker:prod` | Start prod environment via Docker      |
+| `npm run down`        | Stop all Docker containers             |
 
 ---
 
@@ -292,10 +305,12 @@ jobs:
       - run: npm test
 ```
 
-> This workflow installs dependencies, seeds the database, and runs tests on every push or PR to `main`.
+> Installs dependencies, seeds DB, and runs tests on every push/PR to `main`.
 
 ---
 
 📜 License
 
 MIT License © 2025 Busade Adedayo
+
+---

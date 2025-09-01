@@ -1,10 +1,11 @@
+// src/services/user.service.js
 import { User, RefreshToken, Role } from '../models/index.js';
 import { hash, compare } from '../utils/passwords.js';
 import { signAccess, signRefresh, verifyRefresh, sha256 } from '../utils/jwt.js';
 import ApiError from '../utils/ApiError.js';
 
 /**
- * Create a new user with optional roles
+ * Create a new user
  */
 export async function createUser({ email, password, fullName, roleIds = [] }) {
   const existing = await User.findOne({ where: { email } });
@@ -23,9 +24,9 @@ export async function createUser({ email, password, fullName, roleIds = [] }) {
 }
 
 /**
- * Authenticate user and generate JWT tokens
+ * Authenticate user and generate tokens
  */
-export async function authenticate({ email, password }) {
+export async function loginUser({ email, password }) {
   const user = await User.findOne({ where: { email }, include: [Role] });
   if (!user) throw new ApiError(401, 'Invalid credentials');
 
@@ -33,7 +34,7 @@ export async function authenticate({ email, password }) {
   if (!valid) throw new ApiError(401, 'Invalid credentials');
 
   const roleIds = (await user.getRoles()).map(r => r.id);
-  const roleName = roleIds.length ? (await user.getRoles())[0]?.name : null;
+  const roleName = (await user.getRoles())[0]?.name || null;
   const payload = { id: user.id, roleIds };
 
   const accessToken = signAccess(payload);
@@ -49,7 +50,7 @@ export async function authenticate({ email, password }) {
 }
 
 /**
- * Refresh access token
+ * Refresh JWT tokens
  */
 export async function refreshToken(token) {
   const payload = verifyRefresh(token);
@@ -76,9 +77,14 @@ export async function refreshToken(token) {
 /**
  * Logout user
  */
-export async function logout(token) {
-  const tokenHash = sha256(token);
-  await RefreshToken.destroy({ where: { tokenHash } });
+export async function logoutUser(userId, token) {
+  if (token) {
+    const tokenHash = sha256(token);
+    await RefreshToken.destroy({ where: { tokenHash, userId } });
+  } else {
+    // optional: revoke all tokens for user
+    await RefreshToken.destroy({ where: { userId } });
+  }
   return true;
 }
 
@@ -86,11 +92,7 @@ export async function logout(token) {
  * Get user profile
  */
 export async function getUserProfile(userId) {
-  const user = await User.findByPk(userId, {
-    attributes: ['id', 'email', 'fullName', 'createdAt'],
-    include: [Role],
-  });
-
+  const user = await User.findByPk(userId, { include: [Role] });
   if (!user) return null;
 
   const roleName = (await user.getRoles())[0]?.name || null;
@@ -98,7 +100,7 @@ export async function getUserProfile(userId) {
 }
 
 /**
- * Update user profile
+ * Update profile
  */
 export async function updateUserProfile(userId, changes) {
   const user = await User.findByPk(userId);
@@ -115,7 +117,7 @@ export async function updateUserProfile(userId, changes) {
 }
 
 /**
- * Admin: List users with pagination
+ * Admin: list users
  */
 export async function listUsers({ page = 1, pageSize = 20 }) {
   const offset = (page - 1) * pageSize;
@@ -135,7 +137,7 @@ export async function listUsers({ page = 1, pageSize = 20 }) {
 }
 
 /**
- * Admin: Update user
+ * Admin: update user
  */
 export async function updateUser(id, changes) {
   const user = await User.findByPk(id);
@@ -147,7 +149,7 @@ export async function updateUser(id, changes) {
 }
 
 /**
- * Admin: Delete user
+ * Admin: delete user
  */
 export async function deleteUser(id) {
   const deleted = await User.destroy({ where: { id } });

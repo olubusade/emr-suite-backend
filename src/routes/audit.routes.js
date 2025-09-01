@@ -1,7 +1,7 @@
 import express from 'express';
 import { listAudits } from '../controllers/audit.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
-import { authorize } from '../middlewares/permission.js';
+import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
 import { listAuditSchema } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';

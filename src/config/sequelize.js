@@ -1,11 +1,26 @@
 import { Sequelize } from 'sequelize';
-import dbConfig from './database.js';
+import { config } from './config.js';
 
-const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
-  host: dbConfig.host,
-  port: dbConfig.port,
-  dialect: dbConfig.dialect,
-  logging: dbConfig.logging
-});
+const sequelize = new Sequelize(
+  config.db.database,
+  config.db.user,
+  config.db.password,
+  {
+    host: config.db.host,
+    port: config.db.port,
+    dialect: 'postgres',
+    logging: config.env === 'development' ? console.log : false,
+    define: {
+      timestamps: true,
+      underscored: true,
+    },
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
+  }
+);
 
-export default sequelize;
+export default sequelize; // ✅ default export

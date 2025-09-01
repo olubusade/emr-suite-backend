@@ -2,13 +2,12 @@ import { Bill, Patient } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
 
 /**
- * List bills with pagination
+ * List bills with pagination and filters
  */
 export async function listBills({ page = 1, pageSize = 50, filters = {} }) {
-  const limit = Number(pageSize) || 50;
+  const limit = Number(pageSize);
   const offset = (Number(page) - 1) * limit;
 
-  // Build where clause dynamically from filters
   const where = {};
   if (filters.patientId) where.patientId = filters.patientId;
   if (filters.status) where.status = filters.status;
@@ -26,11 +25,10 @@ export async function listBills({ page = 1, pageSize = 50, filters = {} }) {
     patientId: bill.patientId,
     amount: bill.amount,
     status: bill.status,
+    dueDate: bill.dueDate,
     createdAt: bill.createdAt,
     updatedAt: bill.updatedAt,
-    patient: bill.Patient
-      ? { id: bill.Patient.id, fullName: bill.Patient.full_name }
-      : null,
+    patient: bill.Patient ? { id: bill.Patient.id, fullName: bill.Patient.full_name } : null,
   }));
 
   return {
@@ -39,6 +37,28 @@ export async function listBills({ page = 1, pageSize = 50, filters = {} }) {
     page: Number(page),
     pageSize: limit,
     pages: Math.ceil(count / limit),
+  };
+}
+
+/**
+ * Get a single bill by ID
+ */
+export async function getBill(id) {
+  const bill = await Bill.findByPk(id, {
+    include: [{ model: Patient, attributes: ['id', 'full_name'] }],
+  });
+
+  if (!bill) return null;
+
+  return {
+    id: bill.id,
+    patientId: bill.patientId,
+    amount: bill.amount,
+    status: bill.status,
+    dueDate: bill.dueDate,
+    createdAt: bill.createdAt,
+    updatedAt: bill.updatedAt,
+    patient: bill.Patient ? { id: bill.Patient.id, fullName: bill.Patient.full_name } : null,
   };
 }
 
@@ -55,12 +75,12 @@ export async function createBill({ patientId, amount, status }) {
     status: status || 'PENDING',
   });
 
-  // Include patient info in the response
   return {
     id: bill.id,
     patientId: bill.patientId,
     amount: bill.amount,
     status: bill.status,
+    dueDate: bill.dueDate,
     createdAt: bill.createdAt,
     updatedAt: bill.updatedAt,
     patient: { id: patient.id, fullName: patient.full_name },
@@ -81,6 +101,7 @@ export async function updateBill(id, changes) {
   }
   if (changes.amount !== undefined) bill.amount = changes.amount;
   if (changes.status) bill.status = changes.status;
+  if (changes.dueDate) bill.dueDate = changes.dueDate;
 
   await bill.save();
 
@@ -89,11 +110,10 @@ export async function updateBill(id, changes) {
     patientId: bill.patientId,
     amount: bill.amount,
     status: bill.status,
+    dueDate: bill.dueDate,
     createdAt: bill.createdAt,
     updatedAt: bill.updatedAt,
-    patient: bill.Patient
-      ? { id: bill.Patient.id, fullName: bill.Patient.full_name }
-      : null,
+    patient: bill.Patient ? { id: bill.Patient.id, fullName: bill.Patient.full_name } : null,
   };
 }
 

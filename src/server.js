@@ -1,23 +1,22 @@
-// src/server.js
-import { config } from './config/config.js';
 import app from './app.js';
-import { sequelize } from './db.js';
+import { config } from './config/config.js';
+import { sequelize, testDbConnection } from './db.js';
 
 async function start() {
   try {
-    await sequelize.authenticate();
-    console.log('✅ DB connected');
+    await testDbConnection();
 
-    // For demos only (Hey Recruiter!, you can comment in if you want to auto-sync)
+    // Uncomment for local development / demo syncing
     // await sequelize.sync({ alter: true });
-    // console.log('Models synced');
+    // console.log('✅ Models synced');
 
     app.listen(config.port, () => {
-      console.log(`🚀 API running at http://localhost:${config.port}`);
+      console.log(`🚀 Busade's EMR Demo API running in ${config.env} mode at http://localhost:${config.port}`);
     });
   } catch (err) {
-    console.error('❌ DB connection failed:', err);
+    console.error('❌ Server failed to start:', err);
     process.exit(1);
   }
 }
+
 start();

@@ -101,3 +101,25 @@ export async function deleteBill(req, res) {
     return error(res, err.statusCode || 500, err.message || 'Server error');
   }
 }
+
+
+
+
+/**
+ * GET /:id
+ */
+export async function getBill(req, res) {
+  try {
+    const billId = req.params.id;
+    const bill = await billService.getBill(billId);
+
+    if (!bill) return error(res, 404, 'Bill not found');
+
+    await attachAudit(req, 'VIEW_BILL', 'bill', billId);
+
+    return ok(res, bill, 'Bill retrieved successfully');
+  } catch (err) {
+    console.error('bills.get', err);
+    return error(res, err.statusCode || 500, err.message || 'Server error');
+  }
+}

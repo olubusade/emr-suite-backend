@@ -78,6 +78,17 @@ export const updateBillSchema = z.object({
     status: z.enum(['paid', 'pending']).optional()
   })
 });
+export const getBillSchema = z.object({
+  params: z.object({
+    id: uuid()
+  })
+});
+export const listBillSchema = z.object({
+  query: z.object({
+    limit: z.preprocess(v => v ? Number(v) : 100, z.number().int().positive().max(1000).optional()),
+    offset: z.preprocess(v => v ? Number(v) : 0, z.number().int().min(0).optional())
+  })
+});
 
 /* -------------------- Appointments -------------------- */
 export const createAppointmentSchema = z.object({
@@ -102,6 +113,25 @@ export const updateAppointmentSchema = z.object({
     staff_id: uuid().optional(), // ✅ updated from doctor_id
   })
 });
+
+// Validate `GET /appointments/:id` and `DELETE /appointments/:id`
+export const getAppointmentSchema = z.object({
+  params: z.object({
+    id: uuid()
+  })
+});
+
+// Validate `GET /appointments` with optional query params
+export const listAppointmentsSchema = z.object({
+  query: z.object({
+    limit: z.preprocess(v => v ? Number(v) : 100, z.number().int().positive().max(1000).optional()),
+    offset: z.preprocess(v => v ? Number(v) : 0, z.number().int().min(0).optional()),
+    staff_id: z.string().uuid().optional(),       // filter by staff
+    patient_id: z.string().uuid().optional(),     // filter by patient
+    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional()
+  })
+});
+
 
 
 /* -------------------- Roles / Permissions -------------------- */

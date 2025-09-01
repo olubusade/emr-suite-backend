@@ -1,7 +1,7 @@
 import express from 'express';
 import * as billController from '../controllers/bill.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
-import { authorize } from '../middlewares/permission.js';
+import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
 import { listBillSchema, createBillSchema, updateBillSchema, getBillSchema } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
