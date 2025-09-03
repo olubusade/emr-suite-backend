@@ -10,17 +10,17 @@ export const AppointmentModel = (sequelize, DataTypes) => {
       patientId: {
         type: DataTypes.UUID,
         allowNull: false,
-        field: "patient_id", // snake_case in DB
+        field: "patient_id",
       },
       staffId: {
         type: DataTypes.UUID,
         allowNull: false,
-        field: "staff_id", // snake_case in DB
+        field: "staff_id",
       },
       appointmentDate: {
         type: DataTypes.DATE,
         allowNull: false,
-        field: "appointment_date", // snake_case in DB
+        field: "appointment_date",
       },
       reason: {
         type: DataTypes.TEXT,

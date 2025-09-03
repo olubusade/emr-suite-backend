@@ -1,7 +1,3 @@
-import { DataTypes } from 'sequelize';
-import { sequelize } from './index.js';
-import { User } from './index.js';
-
 export const RefreshTokenModel = (sequelize, DataTypes) => {
   const RefreshToken = sequelize.define('RefreshToken', {
     id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },

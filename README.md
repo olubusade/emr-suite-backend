@@ -1,26 +1,24 @@
 
----
-
 # EMR-Suite Backend Demo
 
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square) ![Jest](https://img.shields.io/badge/Testing-Jest-orange?style=flat-square) ![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square)
 
 **Electronic Medical Records (EMR) Suite – Backend Demo**
 
-> ⚠️ **Note for recruiters:** This repository is a **demo** to showcase the backend sophistication of the **wiCare EMR** system. Production-grade simulation in a controlled environment to protect IP. Frontend development in progress.
+> ⚠️ **Note for recruiters:** This repository is a **demo** to showcase the backend sophistication of the **wiCare EMR** system. It simulates production-grade behavior in a controlled environment to protect IP. Frontend work is in progress.
 
 ---
 
 ## 🌟 Key Features
 
-* **User & Role Management** – CRUD for users, roles, and permissions.
-* **Authentication & Security** – JWT-based access & refresh tokens, password hashing, token revocation.
-* **RBAC Enforcement** – Dynamic permissions and centralized middleware.
-* **Audit Logging** – Tracks all sensitive actions (`CREATE`, `UPDATE`, `DELETE`, `LOGIN`, `LOGOUT`).
-* **Database & ORM** – PostgreSQL + Sequelize with relations, migrations, and seeds.
-* **Testing** – Full integration and RBAC tests using Jest + Supertest.
-* **Docker Ready** – Backend and DB via Docker Compose.
-* **Metrics Ready** – Prometheus integration supported.
+* **User & Role Management** – CRUD for users, roles, and permissions
+* **Authentication & Security** – JWT access/refresh, password hashing, token revocation
+* **RBAC Enforcement** – Centralized permission middleware
+* **Audit Logging** – CREATE / UPDATE / DELETE / LOGIN / LOGOUT
+* **Database & ORM** – PostgreSQL + Sequelize (migrations & seeds)
+* **Testing** – Jest + Supertest integration and RBAC tests
+* **Docker Ready** – One-command spin up for backend + Postgres
+* **Metrics Ready** – Prometheus-friendly
 
 ---
 
@@ -29,23 +27,24 @@
 ```
 emr-suite-backend/
 ├─ src/
-│  ├─ config/               # Configuration files for env, JWT, DB
-│  │   ├─ config.js
-│  │   └─ db.js
-│  ├─ controllers/          # Request handlers
+│  ├─ config/               # env, JWT, DB config
+│  ├─ controllers/          # request handlers
+│  ├─ middlewares/          # auth, RBAC, audit
 │  ├─ models/               # Sequelize models
-│  ├─ services/             # Business logic
-│  ├─ middlewares/          # Auth, RBAC, audit
 │  ├─ routes/               # API endpoints
-│  ├─ validation/           # Input validation schemas
-│  ├─ seed/                 # Seed scripts for roles, users, permissions
-│  │   └─ seed.js
-│  ├─ test/                 # Jest + Supertest integration tests
-│  ├─ app.js                # Express app
-│  └─ server.js             # App bootstrap
-├─ docker/                  # Dockerfiles & docker-compose.yml
-├─ .env.dev                 # Development environment variables
-├─ .env.prod                # Production environment variables
+│  ├─ seed/                 # seeds (roles/users/permissions)
+│  ├─ validation/           # input schemas
+│  ├─ db.js 
+|  ├─ app.js
+│  └─ server.js
+├─ docker/
+│  ├─ Dockerfile
+│  ├─ docker-compose.dev.yml
+│  ├─ docker-compose.prod.yml
+|
+├─ .env.dev                 # Local dev (DB_HOST=localhost, PORT=5000)
+├─ .env.prod                # Local prod-like (optional)
+├─ jest.config.js
 ├─ package.json
 └─ README.md
 ```
@@ -54,14 +53,13 @@ emr-suite-backend/
 
 ## 🧭 Conventions & Best Practices
 
-* **camelCase** for all API response keys.
-* **RBAC Enforcement** via middleware for protected routes.
-* **Audit Logging** for create, update, delete, login, logout actions.
-* **JWT Handling** – short-lived access, revocable refresh tokens, SHA-256 hashed in DB.
-* **Error Handling** – standardized with `statusCode` and `message`.
-* **Database Relations** – Sequelize models with clear associations.
-* **Testing** – Jest + Supertest cover all critical flows.
-* **PM2 Support** – Dev and prod processes managed for reliability and scaling.
+* **camelCase** API responses
+* **RBAC** via middleware for protected routes
+* **Audit logs** for critical actions
+* **JWT** short-lived access + revocable refresh
+* **Sequelize associations** reflect domain relations
+* **Standard error shape** (`statusCode`, `message`)
+* **Comprehensive tests** (auth, RBAC, business logic)
 
 ---
 
@@ -69,33 +67,33 @@ emr-suite-backend/
 
 ```mermaid
 flowchart TD
-    A[API Request] --> B[Middleware Layer]
-    B -->|Auth & JWT Validation| C[Controllers]
-    B -->|RBAC Enforcement| C
+    A[Client / API Request] --> B[Middleware Layer]
+    B -->|JWT Auth| C[Controllers]
+    B -->|RBAC| C
     B -->|Audit Logging| C
-    C --> D[Services Layer]
+    C --> D[Services]
     D --> E[Sequelize ORM]
-    E --> F[PostgreSQL Database]
+    E --> F[(PostgreSQL)]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#bfb,stroke:#333,stroke-width:2px
-    style D fill:#ffb,stroke:#333,stroke-width:2px
-    style E fill:#fbf,stroke:#333,stroke-width:2px
-    style F fill:#fbb,stroke:#333,stroke-width:2px
+    style A fill:#f9f,stroke:#333,stroke-width:1px
+    style B fill:#bbf,stroke:#333,stroke-width:1px
+    style C fill:#bfb,stroke:#333,stroke-width:1px
+    style D fill:#ffb,stroke:#333,stroke-width:1px
+    style E fill:#fbf,stroke:#333,stroke-width:1px
+    style F fill:#fbb,stroke:#333,stroke-width:1px
 ```
 
 ---
 
-## 🚀 Installation & Local Development
+## 🚀 Local Development (no Docker)
 
 ### Prerequisites
 
-* Node.js >= 20
-* PostgreSQL >= 15
-* npm >= 9
+* Node.js ≥ 20
+* PostgreSQL ≥ 15
+* npm ≥ 9
 
-### Steps
+### Setup
 
 ```bash
 git clone https://github.com/olubusade/emr-suite-backend.git
@@ -103,26 +101,27 @@ cd emr-suite-backend
 npm install
 ```
 
-### Environment Variables
-
-Copy `.env.dev` for local development:
+Create `.env` from the provided template:
 
 ```bash
 cp .env.dev .env
 ```
 
-Sample `.env.dev`:
+**`.env.dev` (local dev)**
 
 ```env
 ENV=dev
 NODE_ENV=development
 PORT=5000
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASS=postgres
 DB_NAME=busade_emr_demo_db
+
 CORS_ORIGIN=http://localhost:4200
+
 JWT_SECRET=your_jwt_secret
 JWT_REFRESH_SECRET=your_jwt_refresh_secret
 ACCESS_TTL=15m
@@ -130,141 +129,175 @@ REFRESH_TTL=7d
 JWT_ISSUER=http://localhost:5000
 ```
 
----
-
-### Seed Initial Data
+Run migrations & seed:
 
 ```bash
+npm run migrate
 npm run seed
 ```
 
----
-
-### Run Development Server
+Start:
 
 ```bash
 npm run dev
 ```
 
-> Runs server at `http://localhost:5000` with hot reload.
+> Local server: `http://localhost:5000`
 
 ---
 
----
+## 🐳 Docker (recommended for recruiters)
 
-## 🐳 Docker Setup
+### 0) Quick start (TL;DR)
 
 ```bash
-cd docker
-docker compose up --build
+# from project root
+npm run docker:up:dev      # build & start backend (port 3000) + Postgres (5432)
+npm run docker:seed:dev    # seed roles/users/permissions
+# open http://localhost:3000
 ```
 
-* Backend: `http://localhost:5000`
-* PostgreSQL: `localhost:5432`
+### 1) Docker permissions (so you don’t need sudo)
 
-Stop containers:
+If you see:
+
+```
+permission denied while trying to connect to the Docker daemon socket
+```
+
+Fix once:
 
 ```bash
-docker compose down
+sudo usermod -aG docker $USER
+newgrp docker   # or log out & back in
+```
+
+### 2) Postgres port conflicts (5432 already in use?)
+
+* **Option A (stop local Postgres):**
+
+  ```bash
+  sudo systemctl stop postgresql
+  ```
+* **Option B (use a custom host port for Docker):**
+  Edit `docker/docker-compose.dev.yml` to map `5433:5432`:
+
+  ```yaml
+  services:
+    db:
+      image: postgres:15-alpine
+      ports:
+        - "5433:5432"
+  ```
+
+  Then set Docker env file `docker/env.dev`:
+
+  ```env
+  DB_PORT=5433
+  ```
+
+### 3) Environment files used by Docker
+
+Docker uses its **own** env files in `docker/` to avoid clashing with your host:
+
+* `docker/env.dev` (for `docker-compose.dev.yml`)
+* `docker/env.prod` (for `docker-compose.prod.yml`)
+
+**`docker/env.dev` (Docker dev)**
+
+```env
+ENV=dev
+NODE_ENV=development
+PORT=3000
+
+DB_HOST=db
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=postgres
+DB_NAME=busade_emr_demo_db
+
+CORS_ORIGIN=http://localhost:4200
+
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_jwt_refresh_secret
+ACCESS_TTL=15m
+REFRESH_TTL=7d
+JWT_ISSUER=http://localhost:3000
+```
+
+> Note the differences from local: `PORT=3000`, `DB_HOST=db`.
+
+### 4) Start Docker (dev)
+
+```bash
+npm run docker:up:dev
+```
+
+* Backend: `http://localhost:3000`
+* Postgres: `localhost:5432` (or `5433` if you changed it)
+
+### 5) Seed inside Docker
+
+```bash
+npm run docker:seed:dev
+```
+
+### 6) View logs / stop
+
+```bash
+docker logs -f busade-emr-backend-dev
+npm run docker:down:dev
 ```
 
 ---
 
 ## 🔐 Authentication & RBAC
 
-* **Login:** `POST /api/auth/login` → Returns access & refresh tokens
-* **Refresh token:** `POST /api/auth/refresh`
+* **Login:** `POST /api/auth/login` (returns access + refresh)
+* **Refresh:** `POST /api/auth/refresh`
 * **Change password:** `POST /api/auth/change-password`
 
-Roles: `super_admin`, `admin`, `doctor`, `nurse`, `reception`, `billing`, `lab`, `pharmacy`
+Roles: `super_admin`, `admin`, `doctor`, `nurse`, `reception`, `billing`, `lab`, `pharmacy`.
 
-Middleware enforces permissions dynamically.
+---
+
+## 🌐 API Docs
+
+* **Swagger UI:** `/api-docs`
 
 ---
 
 ## 🧪 Testing
 
-Run all tests:
-
 ```bash
-npm run test
-```
-
-RBAC-specific tests:
-
-```bash
-npm run test:rbac
-```
-
-Watch mode:
-
-```bash
+npm test
 npm run test:watch
-```
-
----
-
-## 💾 Database
-
-* PostgreSQL with Sequelize ORM
-* Tables: `Users`, `Roles`, `Permissions`, `RefreshTokens`, `Patients`, `Appointments`, `Bills`, `AuditLogs`, `Metrics`
-
-Seed scripts at `src/seed/seed.js`:
-
-```javascript
-import { Role, Permission, User } from '../models/index.js';
-import { hash } from '../utils/passwords.js';
-
-async function seed() {
-  const roles = await Role.bulkCreate([
-    { name: 'super_admin' },
-    { name: 'admin' },
-    { name: 'doctor' },
-    { name: 'nurse' },
-  ]);
-
-  const perms = await Permission.bulkCreate([
-    { name: 'CREATE_PATIENT' },
-    { name: 'UPDATE_PATIENT' },
-    { name: 'DELETE_PATIENT' },
-    { name: 'VIEW_PATIENT' },
-  ]);
-
-  const passwordHash = await hash('admin@123');
-  await User.create({ email: 'admin@busade-emr-demo.com', name: 'Admin User', passwordHash });
-  console.log('Database seeded successfully.');
-}
-
-seed();
+npm run test:rbac
 ```
 
 ---
 
 ## ⚙️ NPM Scripts
 
-| Script                | Description                            |
-| --------------------- | -------------------------------------- |
-| `npm run dev`         | Start backend in development mode      |
-| `npm start`           | Start backend in production mode       |
-| `npm run seed`        | Seed initial roles, users, permissions |
-| `npm run test`        | Run all tests                          |
-| `npm run test:watch`  | Watch mode for tests                   |
-| `npm run test:rbac`   | Run RBAC module-specific tests         |
-| `npm run docker:dev`  | Start dev environment via Docker       |
-| `npm run docker:prod` | Start prod environment via Docker      |
-| `npm run down`        | Stop all Docker containers             |
-
----
-
-## 🌐 API Documentation
-
-* **Swagger UI:** `/api-docs` – Interactive exploration of all endpoints.
+| Script             | What it does                                         |
+| ------------------ | ---------------------------------------------------- |
+| `dev`              | Local dev (nodemon) on port **5000**                 |
+| `start`            | Local prod-like                                      |
+| `migrate`          | Run Sequelize migrations                             |
+| `seed`             | Seed roles/users/permissions                         |
+| `docker:up:dev`    | Build & start Docker (backend **3000**, db **5432**) |
+| `docker:seed:dev`  | Run seed inside Docker                               |
+| `docker:down:dev`  | Stop Docker dev stack                                |
+| `docker:up:prod`   | Build & start Docker prod                            |
+| `docker:seed:prod` | Seed inside Docker prod                              |
+| `docker:down:prod` | Stop Docker prod stack                               |
+| `test`             | Run all tests                                        |
+| `test:watch`       | Jest watch mode                                      |
+| `test:rbac`        | RBAC suite                                           |
 
 ---
 
 ## ⚡ CI/CD (GitHub Actions)
-
-Example `.github/workflows/ci.yml`:
 
 ```yaml
 name: CI
@@ -281,36 +314,69 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:15-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: emr_suite
+          POSTGRES_DB: busade_emr_demo_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd pg_isready -U postgres
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+      - run: npm ci
+      - run: npm run migrate
       - run: npm run seed
       - run: npm test
 ```
 
-> Installs dependencies, seeds DB, and runs tests on every push/PR to `main`.
-
 ---
 
-📜 License
-
+📜 **License**
 MIT License © 2025 Busade Adedayo
 
 ---
+
+### (Optional) Handy Snippets
+
+**`docker/docker-compose.dev.yml` (excerpt, with optional port 5433)**
+
+```yaml
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: busade-emr-db-dev
+    restart: always
+    env_file: ./env.dev
+    ports:
+      - "5432:5432"   # change to "5433:5432" if 5432 is busy
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      args:
+        NODE_ENV: development
+    container_name: busade-emr-backend-dev
+    restart: always
+    env_file: ./env.dev
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../src:/usr/src/app/src     # live-reload in dev
+    command: npm run dev
+
+volumes:
+  postgres_data_dev:

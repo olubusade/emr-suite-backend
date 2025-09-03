@@ -1,4 +1,3 @@
-// apps/backend/src/models/patient.model.js
 export const PatientModel = (sequelize, DataTypes) => {
   const Patient = sequelize.define(
     'Patient',

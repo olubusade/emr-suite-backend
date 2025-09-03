@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: busade-emr-backend-prod
+    ports:
+      - "5000:5000"
+    env_file:
+      - ../.env.prod
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    container_name: busade-emr-db-prod
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: super_secure_password
+      POSTGRES_DB: busade_emr_demo_db
+      DB_HOST: db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+
+volumes:
+  postgres_data_prod:

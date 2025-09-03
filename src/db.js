@@ -13,12 +13,12 @@ export const sequelize = new Sequelize(
   }
 );
 
-// Optional: test connection
+// Test DB connection
 export async function testDbConnection() {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connected!');
+    console.log('Database connected!');
   } catch (err) {
-    console.error('❌ Database connection failed:', err);
+    console.error('Database connection failed:', err);
   }
 }

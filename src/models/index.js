@@ -1,5 +1,3 @@
-// apps/backend/src/models/index.js
-
 import sequelize from '../config/sequelize.js';
 import { DataTypes } from 'sequelize';
 

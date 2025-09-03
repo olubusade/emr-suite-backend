@@ -1,21 +1,19 @@
-# Use official Node.js LTS image
-FROM node:20-alpine
+# Backend Dockerfile
+FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies
+# Install dependencies
 COPY package*.json ./
-ARG NODE_ENV
-RUN if [ "$NODE_ENV" = "production" ]; \
-    then npm ci --only=production; \
-    else npm install; \
-    fi
+RUN npm install --only=production
 
-# Copy source
-COPY ./src ./src
+# Copy source code
+COPY . .
 
-# Expose port
+# Entrypoint
+COPY docker/entrypoint.sh /usr/src/app/entrypoint.sh
+RUN chmod +x /usr/src/app/entrypoint.sh
+
 EXPOSE 5000
 
-# Default command: will be overridden by docker-compose
-CMD ["node", "src/server.js"]
+CMD ["sh", "/usr/src/app/entrypoint.sh"]

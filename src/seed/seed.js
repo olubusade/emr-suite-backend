@@ -29,11 +29,11 @@ async function seed() {
 
     await seedBills(Bill, patients, users.adminUser);
 
-    console.log('🎉 Seed completed successfully!');
+    console.log('Seed completed successfully!');
     process.exit(0);
 
   } catch (err) {
-    console.error('❌ Seed failed:', err);
+    console.error('Seed failed:', err);
     process.exit(1);
   }
 }

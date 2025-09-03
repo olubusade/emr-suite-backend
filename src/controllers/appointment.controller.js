@@ -1,4 +1,3 @@
-// src/controllers/appointment.controller.js
 import { ok, created, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 import * as appointmentService from '../services/appointment.service.js';
