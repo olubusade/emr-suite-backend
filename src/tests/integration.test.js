@@ -1,6 +1,5 @@
-// src/test/integration.test.js
 /**
- * Comprehensive integration test for Vision Health Detective API
+ * Comprehensive integration test for Busade's EMR Demo API
  *
  * Modules covered:
  * - Auth (login, refresh, logout, change password)

@@ -1,7 +1,10 @@
-// src/test/rbac.edge.test.js
 import request from 'supertest';
 import app from '../app.js';
 import { seedTestData, teardownTestDB, loginTestUser } from './testHelper.js';
+/**
+ * @description Tests for Role-Based Access Control (RBAC) edge cases
+ * focusing on permission boundaries and unauthorized access attempts.
+ */
 
 let adminToken, userToken;
 

@@ -1,7 +1,18 @@
-// src/test/user.test.js
 import request from 'supertest';
 import app from '../app.js';
 import { setupDB, teardownDatabase, createTestUser } from './testHelper.js';
+
+/**
+ * Comprehensive integration test for Busade's EMR Demo API
+ *
+ * Modules covered:
+ * - Users (CRUD, profile)
+ * Features demonstrated:
+ * - RBAC enforcement
+ * - End-to-end API behavior
+ * - Permission checks
+ * - System setup & teardown
+ */
 
 let tokens = {};
 let createdUserId;

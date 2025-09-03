@@ -1,6 +1,9 @@
 import request from 'supertest';
 import app from '../app.js';
 import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
+/**
+ * Store tokens for different user roles
+ */
 
 let tokens = {};
 let patientId;

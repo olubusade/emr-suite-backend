@@ -1,4 +1,3 @@
-// src/test/auth.edge.test.js
 import request from 'supertest';
 import app from '../app.js';
 import { seedTestData, teardownTestDB, loginTestUser } from './testHelper.js';

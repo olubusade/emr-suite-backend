@@ -1,4 +1,3 @@
-// src/test/rbac.comprehensive.test.js
 import request from 'supertest';
 import app from '../app.js';
 import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
@@ -15,9 +14,9 @@ beforeAll(async () => {
   tokens[ROLES.DOCTOR] = await createTestUser({ role: ROLES.DOCTOR });
   tokens[ROLES.NURSE] = await createTestUser({ role: ROLES.NURSE });
   tokens[ROLES.RECEPTION] = await createTestUser({ role: ROLES.RECEPTION });
-  tokens[ROLES.BILLER] = await createTestUser({ role: ROLES.BILLER });
-  tokens[ROLES.LAB_TECHNICIAN] = await createTestUser({ role: ROLES.LAB_TECHNICIAN });
-  tokens[ROLES.PHARMACIST] = await createTestUser({ role: ROLES.PHARMACIST });
+  tokens[ROLES.BILLING] = await createTestUser({ role: ROLES.BILLING });
+  tokens[ROLES.LAB] = await createTestUser({ role: ROLES.LAB });
+  tokens[ROLES.PHARMACY] = await createTestUser({ role: ROLES.PHARMACY });
 });
 
 afterAll(async () => {
@@ -79,7 +78,7 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permRead) {
         it(`should allow roles with ${mod.permRead} permission to read`, async () => {
-          const rolesWithRead = [ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION, ROLES.BILLER, ROLES.LAB_TECHNICIAN, ROLES.PHARMACIST];
+          const rolesWithRead = [ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION, ROLES.BILLING, ROLES.LAB, ROLES.PHARMACY];
           for (const role of rolesWithRead) {
             const res = await request(app)
               .get(mod.route)
@@ -91,7 +90,7 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permCreate) {
         it(`should prevent roles without ${mod.permCreate} permission from creating`, async () => {
-          const rolesWithoutCreate = [ROLES.NURSE, ROLES.LAB_TECHNICIAN, ROLES.PHARMACIST];
+          const rolesWithoutCreate = [ROLES.NURSE, ROLES.LAB, ROLES.PHARMACY];
           for (const role of rolesWithoutCreate) {
             const res = await request(app)
               .post(mod.route)
@@ -105,7 +104,7 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permUpdate) {
         it(`should prevent roles without ${mod.permUpdate} permission from updating`, async () => {
-          const rolesWithoutUpdate = [ROLES.RECEPTION, ROLES.LAB_TECHNICIAN, ROLES.PHARMACIST];
+          const rolesWithoutUpdate = [ROLES.RECEPTION, ROLES.LAB, ROLES.PHARMACY];
           for (const role of rolesWithoutUpdate) {
             const res = await request(app)
               .patch(`${mod.route}/123`)
@@ -119,7 +118,7 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permDelete) {
         it(`should prevent roles without ${mod.permDelete} permission from deleting`, async () => {
-          const rolesWithoutDelete = [ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION, ROLES.BILLER, ROLES.LAB_TECHNICIAN, ROLES.PHARMACIST];
+          const rolesWithoutDelete = [ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION, ROLES.BILLING, ROLES.LAB, ROLES.PHARMACY];
           for (const role of rolesWithoutDelete) {
             const res = await request(app)
               .delete(`${mod.route}/123`)

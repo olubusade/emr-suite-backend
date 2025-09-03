@@ -1,4 +1,3 @@
-// src/test/testHelper.js
 import request from 'supertest';
 import app from '../app.js';
 import { sequelize, User, Role } from '../models/index.js';

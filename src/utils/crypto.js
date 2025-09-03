@@ -1,4 +1,3 @@
-// apps/backend/src/utils/crypto.js
 import crypto from 'crypto';
 
 export function randomToken(bytes = 32) {

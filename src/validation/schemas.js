@@ -1,4 +1,14 @@
 import { z } from 'zod';
+/**
+ * 
+ * @returns {z.ZodString}
+ * @description Helper to validate UUID strings
+ * @example
+ * const schema = z.object({ id: uuid() });
+ * schema.parse({ id: '550e8400-e29b-41d4-a716-446655440000' }); // valid
+ * schema.parse({ id: 'invalid-uuid' }); // throws error
+ * 
+ */
 
 // Helpers
 const uuid = () => z.string().uuid({ message: 'Must be a valid UUID' });
