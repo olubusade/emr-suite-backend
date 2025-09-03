@@ -152,9 +152,9 @@ npm run dev
 
 ```bash
 # from project root
-npm run docker:up:dev      # build & start backend (port 3000) + Postgres (5432)
+npm run docker:up:dev      # build & start backend (port 5000) + Postgres (5432)
 npm run docker:seed:dev    # seed roles/users/permissions
-# open http://localhost:3000
+# open http://localhost:5000
 ```
 
 ### 1) Docker permissions (so you don’t need sudo)
@@ -208,7 +208,7 @@ Docker uses its **own** env files in `docker/` to avoid clashing with your host:
 ```env
 ENV=dev
 NODE_ENV=development
-PORT=3000
+PORT=5000
 
 DB_HOST=db
 DB_PORT=5432
@@ -222,10 +222,10 @@ JWT_SECRET=your_jwt_secret
 JWT_REFRESH_SECRET=your_jwt_refresh_secret
 ACCESS_TTL=15m
 REFRESH_TTL=7d
-JWT_ISSUER=http://localhost:3000
+JWT_ISSUER=http://localhost:5000
 ```
 
-> Note the differences from local: `PORT=3000`, `DB_HOST=db`.
+> Note the differences from local: `PORT=5000`, `DB_HOST=db`.
 
 ### 4) Start Docker (dev)
 
@@ -233,7 +233,7 @@ JWT_ISSUER=http://localhost:3000
 npm run docker:up:dev
 ```
 
-* Backend: `http://localhost:3000`
+* Backend: `http://localhost:5000`
 * Postgres: `localhost:5432` (or `5433` if you changed it)
 
 ### 5) Seed inside Docker
@@ -281,16 +281,21 @@ npm run test:rbac
 
 | Script             | What it does                                         |
 | ------------------ | ---------------------------------------------------- |
+| `local`            | Local dev for docker
 | `dev`              | Local dev (nodemon) on port **5000**                 |
 | `start`            | Local prod-like                                      |
-| `migrate`          | Run Sequelize migrations                             |
+| `migrate`          | Run Sequelize migrations 
+| `migrate:undo`     | Stop Sequelize migration                             |
+| `migrate:undo:all` | Stop all Sequelize migrations                             |
 | `seed`             | Seed roles/users/permissions                         |
-| `docker:up:dev`    | Build & start Docker (backend **3000**, db **5432**) |
+| `docker:up:dev`    | Build & start Docker (backend **5000**, db **5432**) |
 | `docker:seed:dev`  | Run seed inside Docker                               |
 | `docker:down:dev`  | Stop Docker dev stack                                |
 | `docker:up:prod`   | Build & start Docker prod                            |
 | `docker:seed:prod` | Seed inside Docker prod                              |
-| `docker:down:prod` | Stop Docker prod stack                               |
+| `docker:down:prod` | Stop Docker prod stack
+| `docker:logs:dev`  | Log Docker & log  |
+| `docker:restart:log` | Restart Docker   |
 | `test`             | Run all tests                                        |
 | `test:watch`       | Jest watch mode                                      |
 | `test:rbac`        | RBAC suite                                           |
@@ -373,7 +378,7 @@ services:
     depends_on:
       - db
     ports:
-      - "3000:3000"
+      - "5000:5000"
     volumes:
       - ../src:/usr/src/app/src     # live-reload in dev
     command: npm run dev
