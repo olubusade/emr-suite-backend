@@ -14,7 +14,11 @@ export async function login(req, res) {
       ip: req.ip,
     });
 
-    // Audit log
+    console.log('user::',user);
+    console.log('accessToken::', accessToken);
+    console.log('refreshToken::', refreshToken);
+    console.log('permissions::', permissions);
+
     await attachAudit(req, {
       action: 'LOGIN',
       entity: 'user',
@@ -22,17 +26,7 @@ export async function login(req, res) {
       metadata: { email: user.email },
     });
 
-    return ok(res, {
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName, // mapped to camelCase
-        role: user.Role?.name,
-        permissions,
-      },
-      accessToken,
-      refreshToken,
-    });
+    return ok(res, { user, accessToken, refreshToken, permissions });
   } catch (err) {
     console.error('auth.login', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
@@ -50,17 +44,7 @@ export async function refresh(req, res) {
       req.ip
     );
 
-    return ok(res, {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.Role?.name,
-        permissions,
-      },
-    });
+    return ok(res, { user, accessToken, refreshToken, permissions });
   } catch (err) {
     console.error('auth.refresh', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');

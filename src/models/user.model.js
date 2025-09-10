@@ -1,6 +1,6 @@
 export const UserModel = (sequelize, DataTypes) => {
   const User = sequelize.define(
-    'User',
+    'user',
     {
       id: {
         type: DataTypes.UUID,
@@ -23,9 +23,7 @@ export const UserModel = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         unique: true,
         allowNull: false,
-        validate: {
-          isEmail: true,
-        },
+        validate: { isEmail: true },
       },
       password_hash: {
         type: DataTypes.STRING,
@@ -44,21 +42,9 @@ export const UserModel = (sequelize, DataTypes) => {
       tableName: 'users',
       underscored: true,
       timestamps: true,
-      indexes: [
-        { unique: true, fields: ['email'] }, // Faster email lookups
-      ],
+      indexes: [{ unique: true, fields: ['email'] }],
     }
   );
-
-  // Associations
-  User.associate = (models) => {
-    User.belongsToMany(models.Role, {
-      through: models.UserRole,
-      foreignKey: 'user_id',
-      otherKey: 'role_id',
-      as: 'roles',
-    });
-  };
 
   return User;
 };

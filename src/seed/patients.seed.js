@@ -34,6 +34,6 @@ export async function seedPatients(Patient, adminUser) {
     }
   ], { returning: true });
 
-  console.log('✅ Demo patients created');
+  console.log('Demo patients created');
   return patients;
 }

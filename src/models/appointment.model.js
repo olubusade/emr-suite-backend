@@ -38,17 +38,5 @@ export const AppointmentModel = (sequelize, DataTypes) => {
     }
   );
 
-  Appointment.associate = (models) => {
-    Appointment.belongsTo(models.Patient, {
-      foreignKey: "patientId",
-      as: "patient", // optional alias for cleaner queries
-    });
-
-    Appointment.belongsTo(models.Staff, {
-      foreignKey: "staffId",
-      as: "staff", // optional alias
-    });
-  };
-
   return Appointment;
 };

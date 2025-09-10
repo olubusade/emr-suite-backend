@@ -13,9 +13,5 @@ export const RefreshTokenModel = (sequelize, DataTypes) => {
     underscored: true
   });
 
-  RefreshToken.associate = (models) => {
-    RefreshToken.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
-  };
-
   return RefreshToken;
 };

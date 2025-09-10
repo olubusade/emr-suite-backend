@@ -16,6 +16,6 @@ export async function seedPermissions(Permission) {
     permissions[key] = permission;
   }
 
-  console.log('✅ Permissions seeded');
+  console.log('Permissions seeded');
   return permissions;
 }

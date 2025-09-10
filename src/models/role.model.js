@@ -20,12 +20,12 @@ export const RoleModel = (sequelize, DataTypes) => {
           'pharmacist'
         ),
         allowNull: false,
-        unique: true
+        unique: true,
       },
       description: { 
         type: DataTypes.STRING, 
         allowNull: true 
-      }
+      },
     },
     { 
       tableName: 'roles', 
@@ -33,16 +33,6 @@ export const RoleModel = (sequelize, DataTypes) => {
       timestamps: true 
     }
   );
-
-  Role.associate = (models) => {
-    Role.hasMany(models.User, { foreignKey: 'role_id', as: 'users' });
-    Role.belongsToMany(models.Permission, {
-      through: 'role_permissions',
-      foreignKey: 'role_id',
-      otherKey: 'permission_id',
-      as: 'permissions'
-    });
-  };
 
   return Role;
 };

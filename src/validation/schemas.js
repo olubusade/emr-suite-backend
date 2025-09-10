@@ -104,8 +104,8 @@ export const listBillSchema = z.object({
 export const createAppointmentSchema = z.object({
   body: z.object({
     patient_id: uuid(),
-    staff_id: uuid(),             // ✅ updated from doctor_id
-    appointment_date: isoDateString(), // ✅ updated from scheduled_at
+    staff_id: uuid(),             // updated from doctor_id
+    appointment_date: isoDateString(), // updated from scheduled_at
     duration_minutes: z.number().int().positive().optional(),
     reason: z.string().max(255).optional(),
     notes: z.string().optional(),
@@ -115,12 +115,12 @@ export const createAppointmentSchema = z.object({
 export const updateAppointmentSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
-    appointment_date: isoDateString().optional(), // ✅ updated
+    appointment_date: isoDateString().optional(), // updated
     duration_minutes: z.number().int().positive().optional(),
     reason: z.string().max(255).optional(),
     notes: z.string().optional(),
     status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(), // match model enum
-    staff_id: uuid().optional(), // ✅ updated from doctor_id
+    staff_id: uuid().optional(), // updated from doctor_id
   })
 });
 

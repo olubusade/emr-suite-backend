@@ -17,12 +17,12 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: super_secure_password
-      POSTGRES_DB: busade_emr_demo_db
       DB_HOST: db
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
+      - docker/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   postgres_data_prod:

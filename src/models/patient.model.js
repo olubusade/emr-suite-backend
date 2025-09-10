@@ -30,11 +30,5 @@ export const PatientModel = (sequelize, DataTypes) => {
     }
   );
 
-  Patient.associate = (models) => {
-    Patient.belongsTo(models.User, { foreignKey: 'created_by', as: 'creator' });
-    Patient.hasMany(models.Bill, { foreignKey: 'patient_id', as: 'bills' });
-    Patient.hasMany(models.Appointment, { foreignKey: 'patient_id', as: 'appointments' });
-  };
-
   return Patient;
 };

@@ -16,6 +16,6 @@ export async function seedBills(Bill, patients, createdBy) {
     ];
   
     await Bill.bulkCreate(billsData);
-    console.log('✅ Demo bills created');
+    console.log('Demo bills created');
   }
   

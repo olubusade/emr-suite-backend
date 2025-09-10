@@ -7,23 +7,17 @@ export const RolePermissionModel = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      roleId: {
+      role_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'roles', // must match tableName in RoleModel
-          key: 'id',
-        },
+        references: { model: 'roles', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      permissionId: {
+      permission_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'permissions', // must match tableName in PermissionModel
-          key: 'id',
-        },
+        references: { model: 'permissions', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
@@ -34,17 +28,6 @@ export const RolePermissionModel = (sequelize, DataTypes) => {
       timestamps: false,
     }
   );
-
-  RolePermission.associate = (models) => {
-    RolePermission.belongsTo(models.Role, {
-      foreignKey: 'roleId',
-      as: 'role',
-    });
-    RolePermission.belongsTo(models.Permission, {
-      foreignKey: 'permissionId',
-      as: 'permission',
-    });
-  };
 
   return RolePermission;
 };

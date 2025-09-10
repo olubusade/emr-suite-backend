@@ -23,6 +23,6 @@ export async function seedRolePermissions(roles, permissions, RolePermission) {
     }
   
     await RolePermission.bulkCreate(RolePermissionRecords);
-    console.log('✅ Role-Permission mapping completed');
+    console.log('Role-Permission mapping completed');
   }
   

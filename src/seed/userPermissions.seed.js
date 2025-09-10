@@ -11,6 +11,6 @@ export async function seedUserPermissions(users, permissions, UserPermission) {
     }
   
     await UserPermission.bulkCreate(records);
-    console.log('✅ User-Permission mapping completed');
+    console.log('User-Permission mapping completed');
   }
   

@@ -31,5 +31,5 @@ export async function seedAppointments(Appointment, patients, staff) {
   ];
 
   await Appointment.bulkCreate(appointmentsData);
-  console.log('✅ Demo appointments created');
+  console.log('Demo appointments created');
 }

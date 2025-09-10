@@ -16,7 +16,7 @@ export async function seedRoles(Role) {
       roles[name] = role;
     }
   
-    console.log('✅ Roles seeded');
+    console.log('Roles seeded');
     return roles;
   }
   

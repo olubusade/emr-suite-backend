@@ -8,13 +8,14 @@ import { attachAudit } from '../middlewares/audit.middleware.js';
 export async function registerUser(req, res) {
   try {
     const user = await userService.createUser(req.body);
+
     await attachAudit(req, 'CREATE_USER', 'user', user.id, { email: user.email });
 
     return created(res, {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      role: user.roleName, // camelCase
+      role: user.roleName,
     }, 'User registered successfully');
   } catch (err) {
     console.error('user.registerUser', err);
@@ -48,6 +49,7 @@ export async function getProfile(req, res) {
 export async function updateProfile(req, res) {
   try {
     const user = await userService.updateUserProfile(req.user.id, req.body);
+
     await attachAudit(req, 'UPDATE_PROFILE', 'user', user.id);
 
     return ok(res, {
@@ -93,59 +95,12 @@ export async function listUsers(req, res) {
 }
 
 /**
- * Login user
- */
-export async function loginUser(req, res) {
-  try {
-    const { email, password } = req.body;
-    const tokens = await userService.loginUser({ email, password });
-
-    await attachAudit(req, 'LOGIN_USER', 'user', null, { email });
-
-    return ok(res, tokens, 'Login successful');
-  } catch (err) {
-    console.error('user.loginUser', err);
-    return error(res, err.statusCode || 401, err.message || 'Invalid credentials');
-  }
-}
-
-/**
- * Refresh JWT tokens
- */
-export async function refreshToken(req, res) {
-  try {
-    const { refreshToken } = req.body;
-    const tokens = await userService.refreshToken(refreshToken);
-
-    return ok(res, tokens, 'Token refreshed successfully');
-  } catch (err) {
-    console.error('user.refreshToken', err);
-    return error(res, err.statusCode || 401, err.message || 'Invalid refresh token');
-  }
-}
-
-/**
- * Logout user
- */
-export async function logoutUser(req, res) {
-  try {
-    await userService.logoutUser(req.user.id);
-
-    await attachAudit(req, 'LOGOUT_USER', 'user', req.user.id);
-
-    return ok(res, { success: true }, 'Logout successful');
-  } catch (err) {
-    console.error('user.logoutUser', err);
-    return error(res, err.statusCode || 500, err.message || 'Unable to logout');
-  }
-}
-
-/**
  * Admin: Update user
  */
 export async function updateUser(req, res) {
   try {
     const user = await userService.updateUser(req.params.id, req.body);
+
     await attachAudit(req, 'UPDATE_USER', 'user', user.id);
 
     return ok(res, {
@@ -166,6 +121,7 @@ export async function updateUser(req, res) {
 export async function deleteUser(req, res) {
   try {
     await userService.deleteUser(req.params.id);
+
     await attachAudit(req, 'DELETE_USER', 'user', req.params.id);
 
     return ok(res, { success: true }, 'User deleted successfully');
@@ -174,4 +130,3 @@ export async function deleteUser(req, res) {
     return error(res, err.statusCode || 500, err.message || 'Unable to delete user');
   }
 }
-

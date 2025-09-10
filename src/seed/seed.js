@@ -12,7 +12,7 @@ import { seedBills } from './bills.seed.js';
 async function seed() {
   try {
     await sequelize.sync({ force: true });
-    console.log('✅ Database synced');
+    console.log('Database synced');
 
     const roles = await seedRoles(Role);
     const permissions = await seedPermissions(Permission);

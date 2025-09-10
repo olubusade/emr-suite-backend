@@ -15,7 +15,7 @@ export async function seedUsers(User, roles) {
     active: true
   });
 
-  console.log(`✅ Admin user created (email: ${adminUser.email} | password: admin@123)`);
+  console.log(`Admin user created (email: ${adminUser.email} | password: admin@123)`);
 
   // You can also pre-create some doctors if needed
   const doctorUser = await User.create({

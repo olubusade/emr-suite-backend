@@ -1,4 +1,4 @@
-import { STATUS } from '../constants/index.js'; // ✅ ES module import
+import { STATUS } from '../constants/index.js'; 
 
 export function ok(res, data = null, message = 'OK', meta = undefined) {
     const body = { status: STATUS.SUCCESS, message, data };

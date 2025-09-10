@@ -24,11 +24,5 @@ export const BillModel = (sequelize, DataTypes) => {
     }
   );
 
-  Bill.associate = (models) => {
-    Bill.belongsTo(models.Patient, { foreignKey: 'patient_id', as: 'patient' });
-    Bill.belongsTo(models.User, { foreignKey: 'created_by', as: 'creator' });
-    Bill.hasMany(models.Payment, { foreignKey: 'bill_id', as: 'payments' });
-  };
-
   return Bill;
 };

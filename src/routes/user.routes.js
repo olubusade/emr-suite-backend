@@ -210,17 +210,12 @@ const router = express.Router();
  *         $ref: '#/components/responses/Forbidden'
  */
 
-router.post('/register', userController.registerUser);
-router.post('/login', userController.loginUser);
-router.post('/refresh', userController.refreshToken);
-
 router.use(authRequired);
-router.get('/me', userController.getProfile);
-router.patch('/me', userController.updateProfile);
-router.post('/logout', userController.logoutUser);
+router.get('/get_profile', userController.getProfile);
+router.patch('/update_profile', userController.updateProfile);
 
-router.get('/', authorize(PERMISSIONS.USER_READ), userController.listUsers);
-router.post('/', authorize(PERMISSIONS.USER_CREATE), userController.registerUser);
+router.get('/list', authorize(PERMISSIONS.USER_READ), userController.listUsers);
+router.post('/register', authorize(PERMISSIONS.USER_CREATE), userController.registerUser);
 router.patch('/:id', authorize(PERMISSIONS.USER_UPDATE), userController.updateUser);
 router.delete('/:id', authorize(PERMISSIONS.USER_DELETE), userController.deleteUser);
 

@@ -1,12 +1,13 @@
 import app from './app.js';
 import { config } from './config/config.js';
-import { sequelize, testDbConnection } from './db.js';
+import { sequelize } from './config/sequelize.js';
+import { testDbConnection } from './config/db.js';
 
 async function start() {
   try {
     await testDbConnection();
 
-    // Uncomment for local development / demo syncing
+    // Uncomment in dev if needed
     // await sequelize.sync({ alter: true });
     // console.log('Models synced');
 

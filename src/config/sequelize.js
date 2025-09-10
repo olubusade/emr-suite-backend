@@ -1,15 +1,15 @@
 import { Sequelize } from 'sequelize';
 import { config } from './config.js';
 
-const sequelize = new Sequelize(
+export const sequelize = new Sequelize(
   config.db.database,
-  config.db.user,
+  config.db.username,
   config.db.password,
   {
     host: config.db.host,
     port: config.db.port,
-    dialect: 'postgres',
-    logging: config.env === 'development' ? console.log : false,
+    dialect: config.db.dialect,
+    logging: config.db.logging,
     define: {
       timestamps: true,
       underscored: true,
@@ -22,5 +22,3 @@ const sequelize = new Sequelize(
     },
   }
 );
-
-export default sequelize; // ✅ default export

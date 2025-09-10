@@ -1,4 +1,4 @@
-import sequelize from '../config/sequelize.js';
+import { sequelize } from '../config/sequelize.js';
 import { DataTypes } from 'sequelize';
 
 // Import models
@@ -12,6 +12,7 @@ import { BillModel } from './bill.model.js';
 import { AuditLogModel } from './auditLog.model.js';
 import { RefreshTokenModel } from './refreshToken.model.js';
 import { AppointmentModel } from './appointment.model.js';
+import { PaymentModel } from './payment.model.js';
 
 // Initialize models
 const User = UserModel(sequelize, DataTypes);
@@ -24,6 +25,7 @@ const Bill = BillModel(sequelize, DataTypes);
 const AuditLog = AuditLogModel(sequelize, DataTypes);
 const RefreshToken = RefreshTokenModel(sequelize, DataTypes);
 const Appointment = AppointmentModel(sequelize, DataTypes);
+const Payment = PaymentModel(sequelize, DataTypes);
 
 // ----------------- Associations -----------------
 
@@ -36,13 +38,13 @@ Role.belongsToMany(Permission, {
   through: RolePermission,
   foreignKey: 'role_id',
   otherKey: 'permission_id',
-  as: 'permissions'
+  as: 'permissions',
 });
 Permission.belongsToMany(Role, {
   through: RolePermission,
   foreignKey: 'permission_id',
   otherKey: 'role_id',
-  as: 'roles'
+  as: 'roles',
 });
 
 // User ↔ Permission (through UserPermission)
@@ -50,30 +52,39 @@ User.belongsToMany(Permission, {
   through: UserPermission,
   foreignKey: 'user_id',
   otherKey: 'permission_id',
-  as: 'permissions'
+  as: 'permissions',
 });
 Permission.belongsToMany(User, {
   through: UserPermission,
   foreignKey: 'permission_id',
   otherKey: 'user_id',
-  as: 'users'
+  as: 'users',
 });
 
 // Patient ↔ Bill
 Patient.hasMany(Bill, { foreignKey: 'patient_id', as: 'bills' });
 Bill.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
+// Bill ↔ User
+Bill.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
+// Bill ↔ Payment
+Bill.hasMany(Payment, { foreignKey: 'bill_id', as: 'payments' });
+
 // Patient ↔ Appointment
 Patient.hasMany(Appointment, { foreignKey: 'patient_id', as: 'appointments' });
 Appointment.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
+
+// Patient ↔ User
+Patient.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 // Staff (User) ↔ Appointment
 User.hasMany(Appointment, { foreignKey: 'staff_id', as: 'staffAppointments' });
 Appointment.belongsTo(User, { foreignKey: 'staff_id', as: 'staff' });
 
 // User ↔ AuditLog
-User.hasMany(AuditLog, { foreignKey: 'actor_id', as: 'auditLogs' });
-AuditLog.belongsTo(User, { foreignKey: 'actor_id', as: 'actor' });
+User.hasMany(AuditLog, { foreignKey: 'user_id', as: 'auditLogs' });
+AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'actor' });
 
 // User ↔ RefreshToken
 User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refreshTokens' });
@@ -91,5 +102,6 @@ export {
   Bill,
   AuditLog,
   RefreshToken,
-  Appointment
+  Appointment,
+  Payment,
 };

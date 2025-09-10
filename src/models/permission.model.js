@@ -15,7 +15,7 @@ export const PermissionModel = (sequelize, DataTypes) => {
       description: { 
         type: DataTypes.STRING, 
         allowNull: true 
-      }
+      },
     },
     { 
       tableName: 'permissions', 
@@ -23,16 +23,6 @@ export const PermissionModel = (sequelize, DataTypes) => {
       timestamps: true 
     }
   );
-
-  Permission.associate = (models) => {
-    // Example associations (if needed):
-    // Permission.belongsToMany(models.Role, {
-    //   through: 'role_permissions',
-    //   foreignKey: 'permission_id',
-    //   otherKey: 'role_id',
-    //   as: 'roles'
-    // });
-  };
 
   return Permission;
 };

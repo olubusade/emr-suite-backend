@@ -35,8 +35,6 @@ app.use(rateLimiter);
 app.use('/api/auth/register', createAccountLimiter);
 app.use('/api/auth/login', authLimiter);
 
-// You can also apply custom limits per module if needed
-// Example: billing and appointments (sensitive endpoints)
 app.use('/api/bills', rateLimiter);
 app.use('/api/appointments', rateLimiter);
 app.use('/api/patients', rateLimiter);

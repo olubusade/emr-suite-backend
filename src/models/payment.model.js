@@ -19,10 +19,6 @@ export const PaymentModel = (sequelize, DataTypes) => {
       }
     );
   
-    Payment.associate = (models) => {
-      Payment.belongsTo(models.Bill, { foreignKey: 'bill_id', as: 'bill' });
-    };
-  
     return Payment;
   };
   
