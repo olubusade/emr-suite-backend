@@ -1,4 +1,3 @@
-// apps/backend/src/models/audit_log.model.js
 export const AuditLogModel = (sequelize, DataTypes) => {
   const AuditLog = sequelize.define(
     "AuditLog",
@@ -8,33 +7,38 @@ export const AuditLogModel = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
       },
-      user_id: {
-        type: DataTypes.UUID,
-        allowNull: true // null if system action
-      },
       action: {
         type: DataTypes.STRING,
         allowNull: false
       },
       entity: {
         type: DataTypes.STRING,
-        allowNull: false // e.g. "patient"
+        allowNull: false
       },
-      entity_id: {
+      userId: {
         type: DataTypes.UUID,
-        allowNull: true
+        allowNull: false,
+        field: 'user_id'
       },
-      ip_address: {
-        type: DataTypes.STRING,
-        allowNull: true
+      entityId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        field: 'entity_id'
       },
-      user_agent: {
+      ipAddress: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: true,
+        field: 'ip_address'
+      },
+      userAgent: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'user_agent'
       },
       details: {
-        type: DataTypes.JSON,
-        allowNull: true
+        type: DataTypes.JSONB,
+        allowNull: true,
+        field: 'details'
       }
     },
     {
@@ -42,7 +46,6 @@ export const AuditLogModel = (sequelize, DataTypes) => {
       timestamps: true
     }
   );
-
 
   return AuditLog;
 };

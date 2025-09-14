@@ -98,8 +98,8 @@ describe('USER MODULE', () => {
       .post('/api/users')
       .set('Authorization', `Bearer ${tokens.admin}`)
       .send({
-        firstName: 'Tope',
-        lastName: 'Ajala',
+        fname: 'Tope',
+        lname: 'Ajala',
         email: 'topeajala@busade-emr-demo.com',
         password: 'user@123',
         roleId: 2
@@ -114,10 +114,10 @@ describe('USER MODULE', () => {
     const res = await request(app)
       .patch(`/api/users/${createdIds.user}`)
       .set('Authorization', `Bearer ${tokens.admin}`)
-      .send({ firstName: 'Jimoh' });
+      .send({ fname: 'Jimoh' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.firstName).toBe('Jimoh');
+    expect(res.body.data.fname).toBe('Jimoh');
   });
 
   test('Delete user', async () => {
@@ -135,8 +135,8 @@ describe('PATIENT MODULE', () => {
       .post('/api/patients')
       .set('Authorization', `Bearer ${tokens.admin}`)
       .send({
-        firstName: 'Elizabeth',
-        lastName: 'Smith',
+        fname: 'Elizabeth',
+        lname: 'Smith',
         dob: '1990-01-01',
         gender: 'female'
       });
@@ -152,7 +152,7 @@ describe('PATIENT MODULE', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.firstName).toBe('Elizabeth');
+    expect(res.body.data.fname).toBe('Elizabeth');
   });
 });
 

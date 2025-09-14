@@ -9,11 +9,14 @@ import { z } from 'zod';
  * schema.parse({ id: 'invalid-uuid' }); // throws error
  * 
  */
-
-// Helpers
+/**
+ * Helper Validators
+ */
 const uuid = () => z.string().uuid({ message: 'Must be a valid UUID' });
 const isoDateString = () =>
-  z.string().refine((s) => !Number.isNaN(Date.parse(s)), { message: 'Must be a valid ISO date string' });
+  z.string().refine((s) => !Number.isNaN(Date.parse(s)), {
+    message: 'Must be a valid ISO date string'
+  });
 
 /* -------------------- Auth -------------------- */
 export const loginSchema = z.object({
@@ -38,7 +41,7 @@ export const changePasswordSchema = z.object({
 export const createStaffSchema = z.object({
   body: z.object({
     email: z.string().email(),
-    full_name: z.string().min(2),
+    fullName: z.string().min(2),
     designation: z.string().optional(),
     role: z.string().min(2)
   })
@@ -57,7 +60,7 @@ export const setPermissionSchema = z.object({
 /* -------------------- Patients -------------------- */
 export const createPatientSchema = z.object({
   body: z.object({
-    full_name: z.string().min(2),
+    fullName: z.string().min(2),
     age: z.number().int().positive(),
     diagnosis: z.string().optional()
   })
@@ -66,16 +69,24 @@ export const createPatientSchema = z.object({
 export const updatePatientSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
-    full_name: z.string().min(2).optional(),
+    fullName: z.string().min(2).optional(),
     age: z.number().int().positive().optional(),
     diagnosis: z.string().optional()
   })
 });
 
+export const getPatientSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
+export const deletePatientSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
 /* -------------------- Bills -------------------- */
 export const createBillSchema = z.object({
   body: z.object({
-    patient_id: uuid(),
+    patientId: uuid(),
     amount: z.number().positive(),
     status: z.enum(['paid', 'pending']).optional()
   })
@@ -88,60 +99,146 @@ export const updateBillSchema = z.object({
     status: z.enum(['paid', 'pending']).optional()
   })
 });
+
 export const getBillSchema = z.object({
-  params: z.object({
-    id: uuid()
-  })
+  params: z.object({ id: uuid() })
 });
+
+export const deleteBillSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
 export const listBillSchema = z.object({
   query: z.object({
-    limit: z.preprocess(v => v ? Number(v) : 100, z.number().int().positive().max(1000).optional()),
-    offset: z.preprocess(v => v ? Number(v) : 0, z.number().int().min(0).optional())
+    limit: z.preprocess((v) => (v ? Number(v) : 100), z.number().int().positive().max(1000).optional()),
+    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional())
   })
 });
 
 /* -------------------- Appointments -------------------- */
 export const createAppointmentSchema = z.object({
   body: z.object({
-    patient_id: uuid(),
-    staff_id: uuid(),             // updated from doctor_id
-    appointment_date: isoDateString(), // updated from scheduled_at
-    duration_minutes: z.number().int().positive().optional(),
+    patientId: uuid(),
+    staffId: uuid(), // doctor/nurse
+    appointmentDate: isoDateString(),
+    durationMinutes: z.number().int().positive().optional(),
     reason: z.string().max(255).optional(),
-    notes: z.string().optional(),
+    notes: z.string().optional()
   })
 });
 
 export const updateAppointmentSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
-    appointment_date: isoDateString().optional(), // updated
-    duration_minutes: z.number().int().positive().optional(),
+    appointmentDate: isoDateString().optional(),
+    durationMinutes: z.number().int().positive().optional(),
     reason: z.string().max(255).optional(),
     notes: z.string().optional(),
-    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(), // match model enum
-    staff_id: uuid().optional(), // updated from doctor_id
+    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
+    staffId: uuid().optional()
   })
 });
 
-// Validate `GET /appointments/:id` and `DELETE /appointments/:id`
 export const getAppointmentSchema = z.object({
-  params: z.object({
-    id: uuid()
-  })
+  params: z.object({ id: uuid() })
 });
 
-// Validate `GET /appointments` with optional query params
+export const deleteAppointmentSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
 export const listAppointmentsSchema = z.object({
   query: z.object({
-    limit: z.preprocess(v => v ? Number(v) : 100, z.number().int().positive().max(1000).optional()),
-    offset: z.preprocess(v => v ? Number(v) : 0, z.number().int().min(0).optional()),
-    staff_id: z.string().uuid().optional(),       // filter by staff
-    patient_id: z.string().uuid().optional(),     // filter by patient
+    limit: z.preprocess((v) => (v ? Number(v) : 100), z.number().int().positive().max(1000).optional()),
+    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
+    staffId: uuid().optional(),
+    patientId: uuid().optional(),
     status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional()
   })
 });
 
+/* -------------------- Clinical Notes (SOAP) -------------------- */
+export const createClinicalNoteSchema = z.object({
+  body: z.object({
+    patientId: uuid(),
+    staffId: uuid(),
+    subjective: z.string().optional(),
+    objective: z.string().optional(),
+    assessment: z.string().optional(),
+    plan: z.string().optional()
+  })
+});
+
+export const updateClinicalNoteSchema = z.object({
+  params: z.object({ id: uuid() }),
+  body: z.object({
+    subjective: z.string().optional(),
+    objective: z.string().optional(),
+    assessment: z.string().optional(),
+    plan: z.string().optional()
+  })
+});
+
+export const getClinicalNotesSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
+export const listClinicalNotesSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
+export const deleteClinicalNoteSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
+/* -------------------- Vitals -------------------- */
+export const createVitalsSchema = z.object({
+  body: z.object({
+    patientId: uuid(),
+    staffId: uuid(), // nurse who recorded
+    appointmentId: uuid().optional(),
+    temperature: z.number().min(30).max(45).optional(), // °C
+    bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/).optional(), // e.g. 120/80
+    heartRate: z.number().int().min(30).max(220).optional(), // bpm
+    respiratoryRate: z.number().int().min(5).max(60).optional(),
+    spo2: z.number().min(50).max(100).optional(), // %
+    weight: z.number().positive().optional(),
+    height: z.number().positive().optional(),
+    notes: z.string().optional()
+  })
+});
+
+export const updateVitalsSchema = z.object({
+  params: z.object({ id: uuid() }),
+  body: z.object({
+    temperature: z.number().min(30).max(45).optional(),
+    bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/).optional(),
+    heartRate: z.number().int().min(30).max(220).optional(),
+    respiratoryRate: z.number().int().min(5).max(60).optional(),
+    spo2: z.number().min(50).max(100).optional(),
+    weight: z.number().positive().optional(),
+    height: z.number().positive().optional(),
+    notes: z.string().optional()
+  })
+});
+
+export const getVitalsSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
+export const deleteVitalsSchema = z.object({
+  params: z.object({ id: uuid() })
+});
+
+export const listVitalsSchema = z.object({
+  query: z.object({
+    limit: z.preprocess((v) => (v ? Number(v) : 100), z.number().int().positive().max(1000).optional()),
+    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
+    patientId: uuid().optional(),
+    staffId: uuid().optional(),
+    appointmentId: uuid().optional()
+  })
+});
 
 
 /* -------------------- Roles / Permissions -------------------- */
@@ -162,19 +259,13 @@ export const createPermissionSchema = z.object({
 /* -------------------- Audits -------------------- */
 export const listAuditSchema = z.object({
   query: z.object({
-    limit: z.preprocess(
-      (v) => (v ? Number(v) : undefined),
-      z.number().int().positive().max(1000).optional()
-    )
+    limit: z.preprocess((v) => (v ? Number(v) : undefined), z.number().int().positive().max(1000).optional())
   })
 });
 
 /* -------------------- Metrics -------------------- */
 export const metricsSchema = z.object({
   query: z.object({
-    months: z.preprocess(
-      (v) => (v ? Number(v) : 12),
-      z.number().int().min(1).max(24).optional()
-    )
+    months: z.preprocess((v) => (v ? Number(v) : 12), z.number().int().min(1).max(24).optional())
   })
 });

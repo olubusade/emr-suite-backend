@@ -23,8 +23,8 @@ export async function listPatients({ page = 1, pageSize = 20, search }) {
 
   const items = rows.map(p => ({
     id: p.id,
-    firstName: p.firstName,
-    lastName: p.lastName,
+    fname: p.fname,
+    lname: p.lname,
     email: p.email,
     phone: p.phone,
     dob: p.dob,
@@ -48,8 +48,8 @@ export async function createPatient(data) {
 
   return {
     id: patient.id,
-    firstName: patient.firstName,
-    lastName: patient.lastName,
+    fname: patient.fname,
+    lname: patient.lname,
     email: patient.email,
     phone: patient.phone,
     dob: patient.dob,
@@ -73,8 +73,8 @@ export async function updatePatient(id, data) {
 
   return {
     id: patient.id,
-    firstName: patient.firstName,
-    lastName: patient.lastName,
+    fname: patient.fname,
+    lname: patient.lname,
     email: patient.email,
     phone: patient.phone,
     dob: patient.dob,

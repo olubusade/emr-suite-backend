@@ -23,7 +23,7 @@ describe('Patient Module CRUD', () => {
     const res = await request(app)
       .post('/api/patients')
       .set('Authorization', `Bearer ${tokens.doctor}`)
-      .send({ firstName: 'John', lastName: 'Doe', age: 30 });
+      .send({ fname: 'John', lname: 'Doe', age: 30 });
 
     expect(res.status).toBe(201);
     expect(res.body.data).toHaveProperty('id');
@@ -36,8 +36,8 @@ describe('Patient Module CRUD', () => {
       .set('Authorization', `Bearer ${tokens.doctor}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data.firstName).toBe('John');
-    expect(res.body.data.lastName).toBe('Doe');
+    expect(res.body.data.fname).toBe('John');
+    expect(res.body.data.lname).toBe('Doe');
   });
 
   it('should update a patient', async () => {

@@ -4,14 +4,17 @@ import { AuditLog, User } from '../models/index.js';
  * Low-level audit log creator
  * Used by middleware and controllers
  */
-export async function logAudit({ userId, action, entity, entityId = null, metadata = {} }) {
+export async function logAudit({ userId, action, entity, entityId = null, ip, userAgent, details = {} }) {
+
   try {
     await AuditLog.create({
       userId,
       action,
-      entity,     // renamed from 'resource' → 'entity' for consistency
-      entityId,   // renamed from 'resourceId' → 'entityId'
-      metadata,
+      entity,
+      entityId,
+      ipAddress: ip,
+      userAgent,
+      details
     });
   } catch (err) {
     console.error('Audit log error:', err.message);
@@ -26,7 +29,7 @@ export async function logAudit({ userId, action, entity, entityId = null, metada
  * @param {object} params.filters - Optional filters { userId, action, entity }
  */
 export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
-  const limit = Math.min(Number(pageSize) || 50, 1000); // optional max limit
+  const limit = Math.min(Number(pageSize) || 50, 1000);
   const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
 
   const where = {};
@@ -37,31 +40,16 @@ export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
   const { count, rows } = await AuditLog.findAndCountAll({
     where,
     include: [
-      { model: User, attributes: ['id', 'email', 'fullName'] } // map DB field in model to camelCase
+      { model: User, attributes: ['id', 'email', 'fullName'] }
     ],
     order: [['createdAt', 'DESC']],
     limit,
     offset,
   });
 
-  // Map DB snake_case to camelCase for JS
-  const mappedRows = rows.map((log) => ({
-    id: log.id,
-    userId: log.userId,
-    action: log.action,
-    entity: log.entity,
-    entityId: log.entityId,
-    metadata: log.metadata,
-    createdAt: log.createdAt,
-    updatedAt: log.updatedAt,
-    user: log.User
-      ? { id: log.User.id, email: log.User.email, fullName: log.User.fullName }
-      : null,
-  }));
-
   return {
     count,
-    rows: mappedRows,
+    rows,
     page: Math.max(Number(page) || 1, 1),
     pageSize: limit,
     pages: Math.ceil(count / limit),

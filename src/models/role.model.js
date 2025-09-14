@@ -14,13 +14,9 @@ export const RoleModel = (sequelize, DataTypes) => {
           'doctor',
           'nurse',
           'receptionist',
-          'lab_technician',
-          'biller',
           'patient',
-          'pharmacist'
         ),
-        allowNull: false,
-        unique: true,
+        allowNull: false
       },
       description: { 
         type: DataTypes.STRING, 

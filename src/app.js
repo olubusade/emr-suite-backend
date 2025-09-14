@@ -7,27 +7,30 @@ import routes from './routes/index.js';
 import { prometheusMiddleware, register } from './middlewares/metrics.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { setupSwagger } from './config/swagger.js';
-import { rateLimiter, createAccountLimiter, authLimiter } from './middlewares/rateLimit.middleware.js';
+import {
+  rateLimiter,
+  createAccountLimiter,
+  authLimiter
+} from './middlewares/rateLimit.middleware.js';
 
 const app = express();
 
-// -------------------------
-// Security & Parsing
-// -------------------------
+/* -------------------------
+   Security & Parsing
+------------------------- */
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// -------------------------
-// Logging
-// -------------------------
+/* -------------------------
+   Logging
+------------------------- */
 app.use(morgan('tiny'));
 
-// -------------------------
-// Rate limiting
-// -------------------------
-
+/* -------------------------
+   Rate limiting
+------------------------- */
 // Global rate limit for all routes
 app.use(rateLimiter);
 
@@ -35,37 +38,44 @@ app.use(rateLimiter);
 app.use('/api/auth/register', createAccountLimiter);
 app.use('/api/auth/login', authLimiter);
 
-app.use('/api/bills', rateLimiter);
-app.use('/api/appointments', rateLimiter);
-app.use('/api/patients', rateLimiter);
-app.use('/api/users', rateLimiter);
+// Resource-specific additional protection
+['/api/bills', '/api/appointments', '/api/patients', '/api/users', '/api/clinical-notes','/api/vitals'].forEach(
+  (path) => app.use(path, rateLimiter)
+);
 
-// -------------------------
-// Prometheus metrics
-// -------------------------
+/* -------------------------
+   Prometheus metrics
+------------------------- */
 app.use(prometheusMiddleware);
 
-// -------------------------
-// API Routes
-// -------------------------
+/* -------------------------
+   API Routes
+------------------------- */
 app.use('/api', routes);
 
-// -------------------------
-// Swagger docs
-// -------------------------
+/* -------------------------
+   Swagger docs
+------------------------- */
 setupSwagger(app);
 
-// -------------------------
-// /metrics endpoint for Prometheus
-// -------------------------
+/* -------------------------
+   /metrics endpoint for Prometheus
+------------------------- */
 app.get('/metrics', async (_req, res) => {
   res.set('Content-Type', register.contentType);
   res.end(await register.metrics());
 });
 
-// -------------------------
-// Global Error Handler
-// -------------------------
+/* -------------------------
+   Health check endpoint
+------------------------- */
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() });
+});
+
+/* -------------------------
+   Global Error Handler
+------------------------- */
 app.use(errorHandler);
 
 export default app;

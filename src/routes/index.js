@@ -7,6 +7,8 @@ import metricsRoutes from './metrics.routes.js';
 import auditRoutes from './audit.routes.js';
 import appointmentRoutes from './appointment.routes.js';
 import userRoutes from './user.routes.js';
+import clinicalRoutes from './clinical.routes.js';
+import vitalsRoutes from './vitals.routes.js';
 
 const router = express.Router();
 
@@ -30,6 +32,12 @@ router.use('/audit', auditRoutes);
 
 // -------------------- Appointments -------------------- //
 router.use('/appointments', appointmentRoutes);
+
+// -------------------- Clinical Notes -------------------- //
+router.use('/clinical', clinicalRoutes);
+
+// -------------------- Vitals -------------------- //
+router.use('/vitals', vitalsRoutes);
 
 // -------------------- Users -------------------- //
 router.use('/users', userRoutes);

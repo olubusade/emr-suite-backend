@@ -3,24 +3,32 @@ export const BillModel = (sequelize, DataTypes) => {
     'Bill',
     {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-      patient_id: { type: DataTypes.UUID, allowNull: false }, // UUID now
+
+      patientId: { type: DataTypes.UUID, allowNull: false, field: 'patient_id' },
+
       amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+
       status: {
         type: DataTypes.ENUM('unpaid', 'partially_paid', 'paid', 'cancelled'),
-        defaultValue: 'unpaid'
+        defaultValue: 'unpaid',
       },
-      due_date: { type: DataTypes.DATEONLY, allowNull: true },
-      payment_method: {
+
+      dueDate: { type: DataTypes.DATEONLY, allowNull: true, field: 'due_date' },
+
+      paymentMethod: {
         type: DataTypes.ENUM('cash', 'card', 'insurance', 'transfer'),
-        allowNull: true
+        allowNull: true,
+        field: 'payment_method',
       },
+
       notes: { type: DataTypes.TEXT, allowNull: true },
-      created_by: { type: DataTypes.UUID, allowNull: false } // UUID
+
+      createdBy: { type: DataTypes.UUID, allowNull: false, field: 'created_by' },
     },
     {
       tableName: 'bills',
       timestamps: true,
-      underscored: true
+      underscored: true, // maps camelCase JS -> snake_case DB
     }
   );
 

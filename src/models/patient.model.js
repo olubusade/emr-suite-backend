@@ -6,17 +6,26 @@ export const PatientModel = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4, // auto-generate UUID
         primaryKey: true,
-        field: 'id'
+        field: 'id',
       },
-      first_name: { type: DataTypes.STRING, allowNull: false },
-      last_name: { type: DataTypes.STRING, allowNull: false },
+
+      firstName: { type: DataTypes.STRING, allowNull: false, field: 'first_name' },
+
+      lastName: { type: DataTypes.STRING, allowNull: false, field: 'last_name' },
+
       dob: { type: DataTypes.DATEONLY, allowNull: false },
+
       gender: { type: DataTypes.ENUM('male', 'female', 'other'), allowNull: false },
-      marital_status: { type: DataTypes.ENUM('single', 'married'), allowNull: false },
+
+      maritalStatus: { type: DataTypes.ENUM('single', 'married'), allowNull: false, field: 'marital_status' },
+
       phone: { type: DataTypes.STRING, allowNull: true },
+
       email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
+
       address: { type: DataTypes.STRING, allowNull: true },
-      profile_image: { type: DataTypes.STRING, allowNull: true }
+
+      profileImage: { type: DataTypes.STRING, allowNull: true, field: 'profile_image' },
     },
     {
       tableName: 'patients',
@@ -24,9 +33,9 @@ export const PatientModel = (sequelize, DataTypes) => {
       underscored: true,
       getterMethods: {
         fullName() {
-          return `${this.first_name} ${this.last_name}`;
-        }
-      }
+          return `${this.firstName} ${this.lastName}`;
+        },
+      },
     }
   );
 

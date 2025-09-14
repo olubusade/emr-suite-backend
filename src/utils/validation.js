@@ -11,7 +11,7 @@ export const validate = (schema) => (req, res, next) => {
   try {
     // Build object for parsing
     const toValidate = { body: req.body, params: req.params, query: req.query };
-    console.log('toValidate::', toValidate);
+   // console.log('toValidate::', toValidate);
     // Parse - allow either a Zod schema or a function that returns parsed
     const parsed = typeof schema.parse === 'function' ? schema.parse(toValidate) : schema(toValidate);
     if (parsed) {

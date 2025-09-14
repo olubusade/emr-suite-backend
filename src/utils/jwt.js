@@ -8,3 +8,10 @@ export const signRefresh = (payload) => jwt.sign(payload, config.jwt.refreshSecr
 export const verifyAccess = (t) => jwt.verify(t, config.jwt.secret);
 export const verifyRefresh = (t) => jwt.verify(t, config.jwt.refreshSecret);
 export const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+
+export const tokenExpiry = (token) => {
+    const decoded = jwt.decode(token);
+    if (!decoded?.exp) return null; // no expiry found
+    return new Date(decoded.exp * 1000); // exp is in seconds, convert to ms
+};
+  

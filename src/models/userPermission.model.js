@@ -7,22 +7,26 @@ export const UserPermissionModel = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4, 
         primaryKey: true 
       },
-      user_id: { 
+
+      userId: { 
         type: DataTypes.UUID, 
         allowNull: false,
+        field: 'user_id',
         references: { model: 'users', key: 'id' },
         onDelete: 'CASCADE',
       },
-      permission_id: { 
+
+      permissionId: { 
         type: DataTypes.UUID, 
         allowNull: false,
+        field: 'permission_id',
         references: { model: 'permissions', key: 'id' },
         onDelete: 'CASCADE',
       },
     },
     { 
       tableName: 'user_permissions', 
-      underscored: true, 
+      underscored: true, // maps camelCase JS -> snake_case DB
       timestamps: false,
       indexes: [{ unique: true, fields: ['user_id', 'permission_id'] }],
     }

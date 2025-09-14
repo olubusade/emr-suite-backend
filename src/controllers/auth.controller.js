@@ -7,26 +7,21 @@ import { attachAudit } from '../middlewares/audit.middleware.js';
  */
 export async function login(req, res) {
   try {
-    const { user, accessToken, refreshToken, permissions } = await authService.login({
+    const { user, accessToken, refreshToken } = await authService.login({
       email: req.body.email,
       password: req.body.password,
       userAgent: req.headers['user-agent'],
       ip: req.ip,
     });
-
-    console.log('user::',user);
-    console.log('accessToken::', accessToken);
-    console.log('refreshToken::', refreshToken);
-    console.log('permissions::', permissions);
-
+    
     await attachAudit(req, {
       action: 'LOGIN',
       entity: 'user',
       entityId: user.id,
-      metadata: { email: user.email },
+      metadata: { email: user.email }
     });
 
-    return ok(res, { user, accessToken, refreshToken, permissions });
+    return ok(res, { user, accessToken, refreshToken });
   } catch (err) {
     console.error('auth.login', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
@@ -38,13 +33,13 @@ export async function login(req, res) {
  */
 export async function refresh(req, res) {
   try {
-    const { accessToken, refreshToken, permissions, user } = await authService.refreshToken(
+    const { accessToken, refreshToken, user } = await authService.refreshToken(
       req.body.refreshToken,
       req.headers['user-agent'],
       req.ip
     );
 
-    return ok(res, { user, accessToken, refreshToken, permissions });
+    return ok(res, { user, accessToken, refreshToken });
   } catch (err) {
     console.error('auth.refresh', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
@@ -57,6 +52,8 @@ export async function refresh(req, res) {
 export async function logout(req, res) {
   try {
     const userId = req.user?.id;
+    
+    
     await authService.logout(userId, req.body.refreshToken);
 
     await attachAudit(req, {

@@ -5,9 +5,7 @@ export async function seedRoles(Role) {
       'doctor',
       'nurse',
       'receptionist',
-      'biller',
-      'lab_technician',
-      'pharmacist'
+      'patient'
     ];
   
     const roles = {};

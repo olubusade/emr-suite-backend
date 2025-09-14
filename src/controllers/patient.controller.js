@@ -16,8 +16,8 @@ export async function listPatients(req, res) {
     // Map DB fields to camelCase
     const items = data.items.map((patient) => ({
       id: patient.id,
-      firstName: patient.firstName,
-      lastName: patient.lastName,
+      fname: patient.fname,
+      lname: patient.lname,
       email: patient.email,
       phone: patient.phone,
       dob: patient.dob,
@@ -46,8 +46,8 @@ export async function createPatient(req, res) {
 
     return created(res, {
       id: patient.id,
-      firstName: patient.firstName,
-      lastName: patient.lastName,
+      fname: patient.fname,
+      lname: patient.lname,
       email: patient.email,
       phone: patient.phone,
       dob: patient.dob,
@@ -71,8 +71,8 @@ export async function updatePatient(req, res) {
 
     return ok(res, {
       id: patient.id,
-      firstName: patient.firstName,
-      lastName: patient.lastName,
+      fname: patient.fname,
+      lname: patient.lname,
       email: patient.email,
       phone: patient.phone,
       dob: patient.dob,

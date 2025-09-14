@@ -1,24 +1,53 @@
 export const PaymentModel = (sequelize, DataTypes) => {
-    const Payment = sequelize.define(
-      'Payment',
-      {
-        id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-        bill_id: { type: DataTypes.INTEGER, allowNull: false },
-        amount_paid: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
-        payment_date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-        method: {
-          type: DataTypes.ENUM('cash', 'card', 'insurance', 'transfer'),
-          allowNull: false,
-        },
-        reference: { type: DataTypes.STRING, allowNull: true },
+  const Payment = sequelize.define(
+    'Payment',
+    {
+      id: { 
+        type: DataTypes.UUID, 
+        defaultValue: DataTypes.UUIDV4, 
+        primaryKey: true 
       },
-      { 
-        tableName: 'payments', 
-        timestamps: true,
-        underscored: true // ensures Sequelize auto-generates snake_case foreign keys & timestamps
-      }
-    );
-  
-    return Payment;
-  };
-  
+
+      billId: { 
+        type: DataTypes.UUID,  // matches bills.id
+        allowNull: false,
+        field: 'bill_id',
+        references: {
+          model: 'bills', // table name
+          key: 'id'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
+
+      amountPaid: { 
+        type: DataTypes.DECIMAL(10, 2), 
+        allowNull: false,
+        field: 'amount_paid'
+      },
+
+      paymentDate: { 
+        type: DataTypes.DATE, 
+        defaultValue: DataTypes.NOW,
+        field: 'payment_date'
+      },
+
+      method: {
+        type: DataTypes.ENUM('cash', 'card', 'insurance', 'transfer'),
+        allowNull: false,
+      },
+
+      reference: { 
+        type: DataTypes.STRING, 
+        allowNull: true 
+      },
+    },
+    { 
+      tableName: 'payments', 
+      timestamps: true,
+      underscored: true, // maps camelCase JS -> snake_case DB
+    }
+  );
+
+  return Payment;
+};

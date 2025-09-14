@@ -1,33 +1,59 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
-export async function seedUsers(User, roles) {
-  const adminPassword = await bcrypt.hash('admin@123', 10);
+export async function seedUsers(User) {
+  const users = {};
 
-  const adminUser = await User.create({
+  users.admin = await User.create({
     id: uuidv4(),
-    fname: 'Admin',
-    lname: 'User',
-    full_name: 'Admin User',
+    fName: 'Admin',
+    lName: 'User',
+    fullName: 'Admin User',
     email: 'admin@busade-emr-demo.com',
-    password_hash: adminPassword,
-    role_id: roles.admin.id,
+    passwordHash: await bcrypt.hash('admin@123', 10),
     active: true
   });
 
-  console.log(`Admin user created (email: ${adminUser.email} | password: admin@123)`);
-
-  // You can also pre-create some doctors if needed
-  const doctorUser = await User.create({
+  users.doctor = await User.create({
     id: uuidv4(),
-    fname: 'John',
-    lname: 'Doe',
-    full_name: 'John Doe',
-    email: 'john.doe@busade-emr-demo.com',
-    password_hash: await bcrypt.hash('doctor123', 10),
-    role_id: roles.doctor.id,
+    fName: 'John',
+    lName: 'Doe',
+    fullName: 'John Doctor',
+    email: 'john.doctor@busade-emr-demo.com',
+    passwordHash: await bcrypt.hash('doctor@123', 10),
     active: true
   });
 
-  return { adminUser, doctorUser };
+  users.nurse = await User.create({
+    id: uuidv4(),
+    fName: 'Mary',
+    lName: 'Smith',
+    fullName: 'Mary Nurse',
+    email: 'mary.nurse@busade-emr-demo.com',
+    passwordHash: await bcrypt.hash('nurse@123', 10),
+    active: true
+  });
+
+  users.receptionist = await User.create({
+    id: uuidv4(),
+    fName: 'Jane',
+    lName: 'Reception',
+    fullName: 'Jane Reception',
+    email: 'jane.reception@busade-emr-demo.com',
+    passwordHash: await bcrypt.hash('reception@123', 10),
+    active: true
+  });
+
+  users.patient = await User.create({
+    id: uuidv4(),
+    fName: 'Paul',
+    lName: 'Patient',
+    fullName: 'Paul Patient',
+    email: 'paul.patient@busade-emr-demo.com',
+    passwordHash: await bcrypt.hash('patient@123', 10),
+    active: true
+  });
+
+  console.log('Users seeded');
+  return users;
 }

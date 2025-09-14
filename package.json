@@ -5,7 +5,7 @@
         "local": "ENV=dev node src/server.js",
         "dev": "nodemon --watch src --ext js --exec \"ENV=dev node src/server.js\"",
         "start": "ENV=prod node src/server.js",
-        "seed": "node src/seed/seed.js",
+        "seed": "ENV=dev node src/seed/seed.js",
 
         "docker:up:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.dev up --build -d && npm run docker:migrate:dev && npm run docker:seed:dev",
 

@@ -7,16 +7,20 @@ export const RolePermissionModel = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      role_id: {
+
+      roleId: {
         type: DataTypes.UUID,
         allowNull: false,
+        field: 'role_id',
         references: { model: 'roles', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      permission_id: {
+
+      permissionId: {
         type: DataTypes.UUID,
         allowNull: false,
+        field: 'permission_id',
         references: { model: 'permissions', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
@@ -24,7 +28,7 @@ export const RolePermissionModel = (sequelize, DataTypes) => {
     },
     {
       tableName: 'role_permissions',
-      underscored: true,
+      underscored: true, // maps camelCase JS -> snake_case DB
       timestamps: false,
     }
   );

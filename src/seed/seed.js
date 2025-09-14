@@ -1,13 +1,17 @@
-import { sequelize, Role, Permission, User, Patient, Bill, Appointment, UserPermission, RolePermission } from '../models/index.js';
+import { sequelize, Role, Permission, User, Patient, Bill, Appointment, UserPermission, RolePermission, UserRole, Payment, Vital, ClinicalNote } from '../models/index.js';
 
 import { seedRoles } from './roles.seed.js';
 import { seedPermissions } from './permissions.seed.js';
 import { seedRolePermissions } from './rolePermission.seed.js';
 import { seedUsers } from './users.seed.js';
+import { seedUserRoles } from './userRoles.seed.js';
 import { seedUserPermissions } from './userPermissions.seed.js';
 import { seedPatients } from './patients.seed.js';
 import { seedAppointments } from './appointments.seed.js';
 import { seedBills } from './bills.seed.js';
+import { seedPayments } from './payments.seed.js';
+import { seedVitals } from './vitals.seed.js';
+import { seedClinicalNotes } from './clinical.seed.js';
 
 async function seed() {
   try {
@@ -19,15 +23,20 @@ async function seed() {
 
     await seedRolePermissions(roles, permissions, RolePermission);
 
-    const users = await seedUsers(User, roles);
+    const users = await seedUsers(User);
 
+    await seedUserRoles(users, roles, UserRole);
     await seedUserPermissions(users, permissions, UserPermission);
 
-    const patients = await seedPatients(Patient, users.adminUser);
+    const patients = await seedPatients(Patient, users.admin);
 
-    await seedAppointments(Appointment, patients, users.adminUser);
+    const appointments = await seedAppointments(Appointment, patients, users.doctor);
 
-    await seedBills(Bill, patients, users.adminUser);
+    const bills = await seedBills(Bill, patients, users.receptionist);
+    await seedPayments(Payment, bills);
+
+    await seedVitals(Vital, patients, users.nurse);
+    await seedClinicalNotes(ClinicalNote, patients, users.doctor);
 
     console.log('Seed completed successfully!');
     process.exit(0);

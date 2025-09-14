@@ -7,17 +7,20 @@ export const UserModel = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      fname: {
+      fName: {
         type: DataTypes.STRING,
         allowNull: false,
+        field: 'fname',
       },
-      lname: {
+      lName: {
         type: DataTypes.STRING,
         allowNull: false,
+        field: 'lname',
       },
-      full_name: {
+      fullName: {
         type: DataTypes.STRING,
         allowNull: false,
+        field: 'full_name',
       },
       email: {
         type: DataTypes.STRING,
@@ -25,9 +28,10 @@ export const UserModel = (sequelize, DataTypes) => {
         allowNull: false,
         validate: { isEmail: true },
       },
-      password_hash: {
+      passwordHash: {
         type: DataTypes.STRING,
         allowNull: false,
+        field: 'password_hash',
       },
       designation: {
         type: DataTypes.STRING,

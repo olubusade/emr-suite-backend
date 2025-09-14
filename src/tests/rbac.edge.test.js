@@ -23,7 +23,7 @@ describe('RBAC Edge Cases', () => {
     const res = await request(app)
       .patch('/api/users/1')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ firstName: 'Hacker', lastName: 'User' });
+      .send({ fname: 'Hacker', lname: 'User' });
 
     expect(res.statusCode).toBe(403);
     expect(res.body).toHaveProperty('message');
@@ -33,11 +33,11 @@ describe('RBAC Edge Cases', () => {
     const res = await request(app)
       .patch('/api/users/2')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ firstName: 'Updated', lastName: 'ByAdmin' });
+      .send({ fname: 'Updated', lname: 'ByAdmin' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.data).toHaveProperty('firstName', 'Updated');
-    expect(res.body.data).toHaveProperty('lastName', 'ByAdmin');
+    expect(res.body.data).toHaveProperty('fname', 'Updated');
+    expect(res.body.data).toHaveProperty('lname', 'ByAdmin');
   });
 
   it('should deny access without token', async () => {
