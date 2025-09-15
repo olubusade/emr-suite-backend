@@ -1,32 +1,38 @@
+version: "3.9"
+
 services:
   backend:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.dev
     container_name: busade-emr-backend-dev
-    command: npm run local
+    env_file:
+      - ../.env.docker.dev
     ports:
       - "5000:5000"
     volumes:
-      - ../:/usr/src/app
+      - ../src:/usr/src/app/src
+      - ../package.json:/usr/src/app/package.json
+      - ../package-lock.json:/usr/src/app/package-lock.json
       - /usr/src/app/node_modules
-    env_file:
-      - ../.env.dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - db
 
   db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: busade-emr-db-dev
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      DB_HOST: db
+      POSTGRES_DB: busade_emr_demo_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
-      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
 volumes:
   postgres_data_dev:

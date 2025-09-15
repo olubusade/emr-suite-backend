@@ -1,5 +1,11 @@
 node_modules
 npm-debug.log
-#.env
 dist
 src/tests
+.env*
+.git
+.vscode
+.DS_Store
+coverage
+logs
+npm-debug.log*

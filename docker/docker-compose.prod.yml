@@ -1,28 +1,31 @@
+version: "3.9"
+
 services:
   backend:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: busade-emr-backend-prod
-    ports:
-      - "5000:5000"
     env_file:
       - ../.env.prod
+    ports:
+      - "5000:5000"
     depends_on:
       - db
+    restart: unless-stopped
 
   db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: busade-emr-db-prod
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: super_secure_password
-      DB_HOST: db
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: busade_emr_demo_db
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
-      - docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    # keep DB private in prod (no host port mapping)
 
 volumes:
   postgres_data_prod:
