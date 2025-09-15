@@ -8,7 +8,7 @@ export async function testDbConnection() {
 /* 
     const user = await User.findOne({ where: { active: true } });
     if (user) {
-      console.log('👀 Sample user row:', user.toJSON());
+      console.log('Sample user row:', user.toJSON());
     } else {
       console.warn('No active user found.');
     } */

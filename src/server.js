@@ -9,7 +9,7 @@ async function start() {
 
     // Uncomment in dev if needed
     /* await sequelize.sync({ alter: true }); */
-    console.log('Models synced');
+    //console.log('Models synced');
 
     app.listen(config.port, () => {
       console.log(`Busade's EMR Demo API running in ${config.env} mode at http://localhost:${config.port}`);

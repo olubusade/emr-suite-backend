@@ -1,33 +1,30 @@
 {
     "name": "emr-suite-backend",
     "type": "module",
-    "scripts": {
-        "local": "ENV=dev node src/server.js",
-        "dev": "nodemon --watch src --ext js --exec \"ENV=dev node src/server.js\"",
-        "start": "ENV=prod node src/server.js",
-        "seed": "ENV=dev node src/seed/seed.js",
-
-        "docker:up:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.dev up --build -d && npm run docker:migrate:dev && npm run docker:seed:dev",
-
+   "scripts": {
+        "local": "ENV=development node src/server.js",
+        "dev": "nodemon --watch src --ext js --exec \"ENV=development node src/server.js\"",
+        "start": "ENV=production node src/server.js",
+        "seed": "ENV=development node src/seed/seed.js",
+        "docker:up:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev up --build -d && npm run docker:migrate:dev && npm run docker:seed:dev",
         "docker:migrate:dev": "docker compose -f docker/docker-compose.dev.yml run backend npm run migrate",
         "docker:seed:dev": "docker compose -f docker/docker-compose.dev.yml run backend npm run seed",
-        "docker:down:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.dev down",
+        "docker:down:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev down",
         "docker:remove-orphans:dev": "docker compose -f docker/docker-compose.dev.yml down --remove-orphans",
-      
-        "docker:up:prod": "docker compose -f docker/docker-compose.prod.yml up -d --build && npm run docker:migrate:prod",
+
+        "docker:up:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod up -d --build && npm run docker:migrate:prod && npm run docker:seed:prod",
         "docker:migrate:prod": "docker compose -f docker/docker-compose.prod.yml run backend npm run migrate",
         "docker:seed:prod": "docker compose -f docker/docker-compose.prod.yml run backend npm run seed",
-        "docker:down:prod": "docker compose -f docker/docker-compose.prod.yml down",
+        "docker:down:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod down",
         "docker:remove-orphans:prod": "docker compose -f docker/docker-compose.prod.yml down --remove-orphans",
-      
-        "docker:build": "docker-compose -f docker/docker-compose.yml build",
-        "docker:logs:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.dev logs -f",
-        "docker:restart:log": "npm run docker:down:dev && npm run docker:up:dev",
+
+        "docker:logs:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev logs -f",
+        "docker:logs:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod logs -f",
 
         "migrate": "sequelize db:migrate",
         "migrate:undo": "sequelize db:migrate:undo",
         "migrate:undo:all": "sequelize db:migrate:undo:all",
-        "down": "docker-compose down",
+
         "test": "jest --runInBand",
         "test:watch": "jest --watch",
         "test:rbac": "jest tests/rbac-all.test.js"

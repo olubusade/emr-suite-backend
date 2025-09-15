@@ -8,15 +8,14 @@ let tokens = {};
 beforeAll(async () => {
   await setupDatabase();
 
-  // Create users for all roles
+  // Create users for all roles you care about
   tokens[ROLES.SUPER_ADMIN] = await createTestUser({ role: ROLES.SUPER_ADMIN });
   tokens[ROLES.ADMIN] = await createTestUser({ role: ROLES.ADMIN });
   tokens[ROLES.DOCTOR] = await createTestUser({ role: ROLES.DOCTOR });
   tokens[ROLES.NURSE] = await createTestUser({ role: ROLES.NURSE });
   tokens[ROLES.RECEPTION] = await createTestUser({ role: ROLES.RECEPTION });
-  tokens[ROLES.BILLING] = await createTestUser({ role: ROLES.BILLING });
-  tokens[ROLES.LAB] = await createTestUser({ role: ROLES.LAB });
-  tokens[ROLES.PHARMACY] = await createTestUser({ role: ROLES.PHARMACY });
+  tokens[ROLES.PATIENT] = await createTestUser({ role: ROLES.PATIENT });
+  
 });
 
 afterAll(async () => {
@@ -57,6 +56,22 @@ describe('RBAC - All Modules', () => {
       permUpdate: PERMISSIONS.BILL_UPDATE,
       permDelete: PERMISSIONS.BILL_DELETE
     },
+    {
+      name: 'Vital',
+      route: '/api/vitals',
+      permRead: PERMISSIONS.VITAL_READ,
+      permCreate: PERMISSIONS.VITAL_CREATE,
+      permUpdate: PERMISSIONS.VITAL_UPDATE,
+      permDelete: PERMISSIONS.VITAL_DELETE
+    },
+    {
+      name: 'Clinical Note',
+      route: '/api/clinical-notes',
+      permRead: PERMISSIONS.CLINICAL_NOTE_READ,
+      permCreate: PERMISSIONS.CLINICAL_NOTE_CREATE,
+      permUpdate: PERMISSIONS.CLINICAL_NOTE_UPDATE,
+      permDelete: PERMISSIONS.CLINICAL_NOTE_DELETE
+    },
     { name: 'Audit', route: '/api/audits', permRead: PERMISSIONS.AUDIT_READ },
     { name: 'Metrics', route: '/api/metrics', permRead: PERMISSIONS.METRICS_READ },
   ];
@@ -78,7 +93,10 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permRead) {
         it(`should allow roles with ${mod.permRead} permission to read`, async () => {
-          const rolesWithRead = [ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION, ROLES.BILLING, ROLES.LAB, ROLES.PHARMACY];
+          const rolesWithRead = [
+            ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE,
+            ROLES.RECEPTION, ROLES.PATIENT
+          ];
           for (const role of rolesWithRead) {
             const res = await request(app)
               .get(mod.route)
@@ -90,7 +108,7 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permCreate) {
         it(`should prevent roles without ${mod.permCreate} permission from creating`, async () => {
-          const rolesWithoutCreate = [ROLES.NURSE, ROLES.LAB, ROLES.PHARMACY];
+          const rolesWithoutCreate = [ROLES.NURSE, ROLES.PATIENT];
           for (const role of rolesWithoutCreate) {
             const res = await request(app)
               .post(mod.route)
@@ -104,7 +122,7 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permUpdate) {
         it(`should prevent roles without ${mod.permUpdate} permission from updating`, async () => {
-          const rolesWithoutUpdate = [ROLES.RECEPTION, ROLES.LAB, ROLES.PHARMACY];
+          const rolesWithoutUpdate = [ROLES.RECEPTION, ROLES.PATIENT];
           for (const role of rolesWithoutUpdate) {
             const res = await request(app)
               .patch(`${mod.route}/123`)
@@ -118,7 +136,10 @@ describe('RBAC - All Modules', () => {
 
       if (mod.permDelete) {
         it(`should prevent roles without ${mod.permDelete} permission from deleting`, async () => {
-          const rolesWithoutDelete = [ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION, ROLES.BILLING, ROLES.LAB, ROLES.PHARMACY];
+          const rolesWithoutDelete = [
+            ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION,
+            ROLES.PATIENT
+          ];
           for (const role of rolesWithoutDelete) {
             const res = await request(app)
               .delete(`${mod.route}/123`)

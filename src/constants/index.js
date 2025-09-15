@@ -1,60 +1,94 @@
 export const ROLES = {
-    SUPER_ADMIN: 'super_admin',
-    ADMIN: 'admin',
-    DOCTOR: 'doctor',
-    NURSE: 'nurse',
-    RECEPTION: 'receptionist',
-    BILLING: 'biller',
-    LAB: 'lab_technician',
-    PHARMACY: 'pharmacist',
-};
-
-export const PERMISSIONS = {
-    // Users
-    USER_READ: 'user.read',
-    USER_CREATE: 'user.create',
-    USER_UPDATE: 'user.update',
-    USER_DELETE: 'user.delete',
-
+    SUPER_ADMIN: "SUPER_ADMIN",
+    ADMIN: "ADMIN",
+    DOCTOR: "DOCTOR",
+    NURSE: "NURSE",
+    RECEPTIONIST: "RECEPTIONIST",
+    PATIENT: "PATIENT",
+  };
+  
+  export const PERMISSIONS = {
+    // User Management
+    USER_READ: "USER_READ",
+    USER_CREATE: "USER_CREATE",
+    USER_UPDATE: "USER_UPDATE",
+    USER_DELETE: "USER_DELETE",
+  
+    ROLE_READ: "ROLE_READ",
+    ROLE_CREATE: "ROLE_CREATE",
+    ROLE_UPDATE: "ROLE_UPDATE",
+    ROLE_DELETE: "ROLE_DELETE",
+  
+    PERMISSION_READ: "PERMISSION_READ",
+    PERMISSION_CREATE: "PERMISSION_CREATE",
+    PERMISSION_UPDATE: "PERMISSION_UPDATE",
+    PERMISSION_DELETE: "PERMISSION_DELETE",
+  
+    DOCTOR_DASHBOARD_VIEW: "DOCTOR_DASHBOARD_VIEW",
+    DOCTOR_SETTINGS_MANAGE: "DOCTOR_SETTINGS_MANAGE",
+    NURSE_DASHBOARD_VIEW: "NURSE_DASHBOARD_VIEW",
+    NURSE_SETTINGS_MANAGE: "NURSE_SETTINGS_MANAGE",
+    PATIENT_DASHBOARD_VIEW: "PATIENT_DASHBOARD_VIEW",
+    PATIENT_SETTINGS_MANAGE: "PATIENT_SETTINGS_MANAGE",
+    RECEPTIONIST_DASHBOARD_VIEW: "RECEPTIONIST_DASHBOARD_VIEW",
+    RECEPTIONIST_SETTINGS_MANAGE: "RECEPTIONIST_SETTINGS_MANAGE",
+  
     // Patients
-    PATIENT_READ: 'patient.read',
-    PATIENT_CREATE: 'patient.create',
-    PATIENT_UPDATE: 'patient.update',
-    PATIENT_DELETE: 'patient.delete',
-
+    PATIENT_READ: "PATIENT_READ",
+    PATIENT_CREATE: "PATIENT_CREATE",
+    PATIENT_UPDATE: "PATIENT_UPDATE",
+    PATIENT_DELETE: "PATIENT_DELETE",
+  
+    PRESCRIPTION_READ: "PRESCRIPTION_READ",
+    MEDICAL_RECORD_READ: "MEDICAL_RECORD_READ",
+    BILLING_VIEW: "BILLING_VIEW",
+  
+    // Doctors
+    DOCTOR_READ: "DOCTOR_READ",
+    DOCTOR_CREATE: "DOCTOR_CREATE",
+    DOCTOR_UPDATE: "DOCTOR_UPDATE",
+    DOCTOR_DELETE: "DOCTOR_DELETE",
+  
+    // Doctors-Patients
+    DOCTOR_PATIENT_READ: "DOCTOR_PATIENT_READ",
+  
+    // Nurses
+    NURSE_READ: "NURSE_READ",
+    NURSE_CREATE: "NURSE_CREATE",
+    NURSE_UPDATE: "NURSE_UPDATE",
+    NURSE_DELETE: "NURSE_DELETE",
+  
+    // Receptionists
+    RECEPTIONIST_READ: "RECEPTIONIST_READ",
+    RECEPTIONIST_CREATE: "RECEPTIONIST_CREATE",
+    RECEPTIONIST_UPDATE: "RECEPTIONIST_UPDATE",
+    RECEPTIONIST_DELETE: "RECEPTIONIST_DELETE",
+  
     // Appointments
-    APPOINTMENT_READ: 'appointment.read',
-    APPOINTMENT_CREATE: 'appointment.create',
-    APPOINTMENT_UPDATE: 'appointment.update',
-    APPOINTMENT_DELETE: 'appointment.delete',
-
-    // Billing
-    BILL_READ: 'bill.read',
-    BILL_CREATE: 'bill.create',
-    BILL_UPDATE: 'bill.update',
-    BILL_DELETE: 'bill.delete',
-
-    // Roles & permissions
-    ROLE_READ: 'role.read',
-    ROLE_ASSIGN: 'role.assign',
-    PERMISSION_READ: 'permission.read',
-    PERMISSION_ASSIGN: 'permission.assign',
-
-    // Audit
-    AUDIT_READ: 'audit.read',
-    AUDIT_CREATE: 'audit.create',
-
-    // Auth
-    AUTH_LOGIN: 'auth.login',
-    AUTH_LOGOUT: 'auth.logout',
-    AUTH_REFRESH: 'auth.refresh',
-
-    // Metrics
-    METRICS_READ:'metrics.read'
-};
-
-export const STATUS = {
-    SUCCESS: 'success',
-    FAIL: 'fail',
-    ERROR: 'error'
-};
+    APPOINTMENT_READ: "APPOINTMENT_READ",
+    APPOINTMENT_CREATE: "APPOINTMENT_CREATE",
+    APPOINTMENT_UPDATE: "APPOINTMENT_UPDATE",
+    APPOINTMENT_DELETE: "APPOINTMENT_DELETE",
+  
+    // Bills
+    BILL_READ: "BILL_READ",
+    BILL_CREATE: "BILL_CREATE",
+    BILL_UPDATE: "BILL_UPDATE",
+    BILL_DELETE: "BILL_DELETE",
+  
+    // Audit & Reports
+    AUDIT_READ: "AUDIT_READ",
+    REPORT_READ: "REPORT_READ",
+    REPORT_GENERATE: "REPORT_GENERATE",
+  
+    // Metrics & Dashboard
+    METRICS_READ: "METRICS_READ",
+    DASHBOARD_VIEW: "DASHBOARD_VIEW",
+  };
+  
+  export const STATUS = {
+    SUCCESS: "SUCCESS",
+    FAIL: "FAIL",
+    ERROR: "ERROR",
+  };
+  

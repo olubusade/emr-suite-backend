@@ -3,7 +3,21 @@ import path from 'path';
 import fs from 'fs';
 
 const env = process.env.ENV || process.env.NODE_ENV || 'development';
-const envFile = path.resolve(process.cwd(), `.env.${env}`);
+
+// Map environments to actual files
+const envMapping = {
+  development: '.env.local.dev',
+  dev: '.env.local.dev',
+  docker: '.env.dev.docker',
+  production: '.env.prod',
+  prod: '.env.prod',
+};
+
+// Resolve file path
+const envFile = path.resolve(
+  process.cwd(),
+  envMapping[env] || `.env.${env}`
+);
 
 if (fs.existsSync(envFile)) {
   dotenv.config({ path: envFile });
@@ -31,7 +45,7 @@ const dbConfig = {
   logging: env === 'development' ? console.log : false,
 };
 
-//Export for the app (ESM only)
+// Export for the app (ESM only)
 export const config = {
   port: Number(requireEnv('PORT', '5000')),
   env,
