@@ -4,7 +4,7 @@ export const ClinicalNoteModel = (sequelize, DataTypes) => {
       {
         id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
         patientId: { type: DataTypes.UUID, allowNull: false, field: 'patient_id' },
-        doctorId: { type: DataTypes.UUID, allowNull: false, field: 'doctor_id' },
+        staffId: { type: DataTypes.UUID, allowNull: false, field: 'staff_id' },
         subjective: { type: DataTypes.TEXT, allowNull: true },
         objective: { type: DataTypes.TEXT, allowNull: true },
         assessment: { type: DataTypes.TEXT, allowNull: true },

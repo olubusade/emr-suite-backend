@@ -16,8 +16,8 @@ export async function listPatients(req, res) {
     // Map DB fields to camelCase
     const items = data.items.map((patient) => ({
       id: patient.id,
-      fname: patient.fname,
-      lname: patient.lname,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
       email: patient.email,
       phone: patient.phone,
       dob: patient.dob,
@@ -42,7 +42,7 @@ export async function listPatients(req, res) {
 export async function createPatient(req, res) {
   try {
     const patient = await patientService.createPatient(req.body);
-    await attachAudit(req, 'CREATE_PATIENT', 'patient', patient.id, req.body);
+    await attachAudit(req, 'PATIENT_CREATE', 'patient', patient.id, req.body);
 
     return created(res, {
       id: patient.id,
@@ -67,7 +67,7 @@ export async function updatePatient(req, res) {
   try {
     const { id } = req.params;
     const patient = await patientService.updatePatient(id, req.body);
-    await attachAudit(req, 'UPDATE_PATIENT', 'patient', id, req.body);
+    await attachAudit(req, 'PATIENT_UPDATE', 'patient', id, req.body);
 
     return ok(res, {
       id: patient.id,
@@ -92,7 +92,7 @@ export async function deletePatient(req, res) {
   try {
     const { id } = req.params;
     await patientService.deletePatient(id);
-    await attachAudit(req, 'DELETE_PATIENT', 'patient', id);
+    await attachAudit(req, 'PATIENT_DELETE', 'patient', id);
 
     return ok(res, { success: true }, 'Patient deleted successfully');
   } catch (err) {

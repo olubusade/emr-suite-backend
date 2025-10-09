@@ -11,13 +11,20 @@ export async function getMetrics(req, res) {
     const months = parseInt(req.query.months, 10) || 12;
 
     // Fetch metrics data from service
-    const data = await metricsService.getMetricsData({ months });
+     const { totals, monthlyPatientTrend } = await metricsService.getMetricsData({ months }); // ⬅️ Destructure totals and trend
 
     // Include Prometheus metrics
     const prometheusMetrics = await register.metrics();
 
     return ok(res, {
-      ...data,
+      patientCount: totals.patients, 
+      userCount: totals.users,
+      totalAppointments: totals.appointments, // Assuming you added this to 'totals' in the service
+      revenue: totals.revenuePaid, 
+      revenuePending: totals.revenuePending,
+      // The name 'monthlyTrend' is slightly ambiguous if it only contains patient visits
+      // For clarity, it should be renamed or structured:
+      monthlyPatientTrend: monthlyPatientTrend, 
       prometheus: prometheusMetrics,
     });
   } catch (err) {

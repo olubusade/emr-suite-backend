@@ -1,7 +1,7 @@
 {
     "name": "emr-suite-backend",
     "type": "module",
-   "scripts": {
+    "scripts": {
         "local": "ENV=development node src/server.js",
         "dev": "nodemon --watch src --ext js --exec \"ENV=development node src/server.js\"",
         "start": "ENV=production node src/server.js",
@@ -11,20 +11,16 @@
         "docker:seed:dev": "docker compose -f docker/docker-compose.dev.yml run backend npm run seed",
         "docker:down:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev down",
         "docker:remove-orphans:dev": "docker compose -f docker/docker-compose.dev.yml down --remove-orphans",
-
         "docker:up:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod up -d --build && npm run docker:migrate:prod && npm run docker:seed:prod",
         "docker:migrate:prod": "docker compose -f docker/docker-compose.prod.yml run backend npm run migrate",
         "docker:seed:prod": "docker compose -f docker/docker-compose.prod.yml run backend npm run seed",
         "docker:down:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod down",
         "docker:remove-orphans:prod": "docker compose -f docker/docker-compose.prod.yml down --remove-orphans",
-
         "docker:logs:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev logs -f",
         "docker:logs:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod logs -f",
-
         "migrate": "sequelize db:migrate",
         "migrate:undo": "sequelize db:migrate:undo",
         "migrate:undo:all": "sequelize db:migrate:undo:all",
-
         "test": "jest --runInBand",
         "test:watch": "jest --watch",
         "test:rbac": "jest tests/rbac-all.test.js"
@@ -50,6 +46,9 @@
         "zod": "^3.23.8"
     },
     "devDependencies": {
+        "@types/express": "^5.0.3",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8",
         "jest": "^29.7.0",
         "nodemon": "^3.1.10",
         "sequelize-cli": "^6.6.0",

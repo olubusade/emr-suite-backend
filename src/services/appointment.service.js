@@ -1,21 +1,32 @@
 import { Appointment, Patient, User } from '../models/index.js';
-
+import { calculateAge } from '../utils/myLibrary.js';
 /**
  * List appointments with optional limit
  */
-export async function listAppointments({ limit = 200 }) {
-  const safeLimit = Math.min(Number(limit) || 200, 1000);
 
-  const appointments = await Appointment.findAll({
+export async function listAppointments({ page = 1, pageSize = 20, search }) {
+  const pageInt = Number(page) || 1;
+  const limitInt = Number(pageSize) || 20;
+  const offset = (pageInt - 1) * limitInt;
+const where = search
+    ? { firstName: { [Ou.iLike]: `%${search}%` } }
+    : {};
+   
+  const {count, rows } = await Appointment.findAndCountAll({
+    limit: limitInt,
+    offset,
     order: [['appointment_date', 'DESC']],
-    limit: safeLimit,
     include: [
-      { model: Patient, attributes: ['id', 'full_name'] },
-      { model: User, as: 'staff', attributes: ['id', 'full_name', 'email'] }
+      {
+        model: Patient, as: 'patient', attributes: ['id', 'firstName', 'lastName', 'email'],
+        
+        where,
+       },
+      { model: User, as: 'staff', attributes: ['id', 'fullName', 'email'] }
     ]
   });
 
-  return appointments.map((appt) => ({
+  const items = rows.map(appt => ({
     id: appt.id,
     patientId: appt.patientId,
     staffId: appt.staffId,
@@ -24,9 +35,15 @@ export async function listAppointments({ limit = 200 }) {
     reason: appt.reason,
     notes: appt.notes,
     status: appt.status,
-    patient: appt.Patient ? { id: appt.Patient.id, fullName: appt.Patient.full_name } : null,
-    staff: appt.staff ? { id: appt.staff.id, fullName: appt.staff.full_name, email: appt.staff.email } : null
+    patient: appt.patient ? { id: appt.patient.id, fullName: appt.patient.firstName+' '+ appt.patient.lastName, email:appt.patient.email} : null,
+    staff: appt.staff ? { id: appt.staff.id, fullName: appt.staff.fullName, email: appt.staff.email } : null
   }));
+   return {
+    items,
+    total: count,
+    page: pageInt,
+    pages: Math.ceil(count / limitInt)
+  };
 }
 
 /**
@@ -35,12 +52,13 @@ export async function listAppointments({ limit = 200 }) {
 export async function getAppointmentById(id) {
   const appt = await Appointment.findByPk(id, {
     include: [
-      { model: Patient, attributes: ['id', 'full_name', 'age'] },
-      { model: User, as: 'staff', attributes: ['id', 'full_name', 'email'] }
+      { model: Patient, as:patient, attributes: ['id', 'firstName','lastName', 'dob'] },
+      { model: User, as: 'staff', attributes: ['id', 'fullName', 'email'] }
     ]
   });
 
   if (!appt) return null;
+  
 
   return {
     id: appt.id,
@@ -51,10 +69,11 @@ export async function getAppointmentById(id) {
     reason: appt.reason,
     notes: appt.notes,
     status: appt.status,
-    patient: appt.Patient ? { id: appt.Patient.id, fullName: appt.Patient.full_name, age: appt.Patient.age } : null,
+    patient: appt.patient ? { id: appt.patient.id, fullName: appt.patient.firstName+' '+ appt.patient.lastName, age: calculateAge(appt.patient.dob) } : null,
     staff: appt.staff ? { id: appt.staff.id, fullName: appt.staff.full_name, email: appt.staff.email } : null
   };
 }
+
 
 /**
  * Create a new appointment

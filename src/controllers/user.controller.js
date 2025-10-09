@@ -67,12 +67,12 @@ export async function updateProfile(req, res) {
 /**
  * Admin: List all users
  */
-export async function listUsers(req, res) {
+export async function listStaff(req, res) {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = parseInt(req.query.pageSize, 10) || 20;
 
-    const data = await userService.listUsers({ ...req.query, page, pageSize });
+    const data = await userService.listStaff({ ...req.query, page, pageSize });
 
     const items = data.items.map(user => ({
       id: user.id,

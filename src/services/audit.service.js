@@ -7,6 +7,13 @@ import { AuditLog, User } from '../models/index.js';
 export async function logAudit({ userId, action, entity, entityId = null, ip, userAgent, details = {} }) {
 
   try {
+    console.log('userId:', userId);
+    console.log('action:', action);
+    console.log('entity:', entity);
+    console.log('entityId:', entityId);
+    console.log('userAgent:', userAgent);
+    console.log('details:', details);
+    
     await AuditLog.create({
       userId,
       action,

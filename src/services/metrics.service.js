@@ -1,4 +1,4 @@
-import { Patient, Bill, sequelize } from '../models/index.js';
+import { Patient, Bill, User, Appointment, sequelize } from '../models/index.js';
 import { QueryTypes } from 'sequelize';
 
 /**
@@ -9,12 +9,27 @@ import { QueryTypes } from 'sequelize';
 export async function getMetricsData({ months = 12 }) {
   const monthsInt = Number(months) || 12;
 
-  // Total patients
-  const patientsCount = await Patient.count();
-
-  // Revenue
-  const revenuePaid = Number(await Bill.sum('amount', { where: { status: 'PAID' } })) || 0;
-  const revenuePending = Number(await Bill.sum('amount', { where: { status: 'PENDING' } })) || 0;
+    // Total metrics (Awaiting promises)
+  const [
+    patientsCount,
+    usersCount,       
+    appointmentsCount,  
+    revenuePaid,
+    revenuePending
+  ] = await Promise.all([
+    // Total patients
+    Patient.count(),
+    
+    // Total staff/users (from the 'users' table)
+    User.count(),
+    
+    // Total appointments
+    Appointment.count(),
+    // Revenue Paid
+    Bill.sum('amount', { where: { status: 'paid' } }),
+    // Revenue Pending
+    Bill.sum('amount', { where: { status: 'pending' } })
+  ]);
 
   // Monthly patient trend
   const trendRows = await sequelize.query(
@@ -36,12 +51,14 @@ export async function getMetricsData({ months = 12 }) {
     visits: row.visits
   }));
 
-  return {
+   return {
     totals: {
-      patients: patientsCount,
-      revenuePaid,
-      revenuePending
+      patients: Number(patientsCount) || 0,
+      users: Number(usersCount) || 0,         // ⬅️ Included
+      appointments: Number(appointmentsCount) || 0, // ⬅️ Included
+      revenuePaid: Number(revenuePaid) || 0,
+      revenuePending: Number(revenuePending) || 0
     },
-    trend
+    monthlyPatientTrend: trend // Renamed for clarity
   };
 }

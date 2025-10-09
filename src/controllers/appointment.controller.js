@@ -6,13 +6,21 @@ import * as appointmentService from '../services/appointment.service.js';
  * List appointments
  */
 export async function listAppointments(req, res) {
+
   try {
-    const limit = req.query.limit;
-    const appointments = await appointmentService.listAppointments({ limit });
-    return ok(res, appointments);
-  } catch (err) {
-    return error(res, 500, 'Server error', err.message);
-  }
+      const page = parseInt(req.query.page, 10) || 1;
+      const pageSize = parseInt(req.query.pageSize, 10) || 20;
+  
+      const appointments = await appointmentService.listAppointments({ ...req.query, page, pageSize });
+      return ok(res, appointments, 'Appointments retrieved successfully', {
+        page: appointments.page,
+        pages: appointments.pages,
+        total: appointments.total,
+      });
+    } catch (err) {
+      console.error('appointment.listAppointments', err);
+      return error(res, err.statusCode || 500, err.message || 'Unable to list appointments');
+    }
 }
 
 /**

@@ -20,7 +20,7 @@ export async function seedBills(Bill, patients, createdBy) {
       id: uuidv4(),
       patient_id: patients[2].id,
       amount: 1800,
-      status: 'paid',
+      status: 'pending',
       created_by: createdBy.id
     }
   ];

@@ -23,8 +23,8 @@ export async function listPatients({ page = 1, pageSize = 20, search }) {
 
   const items = rows.map(p => ({
     id: p.id,
-    fname: p.fname,
-    lname: p.lname,
+    firstName: p.firstName,
+    lastName: p.lastName,
     email: p.email,
     phone: p.phone,
     dob: p.dob,

@@ -5,7 +5,16 @@ export const ROLES = {
     NURSE: "NURSE",
     RECEPTIONIST: "RECEPTIONIST",
     PATIENT: "PATIENT",
-  };
+};
+  
+export const STAFF_ROLES_ARRAY = [
+    ROLES.SUPER_ADMIN,
+    ROLES.ADMIN,
+    ROLES.DOCTOR,
+    ROLES.NURSE,
+    ROLES.RECEPTIONIST,
+];
+
   
   export const PERMISSIONS = {
     // User Management
@@ -90,5 +99,13 @@ export const ROLES = {
     SUCCESS: "SUCCESS",
     FAIL: "FAIL",
     ERROR: "ERROR",
+  };
+
+  export const BILL_STATUS = {
+    PAID: "paid",
+    UNPAID: "unpaid",
+    PENDING: "pending",
+    CANCEL: "cancelled",
+    PARTIALLY_PAID: "partially_paid",
   };
   

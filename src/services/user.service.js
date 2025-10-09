@@ -2,6 +2,7 @@ import { User, RefreshToken, Role } from '../models/index.js';
 import { hash, compare } from '../utils/passwords.js';
 import { signAccess, signRefresh, verifyRefresh, sha256 } from '../utils/jwt.js';
 import ApiError from '../utils/ApiError.js';
+import { STAFF_ROLES_ARRAY } from '../constants/index.js';
 
 /* -------------------- User creation / login -------------------- */
 export async function createUser({ email, password, fullName, roleIds = [] }) {
@@ -74,4 +75,57 @@ export async function logoutUser(userId, token) {
     await RefreshToken.update({ revokedAt: new Date() }, { where: { userId, revokedAt: null } });
   }
   return true;
+}
+
+
+/**
+ * List users with pagination and optional search
+ */
+export async function listStaff({ page = 1, pageSize = 20, search }) {
+  const pageInt = Number(page) || 1;
+  const limitInt = Number(pageSize) || 20;
+  const offset = (pageInt - 1) * limitInt;
+
+  const where = search
+    ? { fullName: { [Ou.iLike]: `%${search}%` } }
+    : {};
+  
+  const lowercaseStaffRoles = STAFF_ROLES_ARRAY.map(role => role.toLowerCase());
+  const { count, rows } = await User.findAndCountAll({
+    where,
+    active: true,
+    // Eager load the Role model to filter on its name
+    include: [
+    {
+      model: Role,
+      as: 'roles', // Crucial: Use the alias defined in the association
+      required: true, // Performs an INNER JOIN, ensuring only users with roles are returned
+      where: {
+        name: lowercaseStaffRoles
+      },
+      // You can limit the attributes selected from Role if you don't need them
+      attributes: ['name'] 
+    }
+  ],
+    limit: limitInt,
+    offset,
+    order: [['created_at', 'DESC']]
+  });
+
+  const items = rows.map(u => ({
+    id: u.id,
+    fullName: u.fName+ ' '+ u.lName,
+    email: u.email,
+    phone: u.phone,
+    dob: u.dob,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt
+  }));
+
+  return {
+    items,
+    total: count,
+    page: pageInt,
+    pages: Math.ceil(count / limitInt)
+  };
 }

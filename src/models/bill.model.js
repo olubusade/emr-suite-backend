@@ -9,7 +9,7 @@ export const BillModel = (sequelize, DataTypes) => {
       amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
 
       status: {
-        type: DataTypes.ENUM('unpaid', 'partially_paid', 'paid', 'cancelled'),
+        type: DataTypes.ENUM('unpaid','pending', 'partially_paid', 'paid', 'cancelled'),
         defaultValue: 'unpaid',
       },
 

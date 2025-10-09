@@ -214,7 +214,7 @@ router.use(authRequired);
 router.get('/get_profile', userController.getProfile);
 router.patch('/update_profile', userController.updateProfile);
 
-router.get('/list', authorize(PERMISSIONS.USER_READ), userController.listUsers);
+router.get('/list_staff', authorize(PERMISSIONS.USER_READ), userController.listStaff);
 router.post('/register', authorize(PERMISSIONS.USER_CREATE), userController.registerUser);
 router.patch('/:id', authorize(PERMISSIONS.USER_UPDATE), userController.updateUser);
 router.delete('/:id', authorize(PERMISSIONS.USER_DELETE), userController.deleteUser);
