@@ -26,7 +26,8 @@ async function seed() {
     const users = await seedUsers(User);
 
     await seedUserRoles(users, roles, UserRole);
-    await seedUserPermissions(users, permissions, UserPermission);
+    await seedUserPermissions(users, permissions, UserPermission, roles, RolePermission);
+
 
     const patients = await seedPatients(Patient, users.admin);
 

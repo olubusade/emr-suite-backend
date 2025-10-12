@@ -32,8 +32,8 @@ export const createAccountLimiter = rateLimit({
  * Login attempts limiter (10 minutes window, 5 attempts per IP)
  */
 export const authLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 1 minutes
-  max: 5, // limit each IP to 5 login attempts per windowMs
+  windowMs: 10 * 1000, // 10 secs
+  max: 2, // limit each IP to 5 login attempts per windowMs
   message: {
     statusCode: 429,
     error: 'Too many login attempts, please try again later.'

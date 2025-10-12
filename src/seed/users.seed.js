@@ -4,6 +4,16 @@ import { v4 as uuidv4 } from 'uuid';
 export async function seedUsers(User) {
   const users = {};
 
+  users.super_admin = await User.create({
+    id: uuidv4(),
+    fName: 'Super',
+    lName: 'Admin',
+    fullName: 'Super Admin',
+    email: 'superadmin@busade-emr-demo.com',
+    passwordHash: await bcrypt.hash('superadmin@123', 10),
+    active: true
+  });
+
   users.admin = await User.create({
     id: uuidv4(),
     fName: 'Admin',
@@ -19,7 +29,7 @@ export async function seedUsers(User) {
     fName: 'John',
     lName: 'Doe',
     fullName: 'John Doctor',
-    email: 'john.doctor@busade-emr-demo.com',
+    email: 'doctor@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('doctor@123', 10),
     active: true
   });
@@ -29,7 +39,7 @@ export async function seedUsers(User) {
     fName: 'Mary',
     lName: 'Smith',
     fullName: 'Mary Nurse',
-    email: 'mary.nurse@busade-emr-demo.com',
+    email: 'nurse@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('nurse@123', 10),
     active: true
   });
@@ -39,7 +49,7 @@ export async function seedUsers(User) {
     fName: 'Jane',
     lName: 'Reception',
     fullName: 'Jane Reception',
-    email: 'jane.reception@busade-emr-demo.com',
+    email: 'reception@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('reception@123', 10),
     active: true
   });
@@ -49,7 +59,7 @@ export async function seedUsers(User) {
     fName: 'Paul',
     lName: 'Patient',
     fullName: 'Paul Patient',
-    email: 'paul.patient@busade-emr-demo.com',
+    email: 'patient@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('patient@123', 10),
     active: true
   });
