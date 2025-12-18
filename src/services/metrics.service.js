@@ -1,5 +1,10 @@
 import { Patient, Bill, User, Appointment, sequelize } from '../models/index.js';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, where, Op } from 'sequelize';
+import { DateTime } from 'luxon';
+
+const startOfToday = DateTime.now().startOf('day').toJSDate();
+const endOfToday = DateTime.now().endOf('day').toJSDate();
+
 
 /**
  * Get metrics data for dashboard
@@ -12,6 +17,7 @@ export async function getMetricsData({ months = 12 }) {
     // Total metrics (Awaiting promises)
   const [
     patientsCount,
+    patientsCreatedToday,
     usersCount,       
     appointmentsCount,  
     revenuePaid,
@@ -19,6 +25,15 @@ export async function getMetricsData({ months = 12 }) {
   ] = await Promise.all([
     // Total patients
     Patient.count(),
+
+    // Total today patients
+    Patient.count({
+      where: {
+        createdAt: {
+          [Op.between]: [startOfToday, endOfToday]
+        }
+      }
+    }),
     
     // Total staff/users (from the 'users' table)
     User.count(),
@@ -57,7 +72,8 @@ export async function getMetricsData({ months = 12 }) {
       users: Number(usersCount) || 0,         // ⬅️ Included
       appointments: Number(appointmentsCount) || 0, // ⬅️ Included
       revenuePaid: Number(revenuePaid) || 0,
-      revenuePending: Number(revenuePending) || 0
+       revenuePending: Number(revenuePending) || 0,
+      patientsCreatedToday: Number(patientsCreatedToday) || 0
     },
     monthlyPatientTrend: trend // Renamed for clarity
   };

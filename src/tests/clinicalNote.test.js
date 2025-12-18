@@ -20,7 +20,15 @@ describe("Clinical Note Module CRUD", () => {
     const res = await request(app)
       .post("/api/clinical-notes")
       .set("Authorization", `Bearer ${tokens.doctor}`)
-      .send({ patientId: 1, note: "Patient shows improvement" });
+      send({
+          patientId: patientId, // ID retrieved from a seeded patient
+          staffId: tokens.doctor.userId, // ID retrieved from the authenticated user
+          diagnosis: 'Acute viral pharyngitis (J02.9)', // 🔑 Include the new field
+          subjective: 'Patient reports sore throat for 3 days.',
+          objective: 'Throat is red, no exudates.',
+          assessment: 'Pharyngitis.',
+          plan: 'Rest and fluids.',
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.data).toHaveProperty("id");

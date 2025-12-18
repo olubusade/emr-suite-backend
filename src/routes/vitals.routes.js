@@ -4,8 +4,8 @@ import { authRequired } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
 import { 
-  createVitalsSchema, 
-  updateVitalsSchema, 
+  createVitalSchema, 
+  updateVitalSchema, 
   getVitalsSchema 
 } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
@@ -60,7 +60,7 @@ router.get('/',
 router.post('/', 
   authRequired, 
   authorize(PERMISSIONS.VITALS_CREATE), 
-  validate(createVitalsSchema), 
+  validate(createVitalSchema), 
   vitalsController.createVital
 );
 
@@ -112,7 +112,7 @@ router.get('/:id',
 router.put('/:id', 
   authRequired, 
   authorize(PERMISSIONS.VITALS_UPDATE), 
-  validate(updateVitalsSchema), 
+  validate(updateVitalSchema), 
   vitalsController.updateVital
 );
 

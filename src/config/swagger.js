@@ -60,3 +60,15 @@ const specs = swaggerJsdoc(options);
 export function setupSwagger(app) {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
 }
+
+/* 
+👉 http://localhost:5000/api/docs
+
+To validate specific route
+
+npx swagger-cli validate src/routes/roles.route.js 
+
+To validate all routes
+npx swagger-cli validate swagger.json
+
+*/

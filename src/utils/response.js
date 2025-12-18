@@ -17,3 +17,10 @@ export function fail(res, statusCode = 400, message = 'Bad Request', details = n
 export function error(res, statusCode = 500, message = 'Internal Server Error', details = null) {
     return res.status(statusCode).json({ status: STATUS.ERROR, message, details });
 }
+
+/**
+ * Successful response with no content (204 No Content)
+ */
+export function noContent(res) {
+  return res.status(204).end();
+}

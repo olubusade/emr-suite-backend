@@ -52,28 +52,45 @@ Role.belongsToMany(User, {
 // Role ↔ Permission (through RolePermission)
 Role.belongsToMany(Permission, {
   through: RolePermission,
-  foreignKey: 'role_id',
-  otherKey: 'permission_id',
+  foreignKey: 'roleId',
+  otherKey: 'permissionId',
   as: 'permissions',
 });
 Permission.belongsToMany(Role, {
   through: RolePermission,
-  foreignKey: 'permission_id',
-  otherKey: 'role_id',
+  foreignKey: 'permissionId',
+  otherKey: 'roleId',
   as: 'roles',
 });
+/* Role.associate = models => {
+  Role.belongsToMany(models.Permission, {
+    through: models.RolePermission,
+    foreignKey: 'role_id',
+    otherKey: 'permission_id',
+    as: 'permissions',
+  });
+};
+
+Permission.associate = models => {
+  Permission.belongsToMany(models.Role, {
+    through: models.RolePermission,
+    foreignKey: 'permission_id',
+    otherKey: 'role_id',
+    as: 'roles',
+  });
+}; */
 
 // User ↔ Permission (through UserPermission)
 User.belongsToMany(Permission, {
   through: UserPermission,
-  foreignKey: 'user_id',
-  otherKey: 'permission_id',
+  foreignKey: 'userId',
+  otherKey: 'permissionId',
   as: 'permissions',
 });
 Permission.belongsToMany(User, {
   through: UserPermission,
-  foreignKey: 'permission_id',
-  otherKey: 'user_id',
+  foreignKey: 'permissionId',
+  otherKey: 'userId',
   as: 'users',
 });
 

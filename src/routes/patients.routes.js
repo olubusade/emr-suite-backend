@@ -143,6 +143,13 @@ r.post(
   patientController.createPatient
 );
 
+r.get(
+  '/:id',
+  authRequired,
+  authorize(PERMISSIONS.PATIENT_READ),
+  patientController.getPatient
+);
+
 r.put(
   '/:id',
   authRequired,

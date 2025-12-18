@@ -13,6 +13,14 @@ import { z } from 'zod';
  * Helper Validators
  */
 const uuid = () => z.string().uuid({ message: 'Must be a valid UUID' });
+const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{7,15}$/;
+
+// ENUMS matching the PatientModel.js
+const GENDER_ENUM = z.enum(['male', 'female', 'other', 'unknown']);
+const MARITAL_ENUM = z.enum(['single', 'married', 'divorced', 'widowed', 'separated']);
+const BLOOD_ENUM = z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']);
+const GENOTYPE_ENUM = z.enum(['AA', 'AS', 'SS', 'AC', 'SC']);
+
 const isoDateString = () =>
   z.string().refine((s) => !Number.isNaN(Date.parse(s)), {
     message: 'Must be a valid ISO date string'
@@ -60,19 +68,49 @@ export const setPermissionSchema = z.object({
 /* -------------------- Patients -------------------- */
 export const createPatientSchema = z.object({
   body: z.object({
-    fullName: z.string().min(2),
-    age: z.number().int().positive(),
-    diagnosis: z.string().optional()
-  })
+    // --- MANDATORY FIELDS (Core Identity & Auth) ---
+    firstName: z.string().trim().min(2, 'First name must be at least 2 characters.'),
+    lastName: z.string().trim().min(2, 'Last name must be at least 2 characters.'),
+    email: z.string().email('Invalid email format.'),
+    password: z.string().min(8, 'Password must be at least 8 characters.'), // Increased security minimum
+
+    dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of Birth must be in YYYY-MM-DD format.'),
+    gender: GENDER_ENUM.default('unknown'), // Ensure the default value is included if not provided
+    
+    // --- OPTIONAL FIELDS (Demographics & Medical) ---
+    middleName: z.string().trim().optional(),
+    maritalStatus: MARITAL_ENUM.optional(),
+    
+    phone: z.string().regex(phoneRegex, 'Invalid phone number format.').optional(),
+    
+    nationalId: z.string().optional(), // For compliance
+    address: z.string().trim().optional(),
+    occupation: z.string().trim().optional(),
+    nationality: z.string().trim().optional(),
+    stateOfOrigin: z.string().trim().optional(),
+    
+    bloodGroup: BLOOD_ENUM.optional(),
+    genotype: GENOTYPE_ENUM.optional(),
+
+    // --- EMERGENCY CONTACT ---
+    emergencyContactName: z.string().trim().optional(),
+    emergencyContactPhone: z.string().regex(phoneRegex, 'Invalid phone number format.').optional(),
+    emergencyRelationship: z.string().trim().optional(),
+    
+    profileImage: z.string().url('Profile image must be a valid URL.').optional()
+  }),
 });
 
 export const updatePatientSchema = z.object({
   params: z.object({ id: uuid() }),
-  body: z.object({
-    fullName: z.string().min(2).optional(),
-    age: z.number().int().positive().optional(),
-    diagnosis: z.string().optional()
-  })
+  body: createPatientSchema.shape.body.partial().extend({
+    // Password still needs its own specific validation/message
+    password: z.string().min(8, 'Password must be at least 8 characters.').optional(),
+    // Just allow them to be sent if they meet the basic type validation.
+    // The Service will ignore them.
+    email: z.string().email().optional(), 
+    role: z.string().optional(),
+  }),
 });
 
 export const getPatientSchema = z.object({
@@ -160,23 +198,24 @@ export const listAppointmentsSchema = z.object({
 /* -------------------- Clinical Notes (SOAP) -------------------- */
 export const createClinicalNoteSchema = z.object({
   body: z.object({
-    patientId: uuid(),
-    staffId: uuid(),
+    // These should be verified in the controller using a middleware or database lookup
+    patientId: z.string().uuid(),
+    
+    // The staffId is typically pulled from req.user.id (the authenticated doctor)
+    // but should be accepted if the staff is creating a note for another staff member (rare)
+    staffId: z.string().uuid().optional(), 
+    
+    diagnosis: z.string().min(3).max(1000).optional(),
     subjective: z.string().optional(),
     objective: z.string().optional(),
     assessment: z.string().optional(),
-    plan: z.string().optional()
-  })
+    plan: z.string().optional(),
+  }),
 });
 
 export const updateClinicalNoteSchema = z.object({
-  params: z.object({ id: uuid() }),
-  body: z.object({
-    subjective: z.string().optional(),
-    objective: z.string().optional(),
-    assessment: z.string().optional(),
-    plan: z.string().optional()
-  })
+  params: z.object({ id: z.string().uuid() }),
+  body: createClinicalNoteSchema.shape.body.partial()
 });
 
 export const getClinicalNotesSchema = z.object({
@@ -192,23 +231,36 @@ export const deleteClinicalNoteSchema = z.object({
 });
 
 /* -------------------- Vitals -------------------- */
-export const createVitalsSchema = z.object({
+export const createVitalSchema = z.object({
   body: z.object({
-    patientId: uuid(),
-    staffId: uuid(), // nurse who recorded
-    appointmentId: uuid().optional(),
-    temperature: z.number().min(30).max(45).optional(), // °C
-    bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/).optional(), // e.g. 120/80
-    heartRate: z.number().int().min(30).max(220).optional(), // bpm
-    respiratoryRate: z.number().int().min(5).max(60).optional(),
-    spo2: z.number().min(50).max(100).optional(), // %
-    weight: z.number().positive().optional(),
-    height: z.number().positive().optional(),
-    notes: z.string().optional()
-  })
+    // Mandatory field (Must match a valid patient)
+    patientId: z.string().uuid(), 
+    
+    // Mandatory field (When the reading was taken)
+    readingAt: z.string().datetime(), // Ensures ISO 8601 format (e.g., 2025-10-25T14:30:00.000Z)
+
+    // Optional fields with specific types and ranges
+    temperature: z.number().min(30).max(45).optional(), // Realistic temperature range
+    heartRate: z.number().int().min(30).max(200).optional(),
+    
+    // String format validation for "Systolic/Diastolic"
+    bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/, 'Format must be Sys/Dia (e.g., 120/80)').optional(), 
+    
+    respiratoryRate: z.number().int().min(5).max(40).optional(),
+
+    weightKg: z.number().min(0).optional(),
+    heightCm: z.number().min(0).optional(),
+    spo2: z.number().int().min(0).max(100).optional(), // Oxygen saturation
+    painScale: z.number().int().min(0).max(10).optional(),
+    
+    notes: z.string().optional(),
+    
+    // nurseId is often pulled from req.user.id, but allow it to be passed if needed
+    nurseId: z.string().uuid().optional(),
+  }),
 });
 
-export const updateVitalsSchema = z.object({
+export const updateVitalSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
     temperature: z.number().min(30).max(45).optional(),
@@ -226,7 +278,7 @@ export const getVitalsSchema = z.object({
   params: z.object({ id: uuid() })
 });
 
-export const deleteVitalsSchema = z.object({
+export const deleteVitalSchema = z.object({
   params: z.object({ id: uuid() })
 });
 

@@ -29,7 +29,7 @@ export const AppointmentModel = (sequelize, DataTypes) => {
       status: {
         type: DataTypes.ENUM("scheduled", "completed", "canceled", "no_show"),
         defaultValue: "scheduled",
-      },
+      }
     },
     {
       tableName: "appointments",

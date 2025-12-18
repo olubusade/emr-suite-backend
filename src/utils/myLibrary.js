@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 //calculate age from the current date of birth
  export function calculateAge(dobString) {
   // 1. Convert the input string (e.g., "1988-01-01") into a Date object
@@ -15,4 +17,12 @@
   }
 
   return age;
+ }
+
+export function generateTempPassword(length = 10) {
+  return crypto
+    .randomBytes(length)
+    .toString('base64')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, length);
 }

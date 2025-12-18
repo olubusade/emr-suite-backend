@@ -1,240 +1,329 @@
-# EMR-Suite Backend Demo
 
-![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square) ![Sequelize](https://img.shields.io/badge/ORM-Sequelize-lightblue?style=flat-square) ![Jest](https://img.shields.io/badge/Testing-Jest-orange?style=flat-square) ![Docker](https://img.shields.io/badge/Containerized-blue?style=flat-square)
+# 🏥 EMR-Suite Backend
 
-**Electronic Medical Records (EMR) Suite – Backend Demo**
+**Production-Grade Electronic Medical Records (EMR) Backend (Demo)**
 
-> ⚠️ **Note for recruiters:** This repo is a **demo** of a production-grade backend powering the **wiCare EMR system**.
-> It demonstrates **authentication, RBAC, audit logging, Swagger docs, metrics, Dockerized workflows, and modular APIs**.
-> Frontend integration (Angular/Ionic) is in progress.
-
----
-
-## 🌟 Key Features
-
-* **Authentication & Security**
-
-  * JWT access + refresh tokens
-  * Token revocation & expiry
-  * Rate limiting (global & per-route)
-  * Helmet + CORS + morgan request logging
-* **RBAC (Role-Based Access Control)**
-
-  * Roles: `super_admin`, `admin`, `doctor`, `nurse`, `receptionist`, `patient`
-  * Fine-grained permissions (e.g. `appointment.create`, `clinicalnote.read`, `vital.update`)
-  * Many-to-many relations (`UserRoles`, `RolePermissions`)
-  * Centralized `authorize()` middleware
-* **Modules / APIs**
-
-  * **Users & Roles** → CRUD, login, password change
-  * **Patients** → CRUD
-  * **Appointments** → CRUD
-  * **Bills** → CRUD
-  * **Clinical Notes** → CRUD
-  * **Vitals** → CRUD
-* **Audit Logging**
-
-  * Records CRUD + Auth actions
-  * Includes `actorId`, `entity`, `before`, `after`
-* **Developer Experience**
-
-  * Swagger (`/api-docs`) with RBAC notes
-  * Sequelize migrations + seeds
-  * Jest + Supertest tests (`appointments`, `clinicalNotes`, `vitals`)
-  * Docker (dev + prod) with `entrypoint.sh` waiting for DB
-  * Prometheus metrics (`/metrics`) for monitoring
-* **Recruiter-Friendly**
-
-  * Modular, scalable, CI/CD-ready
-  * Shows ability to handle **real-world infra**
+![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square)
+![Sequelize](https://img.shields.io/badge/ORM-Sequelize-lightblue?style=flat-square)
+![Jest](https://img.shields.io/badge/Testing-Jest-orange?style=flat-square)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square)
+![RBAC](https://img.shields.io/badge/Security-RBAC-red?style=flat-square)
 
 ---
 
-## 🏗️ Project Structure
+## 📌 Overview
 
-```
-emr-suite-backend/
-├─ src/
-│  ├─ config/               # env, db, swagger, jwt config
-│  ├─ constants/            # roles, permissions, status codes
-│  ├─ controllers/          # Express handlers
-│  ├─ middlewares/          # auth, RBAC, audit, rateLimit, metrics
-│  ├─ models/               # Sequelize models
-│  ├─ routes/               # API route definitions
-│  ├─ seed/                 # seeding logic for roles, users, permissions
-│  ├─ utils/                # logger, validators
-│  ├─ app.js                # express app setup
-│  └─ server.js             # entry point
-├─ tests/                   # Jest + Supertest
-│  ├─ appointment.test.js
-│  ├─ clinicalNote.test.js
-│  └─ vital.test.js
-├─ docker/
-│  ├─ Dockerfile            # multi-stage (production)
-│  ├─ Dockerfile.dev        # development image
-│  ├─ entrypoint.sh         # waits for DB, runs migrations/seeds, starts server
-│  ├─ init.sql              # optional DB bootstrap
-│  ├─ docker-compose.dev.yml
-│  └─ docker-compose.prod.yml
-├─ .env.docker.dev
-├─ .env.local.dev
-├─ .env.prod
-├─ package.json
-└─ README.md
-```
+**EMR-Suite Backend** is a **production-grade Node.js backend** designed to power a modern **Electronic Medical Records (EMR)** platform.
+
+> ⚠️ **Recruiter / Reviewer Note**
+> This repository is a **backend demo extracted from a real EMR system** (wiCare EMR).
+> It intentionally focuses on **architecture, security, scalability, and healthcare workflows**, not UI polish.
+> The frontend (Angular + Ionic) lives in a separate repository.
+
+This project demonstrates how I design **secure, auditable, role-aware APIs** suitable for **regulated healthcare environments**.
 
 ---
 
-## 🖼️ Architecture Diagram
+## 🎯 What This Project Demonstrates
 
-```mermaid
-flowchart TD
-    A[Client] --> B[Express Middleware]
-    B -->|JWT Auth| C[Controllers]
-    B -->|RBAC Check| C
-    B -->|Audit Log| C
-    C --> D[Services / Business Logic]
-    D --> E[Sequelize ORM]
-    E --> F[(PostgreSQL DB)]
-    B --> G[/Prometheus Metrics/]
+✔ Clean backend architecture
+✔ Secure authentication & authorization
+✔ Real-world healthcare workflows
+✔ Auditability & compliance thinking
+✔ Production readiness (Docker, CI, tests, monitoring)
 
-    style A fill:#f9f,stroke:#333
-    style B fill:#bbf,stroke:#333
-    style C fill:#bfb,stroke:#333
-    style D fill:#ffb,stroke:#333
-    style E fill:#fbf,stroke:#333
-    style F fill:#fbb,stroke:#333
-    style G fill:#ccc,stroke:#333
-```
+This is **not** a CRUD demo — it is a **system-level backend**.
 
 ---
 
-## 🔐 Authentication & RBAC
+## 🧠 Core Architectural Principles
 
-* **Login:** `POST /api/auth/login`
-* **Refresh:** `POST /api/auth/refresh`
-* **Logout:** `POST /api/auth/logout`
-* **Change password:** `POST /api/auth/change-password`
+* **Security-first design** (JWT, RBAC, rate limits)
+* **Explicit role & permission modeling**
+* **Auditability for healthcare compliance**
+* **Separation of concerns** (controllers, services, middleware)
+* **Observable & testable** by default
+* **Container-ready** for modern deployments
 
-### Roles & Permissions
+---
 
-* `super_admin` → all modules
-* `admin` → admin modules
-* `doctor` → clinical notes + vitals
-* `nurse` → vitals + patient info
-* `receptionist` → appointments + registration
-* `patient` → limited self-access
+## 🔐 Authentication & Security
 
-Example middleware usage:
+### Authentication
 
-```js
+* JWT **access & refresh tokens**
+* Token expiration & revocation
+* Secure password hashing
+* Password change enforcement
+
+### Security Hardening
+
+* Rate limiting (global + route-level)
+* Helmet security headers
+* CORS configuration
+* Centralized request logging
+
+---
+
+## 🧩 Role-Based Access Control (RBAC)
+
+RBAC is **first-class**, not an afterthought.
+
+### Roles
+
+* `super_admin`
+* `admin`
+* `doctor`
+* `nurse`
+* `receptionist`
+* `patient`
+
+### Permission Model
+
+* Fine-grained permissions (e.g. `appointment.create`, `vital.update`)
+* Many-to-many relationships:
+
+  * `Users ↔ Roles`
+  * `Roles ↔ Permissions`
+* Centralized `authorize()` middleware
+
+```ts
 router.post(
-  "/",
+  '/',
   authRequired,
   authorize(PERMISSIONS.CLINICALNOTE_CREATE),
   clinicalController.create
 );
 ```
 
----
-
-## 🌐 API Docs
-
-* Swagger UI: [http://localhost:5000/api-docs](http://localhost:5000/api-docs)
-  Includes request/response samples + RBAC notes.
+✔ Easily extensible
+✔ Prevents role leakage
+✔ Matches enterprise RBAC standards
 
 ---
 
-## 🧪 Testing
+## 🏥 Domain Modules
 
-```bash
-npm test             # run all tests
-npm run test:watch   # watch mode
-npm run test:rbac    # RBAC-specific
+Each module mirrors **real hospital workflows**:
+
+### 🧍 Patients
+
+* Registration & demographic management
+* Medical identifiers
+* Emergency contacts
+
+### 📅 Appointments
+
+* Reception-driven scheduling
+* Status lifecycle (today / past / upcoming)
+* Role-aware visibility
+
+### 🩺 Clinical Notes
+
+* Doctor-only creation
+* Immutable historical records
+* Full audit trail
+
+### 💉 Vitals
+
+* Nurse-driven vitals capture
+* Time-series friendly design
+
+### 💳 Billing
+
+* Paid vs pending bills
+* Financial audit readiness
+
+---
+
+## 🧾 Audit Logging
+
+Every sensitive action is recorded.
+
+**Audit captures:**
+
+* Actor (who performed the action)
+* Entity affected
+* Action type
+* Before & after state
+* Timestamp
+
+This is critical for:
+
+* Healthcare compliance
+* Internal investigations
+* Debugging production incidents
+
+---
+
+## 📊 Monitoring & Observability
+
+* **Prometheus metrics** exposed at `/metrics`
+* Tracks:
+
+  * Request count
+  * Latency
+  * Error rates
+  * Route-level performance
+
+Ready for **Grafana integration**.
+
+---
+
+## 📐 System Architecture
+
+```mermaid
+flowchart TD
+    A[Client / Frontend] --> B[Express Middleware]
+    B -->|JWT Auth| C[Controllers]
+    B -->|RBAC Check| C
+    B -->|Audit Logging| C
+    C --> D[Service Layer]
+    D --> E[Sequelize ORM]
+    E --> F[(PostgreSQL)]
+    B --> G[Prometheus Metrics]
+
+    style A fill:#f9f
+    style B fill:#bbf
+    style C fill:#bfb
+    style D fill:#ffb
+    style E fill:#fbf
+    style F fill:#fbb
+    style G fill:#ccc
 ```
 
-Tests cover **Appointments**, **Clinical Notes**, **Vitals**, with both positive and negative cases.
+---
+
+## 📁 Project Structure
+
+```bash
+emr-suite-backend/
+├── src/
+│   ├── config/          # env, db, jwt, swagger
+│   ├── constants/       # roles, permissions, enums
+│   ├── controllers/    # HTTP layer
+│   ├── middlewares/    # auth, RBAC, audit, rateLimit
+│   ├── models/         # Sequelize models
+│   ├── routes/         # API definitions
+│   ├── seed/           # roles, users, permissions
+│   ├── services/       # SQL logic
+│   ├── utils/          # logger, validators
+│   ├── app.js
+│   └── server.js
+├── tests/              # Jest + Supertest
+├── docker/             # Docker & compose configs
+├── .env.*              # Environment configs
+└── README.md
+```
 
 ---
 
-## 🚀 Local Development (no Docker)
+## 📚 API Documentation
 
-### Prereqs
+* **Swagger UI:**
+  👉 `http://localhost:5000/api-docs`
+
+Includes:
+
+* Request/response schemas
+* Auth requirements
+* RBAC notes per endpoint
+
+---
+
+## 🧪 Testing Strategy
+
+* **Jest + Supertest**
+* Covers:
+
+  * Appointments
+  * Clinical Notes
+  * Vitals
+  * RBAC enforcement
+* Includes negative cases (permission denied, invalid input)
+
+```bash
+npm test
+npm run test:watch
+```
+
+---
+
+## 🚀 Local Development
+
+### Prerequisites
 
 * Node.js ≥ 20
 * PostgreSQL ≥ 15
 * npm ≥ 9
 
-### Setup
-
 ```bash
 git clone https://github.com/olubusade/emr-suite-backend.git
 cd emr-suite-backend
 npm install
-cp .env.dev .env
+cp .env.local.dev .env
 npm run migrate
 npm run seed
 npm run dev
 ```
 
-Server runs at: `http://localhost:5000`
+Server: `http://localhost:5000`
 
 ---
 
-## 🐳 Docker Development
+## 🐳 Docker Support
+
+### Development
 
 ```bash
-# Start app + Postgres in dev mode
 npm run docker:up:dev
-
-# Seed roles, users, permissions
 npm run docker:seed:dev
-
-# Tear down
-npm run docker:down:dev
 ```
 
-> Uses `entrypoint.sh` to wait for DB readiness → runs migrations + seeds → starts server.
-
----
-
-## 🏭 Docker Production
+### Production
 
 ```bash
 npm run docker:up:prod
 npm run docker:seed:prod
-npm run docker:down:prod
 ```
 
-Optimized multi-stage build (slim runtime, prod deps only).
+Multi-stage builds ensure:
+
+* Small image size
+* Faster deployments
+* Production-only dependencies
 
 ---
 
-## ⚡ CI/CD (GitHub Actions)
+## 🔁 CI/CD (GitHub Actions)
 
-* Runs on **push & PR → main**
-* Steps:
+* Runs on every **push & PR**
+* Pipeline:
 
-  1. Spin up Postgres service
+  1. Spin up PostgreSQL
   2. Run migrations & seeds
-  3. Run Jest test suite
-* Guarantees backend stability per commit.
+  3. Execute Jest test suite
+
+✔ Prevents broken deployments
+✔ Enforces discipline
 
 ---
 
-## 📊 Monitoring
+## 👤 About the Author
 
-* **Prometheus metrics:** `/metrics`
-  Tracks:
+**Busade Adedayo**
+Senior Software Engineer (Healthcare Systems)
 
-  * Request count & latency
-  * Error rates
-  * Route-level performance
-
-Ready to hook into **Grafana**.
+* 5+ years building production EMR systems
+* Strong focus on backend architecture & security
+* Experience with real hospital workflows
+* Passionate about scalable, maintainable systems
 
 ---
 
 ## 📜 License
 
-MIT License © 2025 Busade Adedayo
+MIT © 2025 — Busade Adedayo
+
+---

@@ -49,5 +49,5 @@ export async function seedRolePermissions(roles, permissions, RolePermission) {
   }
 
   await RolePermission.bulkCreate(records);
-  console.log('Role-Permission mapping completed with RBAC logic ✅');
+  console.log('Role-Permission mapping completed with RBAC logic');
 }

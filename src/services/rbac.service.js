@@ -54,7 +54,7 @@ export async function getUserPermissions(userId) {
  */
 export async function userHasPermission(userId, permissionKey) {
   const permissions = await getUserPermissions(userId);
-  console.log('Permissions:::', permissions);
-  console.log('permissionKey:::',permissionKey);
+  /* console.log('Permissions:::', permissions);
+  console.log('permissionKey:::',permissionKey); */
   return permissions.includes(permissionKey);
 }

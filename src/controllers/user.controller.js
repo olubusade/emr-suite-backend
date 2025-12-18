@@ -78,7 +78,8 @@ export async function listStaff(req, res) {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      role: user.roleName,
+      role: user.designation,
+      active:user.active,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }));
