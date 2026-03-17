@@ -194,6 +194,15 @@ flowchart TD
 ```
 
 ---
+🚀 Deployment
+Zero-Cost Demo (Render)
+For demo purposes, this backend is configured for Render.
+
+Connect this GitHub repo to Render.
+
+Add DATABASE_URL and JWT_SECRET to environment variables.
+
+The render.yaml (Blueprint) will automatically provision the Web Service and Database.
 
 ## 📁 Project Structure
 
