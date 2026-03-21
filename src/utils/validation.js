@@ -8,6 +8,7 @@ import { ZodError } from 'zod';
  * router.post('/', validate(createAppointmentSchema), controller.createAppointment)
  */
 export const validate = (schema) => (req, res, next) => {
+  console.log('PARAMS VALIDATE>>>',req.query)
   try {
     // Build object for parsing
     const toValidate = { body: req.body, params: req.params, query: req.query };
@@ -15,6 +16,7 @@ export const validate = (schema) => (req, res, next) => {
     // Parse - allow either a Zod schema or a function that returns parsed
     const parsed = typeof schema.parse === 'function' ? schema.parse(toValidate) : schema(toValidate);
     if (parsed) {
+      console.log('PARAMS VALIDATE>>>',parsed.query)
       if (parsed.body) req.body = parsed.body;
       if (parsed.params) req.params = parsed.params;
       if (parsed.query) req.query = parsed.query;

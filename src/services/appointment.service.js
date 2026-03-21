@@ -4,29 +4,53 @@ import { calculateAge } from '../utils/myLibrary.js';
  * List appointments with optional limit
  */
 
-export async function listAppointments({ page = 1, pageSize = 20, search }) {
+export async function listAppointments({ page = 1, pageSize = 20, search, status }) {
   const pageInt = Number(page) || 1;
   const limitInt = Number(pageSize) || 20;
   const offset = (pageInt - 1) * limitInt;
-const where = search
+
+  // Build patient search condition
+  const patientWhere = search
     ? { firstName: { [Ou.iLike]: `%${search}%` } }
     : {};
-   
-  const {count, rows } = await Appointment.findAndCountAll({
+
+  // Build appointment date filter based on the flag
+  const now = new Date();
+  let appointmentWhere = {};
+
+  if (status === 'PAST') {
+    where.appointmentDate = { [Op.lt]: new Date() };
+} else if (status === 'UPCOMING') {
+    where.appointmentDate = { [Op.gt]: new Date() };
+} else if (status === 'TODAY') {
+    const start = new Date();
+    start.setHours(0,0,0,0);
+    const end = new Date();
+    end.setHours(23,59,59,999);
+    where.appointmentDate = { [Op.between]: [start, end] };
+}
+
+  const { count, rows } = await Appointment.findAndCountAll({
     limit: limitInt,
     offset,
-    order: [['appointment_date', 'DESC']],
+    order: [['appointmentDate', 'DESC']],
+    where: appointmentWhere,
     include: [
       {
-        model: Patient, as: 'patient', attributes: ['id', 'firstName', 'lastName', 'email'],
-        
-        where,
-       },
-      { model: User, as: 'staff', attributes: ['id', 'fullName', 'email'] }
-    ]
+        model: Patient,
+        as: 'patient',
+        attributes: ['id', 'firstName', 'lastName', 'email'],
+        where: patientWhere,
+      },
+      {
+        model: User,
+        as: 'staff',
+        attributes: ['id', 'fullName', 'email'],
+      },
+    ],
   });
 
-  const items = rows.map(appt => ({
+  const items = rows.map((appt) => ({
     id: appt.id,
     patientId: appt.patientId,
     staffId: appt.staffId,
@@ -35,14 +59,23 @@ const where = search
     reason: appt.reason,
     notes: appt.notes,
     status: appt.status,
-    patient: appt.patient ? { id: appt.patient.id, fullName: appt.patient.firstName+' '+ appt.patient.lastName, email:appt.patient.email} : null,
-    staff: appt.staff ? { id: appt.staff.id, fullName: appt.staff.fullName, email: appt.staff.email } : null
+    patient: appt.patient
+      ? {
+          id: appt.patient.id,
+          fullName: appt.patient.firstName + ' ' + appt.patient.lastName,
+          email: appt.patient.email,
+        }
+      : null,
+    staff: appt.staff
+      ? { id: appt.staff.id, fullName: appt.staff.fullName, email: appt.staff.email }
+      : null,
   }));
-   return {
+
+  return {
     items,
     total: count,
     page: pageInt,
-    pages: Math.ceil(count / limitInt)
+    pages: Math.ceil(count / limitInt),
   };
 }
 

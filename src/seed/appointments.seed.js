@@ -4,32 +4,35 @@ export async function seedAppointments(Appointment, patients, staff) {
   const now = new Date();
 
   const appointmentsData = [
+    // Past Appointment (yesterday)
     {
       id: uuidv4(),
-      patientId: patients[0].id,  // camelCase
-      staffId: staff.id,           // camelCase
-      appointmentDate: new Date(now.getTime() + 3600 * 1000),
-      reason: 'Routine Checkup',
-      status: 'scheduled',
+      patientId: patients[0].id,
+      staffId: staff.id,
+      appointmentDate: new Date(now.getTime() - 24 * 60 * 60 * 1000), // yesterday
+      reason: 'Follow-up',
+      status: 'completed',
     },
+    // Today Appointment
     {
       id: uuidv4(),
       patientId: patients[1].id,
       staffId: staff.id,
-      appointmentDate: new Date(now.getTime() + 7200 * 1000),
-      reason: 'Follow-up',
+      appointmentDate: now, // now
+      reason: 'Routine Checkup',
       status: 'scheduled',
     },
+    // Upcoming Appointment (tomorrow)
     {
       id: uuidv4(),
       patientId: patients[2].id,
       staffId: staff.id,
-      appointmentDate: new Date(now.getTime() + 10800 * 1000),
+      appointmentDate: new Date(now.getTime() + 24 * 60 * 60 * 1000), // tomorrow
       reason: 'Lab Results Review',
       status: 'scheduled',
     },
   ];
 
   await Appointment.bulkCreate(appointmentsData);
-  console.log('Demo appointments created');
+  console.log('Demo appointments seeded: Past, Today, Upcoming');
 }

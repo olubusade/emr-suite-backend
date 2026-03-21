@@ -32,6 +32,7 @@ export async function listPatients({ page = 1, pageSize = 20, search }) {
     attributes: { exclude: ['password', 'role', 'national_id'] } 
   });
 
+  console.log('rows::',rows);
   const items = rows.map(p => ({
     id: p.id,
     firstName: p.firstName, // 🔑 Consistent naming
@@ -39,6 +40,14 @@ export async function listPatients({ page = 1, pageSize = 20, search }) {
     email: p.email,
     phone: p.phone,
     dob: p.dob,
+    address:p.address,
+    gender: p.gender,
+    maritalStatus: p.maritalStatus,
+    role: p.role,
+    bloodGroup: p.bloodGroup,
+    genotype: p.genotype,
+    nationality: p.nationality,
+    status: p.status,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt
   }));

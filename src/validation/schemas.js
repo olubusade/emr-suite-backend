@@ -187,12 +187,18 @@ export const deleteAppointmentSchema = z.object({
 
 export const listAppointmentsSchema = z.object({
   query: z.object({
-    limit: z.preprocess((v) => (v ? Number(v) : 100), z.number().int().positive().max(1000).optional()),
+    page: z.preprocess((v) => Number(v) || 1, z.number()),
+    limit: z.preprocess((v) => Number(v) || 20, z.number()),
     offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
+    //Allow the new timeFrame flag
+    timeFrame: z.enum(['PAST', 'UPCOMING', 'TODAY']).optional(),
     staffId: uuid().optional(),
     patientId: uuid().optional(),
-    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional()
+    // Keep the actual database status separate
+    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
+    search: z.string().optional(),
   })
+    //.passthrough()
 });
 
 /* -------------------- Clinical Notes (SOAP) -------------------- */
