@@ -9,7 +9,10 @@ export async function seedAppointments(Appointment, patients, staff) {
       id: uuidv4(),
       patientId: patients[0].id,
       staffId: staff.id,
+      createdBy: staff.id,
       appointmentDate: new Date(now.getTime() - 24 * 60 * 60 * 1000), // yesterday
+      appointmentTime: "10:30",
+      notes: "Follow-up appointment from last month.",
       reason: 'Follow-up',
       status: 'completed',
     },
@@ -18,7 +21,10 @@ export async function seedAppointments(Appointment, patients, staff) {
       id: uuidv4(),
       patientId: patients[1].id,
       staffId: staff.id,
+      createdBy: staff.id,
       appointmentDate: now, // now
+      appointmentTime: "11:30",
+      notes: "Routine checkup appointment.",
       reason: 'Routine Checkup',
       status: 'scheduled',
     },
@@ -27,12 +33,17 @@ export async function seedAppointments(Appointment, patients, staff) {
       id: uuidv4(),
       patientId: patients[2].id,
       staffId: staff.id,
+      createdBy: staff.id,
       appointmentDate: new Date(now.getTime() + 24 * 60 * 60 * 1000), // tomorrow
+      appointmentTime: "14:00",
+      notes: "Appointment for lab results review.",
       reason: 'Lab Results Review',
       status: 'scheduled',
     },
   ];
 
-  await Appointment.bulkCreate(appointmentsData);
-  console.log('Demo appointments seeded: Past, Today, Upcoming');
+  const createdAppointments = await Appointment.bulkCreate(appointmentsData, { returning: true });
+  console.log('✅ Demo appointments seeded');
+  
+  return createdAppointments;
 }

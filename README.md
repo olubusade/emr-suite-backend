@@ -2,7 +2,7 @@
 # 🏥 EMR-Suite Backend
 
 **Production-Grade Electronic Medical Records (EMR) Backend (Demo)**
-
+\dd
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square)
 ![Sequelize](https://img.shields.io/badge/ORM-Sequelize-lightblue?style=flat-square)
@@ -48,6 +48,29 @@ This is **not** a CRUD demo — it is a **system-level backend**.
 
 ---
 
+## 🛠️ The "Senior Engineer" Stack
+* **Runtime:** Node.js 20.x (LTS)
+* **Data:** PostgreSQL 15 + Sequelize ORM
+* **Validation:** Zod (Schema-first request validation)
+* **Security:** JWT (Access/Refresh), Argon2/Bcrypt, Helmet, Rate-Limiting
+* **DevOps:** Docker (Multi-stage), GitHub Actions CI/CD, Prometheus
+* **Testing:** Jest + Supertest (Integration & RBAC Audit Testing)
+
+---
+
+## 🧾 Healthcare Compliance & Auditing
+In a real EMR, "Who changed what" is a legal requirement. 
+* **Immutable Logs:** The system implements an Audit Service that captures the `before` and `after` state of sensitive records.
+* **Actor Tracking:** Every mutation is tied to a specific User ID and Timestamp, providing a 100% transparent history for Clinical Notes and Billing records.
+
+---
+## 📊 Observability (Prometheus & Winston)
+Built for the "Day 2" of production.
+* **Metrics:** Custom Prometheus counters track API latency and 4xx/5xx error rates.
+* **Structured Logging:** Winston is configured with transport layers to ensure logs are searchable and follow a standard JSON format for ELK/Loki integration.
+
+---
+
 ## 🔐 Authentication & Security
 
 ### Authentication
@@ -63,6 +86,13 @@ This is **not** a CRUD demo — it is a **system-level backend**.
 * Helmet security headers
 * CORS configuration
 * Centralized request logging
+
+---
+
+## 🔐 Advanced RBAC & Security Logic
+Most demos stop at "User vs Admin." This system implements a **Many-to-Many Permission Matrix**:
+* **Authorize Middleware:** A custom-built higher-order function that validates specific permissions (e.g., `CLINICAL_NOTE_EDIT`) rather than just checking a role name.
+* **Zod Integration:** Every request is validated against a strict schema before hitting the controller, preventing injection and malformed data at the edge.
 
 ---
 

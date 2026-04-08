@@ -28,7 +28,7 @@ export async function seedUsers(User) {
     id: uuidv4(),
     fName: 'John',
     lName: 'Doe',
-    fullName: 'John Doctor',
+    fullName: 'John Doe',
     email: 'doctor@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('doctor@123', 10),
     active: true
@@ -38,7 +38,7 @@ export async function seedUsers(User) {
     id: uuidv4(),
     fName: 'Mary',
     lName: 'Smith',
-    fullName: 'Mary Nurse',
+    fullName: 'Mary Smith',
     email: 'nurse@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('nurse@123', 10),
     active: true
@@ -47,8 +47,8 @@ export async function seedUsers(User) {
   users.receptionist = await User.create({
     id: uuidv4(),
     fName: 'Jane',
-    lName: 'Reception',
-    fullName: 'Jane Reception',
+    lName: 'Williams',
+    fullName: 'Jane Williams',
     email: 'reception@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('reception@123', 10),
     active: true
@@ -57,8 +57,8 @@ export async function seedUsers(User) {
   users.patient = await User.create({
     id: uuidv4(),
     fName: 'Paul',
-    lName: 'Patient',
-    fullName: 'Paul Patient',
+    lName: 'Martins',
+    fullName: 'Paul Martins',
     email: 'patient@busade-emr-demo.com',
     passwordHash: await bcrypt.hash('patient@123', 10),
     active: true

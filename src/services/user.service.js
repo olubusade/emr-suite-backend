@@ -37,7 +37,7 @@ export async function createUser({ email, password, fullName, roleIds = [] }) {
 /**
  * List users with pagination and optional search
  */
-export async function listStaff({ page = 1, pageSize = 20, search }) {
+export async function listStaff({ page = 1, pageSize = 20, search,roleKey }) {
   const pageInt = Number(page) || 1;
   const limitInt = Number(pageSize) || 20;
   const offset = (pageInt - 1) * limitInt;
@@ -48,13 +48,9 @@ export async function listStaff({ page = 1, pageSize = 20, search }) {
   
   // 🔑 NOTE: The WHERE clause should filter by role KEY, not name, for robustness.
   // Assuming STAFF_ROLES_ARRAY contains the role keys (e.g., ['DOCTOR', 'NURSE'])
-  const roleWhere = {
-    // If your roles use keys:
-    // key: STAFF_ROLES_ARRAY,
-    
-    // If your roles use names (based on original code):
-    name: STAFF_ROLES_ARRAY.map(role => role.toLowerCase())
-  };
+  const roleWhere = roleKey 
+    ? { name: roleKey.toLowerCase() } // Filter specifically for 'doctor'
+    : { name: STAFF_ROLES_ARRAY.map(r => r.toLowerCase()) }; // Default to all staff
 
 
   const { count, rows } = await User.findAndCountAll({

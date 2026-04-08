@@ -6,7 +6,9 @@ import { validate } from '../utils/validation.js';
 import { 
   createVitalSchema, 
   updateVitalSchema, 
-  getVitalsSchema 
+  getVitalsSchema,
+  getVitalByPatientSchema,
+  getVitalByAppointmentSchema
 } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
 
@@ -24,19 +26,38 @@ const router = express.Router();
  * /vitals:
  *   get:
  *     summary: List all vitals
+ *     description: Retrieve all vital records, optionally filtered by patient.
  *     tags: [Vitals]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: patientId
- *         schema: { type: string, format: uuid }
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter vitals by patient ID
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 10
  *     responses:
  *       200:
- *         description: List of vitals
+ *         description: List of vitals retrieved successfully
  */
-router.get('/', 
-  authRequired, 
-  authorize(PERMISSIONS.VITALS_READ), 
+router.get(
+  '/',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_READ),
   vitalsController.listVitals
 );
 
@@ -45,8 +66,10 @@ router.get('/',
  * /vitals:
  *   post:
  *     summary: Create a new vital record
+ *     description: Capture a new set of patient vital readings.
  *     tags: [Vitals]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -55,13 +78,97 @@ router.get('/',
  *             $ref: '#/components/schemas/CreateVital'
  *     responses:
  *       201:
- *         description: Vital record created
+ *         description: Vital record created successfully
+ *       400:
+ *         description: Validation error
  */
-router.post('/', 
-  authRequired, 
-  authorize(PERMISSIONS.VITALS_CREATE), 
-  validate(createVitalSchema), 
+router.post(
+  '/',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_CREATE),
+  validate(createVitalSchema),
   vitalsController.createVital
+);
+
+/**
+ * @swagger
+ * /vitals/patient/{patientId}:
+ *   get:
+ *     summary: Get all vitals for a specific patient
+ *     description: Retrieves the full vital history for a patient.
+ *     tags: [Vitals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Unique identifier of the patient
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Patient vitals retrieved successfully
+ *       400:
+ *         description: Invalid patient ID
+ */
+router.get(
+  '/patient/:patientId',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_READ),
+  validate(getVitalByPatientSchema),
+  vitalsController.getVitalsByPatient
+);
+/**
+ * @swagger
+ * /vitals/appointment/{appointmentId}:
+ *   get:
+ *     summary: Get all vitals for a specific appointment
+ *     description: Retrieves the full vital history for an appointment.
+ *     tags: [Vitals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: appointmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Unique identifier of the appointment
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Patient vitals retrieved successfully
+ *       400:
+ *         description: Invalid patient ID
+ */
+router.get(
+  '/appointment/:appointmentId',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_READ),
+  validate(getVitalByAppointmentSchema),
+  vitalsController.getVitalsByAppointment
 );
 
 /**
@@ -69,21 +176,29 @@ router.post('/',
  * /vitals/{id}:
  *   get:
  *     summary: Get a single vital record
+ *     description: Retrieve details of a specific vital record.
  *     tags: [Vitals]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Unique identifier of the vital record
  *     responses:
  *       200:
- *         description: Vital record found
+ *         description: Vital record retrieved successfully
+ *       404:
+ *         description: Vital not found
  */
-router.get('/:id', 
-  authRequired, 
-  authorize(PERMISSIONS.VITALS_READ), 
-  validate(getVitalsSchema), 
+router.get(
+  '/:id',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_READ),
+  validate(getVitalsSchema),
   vitalsController.getVital
 );
 
@@ -92,13 +207,17 @@ router.get('/:id',
  * /vitals/{id}:
  *   put:
  *     summary: Update a vital record
+ *     description: Update an existing vital record.
  *     tags: [Vitals]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -107,12 +226,13 @@ router.get('/:id',
  *             $ref: '#/components/schemas/UpdateVital'
  *     responses:
  *       200:
- *         description: Vital record updated
+ *         description: Vital record updated successfully
  */
-router.put('/:id', 
-  authRequired, 
-  authorize(PERMISSIONS.VITALS_UPDATE), 
-  validate(updateVitalSchema), 
+router.put(
+  '/:id',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_UPDATE),
+  validate(updateVitalSchema),
   vitalsController.updateVital
 );
 
@@ -121,21 +241,26 @@ router.put('/:id',
  * /vitals/{id}:
  *   delete:
  *     summary: Delete a vital record
+ *     description: Permanently remove a vital record.
  *     tags: [Vitals]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       204:
- *         description: Vital record deleted
+ *         description: Vital record deleted successfully
  */
-router.delete('/:id', 
-  authRequired, 
-  authorize(PERMISSIONS.VITALS_DELETE), 
-  validate(getVitalsSchema), 
+router.delete(
+  '/:id',
+  authRequired,
+  authorize(PERMISSIONS.VITAL_DELETE),
+  validate(getVitalsSchema),
   vitalsController.deleteVital
 );
 

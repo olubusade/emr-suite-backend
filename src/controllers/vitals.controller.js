@@ -23,6 +23,32 @@ export async function getVital(req, res) {
   }
 }
 
+export async function getVitalsByPatient(req, res) {
+  const { patientId } = req.params;
+  
+  if (!patientId) throw new ApiError(400, 'Patient ID is required');
+  try { 
+    const history = await vitalsService.getVitalsByPatientId(patientId);
+    return ok(res, history);
+  }catch (err) {
+    console.error('vitals.getVitalsByPatient', err);
+    return error(res, 500, 'Server error', err.message);
+  }
+}
+export async function getVitalsByAppointment(req, res) {
+  const { appointmentId } = req.params;
+  
+  if (!appointmentId) throw new ApiError(400, 'Appointment ID is required');
+  try { 
+    const history = await vitalsService.getVitalsByAppointment(appointmentId);
+    return ok(res, history);
+  }catch (err) {
+    console.error('vitals.getVitalsByAppointment', err);
+    return error(res, 500, 'Server error', err.message);
+  }
+}
+
+
 export async function createVital(req, res) {
   try {
     // 🔑 Inject nurseId from the authenticated user
@@ -66,6 +92,7 @@ export async function updateVital(req, res) {
     return error(res, err.statusCode || 400, 'Error updating vitals', err.message);
   }
 }
+
 
 export async function deleteVital(req, res) {
   try {

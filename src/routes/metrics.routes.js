@@ -61,7 +61,7 @@ const r = express.Router();
 r.get(
   '/',
   authRequired,
-  authorize(PERMISSIONS.APPOINTMENT_CREATE),
+  authorize(PERMISSIONS.METRICS_READ),
   metricsController.getMetrics
 );
 

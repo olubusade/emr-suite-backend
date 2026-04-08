@@ -1,4 +1,4 @@
-import { ClinicalNote, Patient, User } from '../models/index.js';
+import { ClinicalNote, Patient, User, Appointment } from '../models/index.js';
 
 /**
  * List clinical notes
@@ -25,6 +25,45 @@ export async function getClinicalNotesById(id) {
       { model: Patient, attributes: ['id', 'full_name', 'age'] },
       { model: User, as: 'doctor', attributes: ['id', 'full_name', 'email'] }
     ]
+  });
+}
+
+/**
+ * Get clinical notes by patient ID
+ */
+export async function getClinicalNotesByPatientId(patientId) {
+  return await ClinicalNote.findAll({
+    where: { patientId },
+    include: [
+      { 
+        model: User, 
+        as: 'doctor',
+        attributes: ['id', 'fName', 'lName'] 
+      },
+      { 
+        model: Appointment, 
+        attributes: ['id', 'appointmentDate', 'status'] 
+      }
+    ],
+    order: [['createdAt', 'DESC']]
+  });
+}
+
+export async function getClinicalNotesByAppointmentId(appointmentId) {
+  return await ClinicalNote.findAll({
+    where: { appointmentId },
+    include: [
+      { 
+        model: User, 
+        as: 'doctor',
+        attributes: ['id', 'fName', 'lName'] 
+      },
+      { 
+        model: Appointment, 
+        attributes: ['id', 'appointmentDate', 'status'] 
+      }
+    ],
+    order: [['createdAt', 'DESC']]
   });
 }
 

@@ -36,8 +36,8 @@ async function seed() {
     const bills = await seedBills(Bill, patients, users.receptionist);
     await seedPayments(Payment, bills);
 
-    await seedVitals(Vital, patients, users.nurse);
-    await seedClinicalNotes(ClinicalNote, patients, users.doctor);
+    await seedVitals(Vital, users.nurse,appointments);
+    await seedClinicalNotes(ClinicalNote, patients, users.doctor,appointments);
 
     console.log('Seed completed successfully!');
     process.exit(0);

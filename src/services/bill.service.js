@@ -14,21 +14,31 @@ export async function listBills({ page = 1, pageSize = 50, filters = {} }) {
 
   const { count, rows } = await Bill.findAndCountAll({
     where,
-    include: [{ model: Patient, attributes: ['id', 'full_name'] }],
+    include: [{ 
+      model: Patient, 
+      as: 'patient', 
+      attributes: ['id', 'firstName','lastName'] 
+    }],
     order: [['created_at', 'DESC']],
     limit,
     offset,
   });
 
   const mappedRows = rows.map((bill) => ({
+
     id: bill.id,
     patientId: bill.patientId,
     amount: bill.amount,
     status: bill.status,
     dueDate: bill.dueDate,
+    paymentMethod: bill.paymentMethod,
     createdAt: bill.createdAt,
     updatedAt: bill.updatedAt,
-    patient: bill.Patient ? { id: bill.Patient.id, fullName: bill.Patient.full_name } : null,
+    // ✅ Use the alias key (bill.patient) instead of the default (bill.Patient)
+    patient: bill.patient ? { 
+      id: bill.patient.id, 
+      fullName: bill.patient.firstName + ' ' + bill.patient.lastName
+    } : null,
   }));
 
   return {

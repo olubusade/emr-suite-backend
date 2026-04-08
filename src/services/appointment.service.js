@@ -1,34 +1,35 @@
 import { Appointment, Patient, User } from '../models/index.js';
 import { calculateAge } from '../utils/myLibrary.js';
+import { Op } from 'sequelize';
 /**
  * List appointments with optional limit
  */
 
-export async function listAppointments({ page = 1, pageSize = 20, search, status }) {
+export async function listAppointments({ page = 1, pageSize = 20, search, status, timeFrame }) {
   const pageInt = Number(page) || 1;
   const limitInt = Number(pageSize) || 20;
   const offset = (pageInt - 1) * limitInt;
 
   // Build patient search condition
   const patientWhere = search
-    ? { firstName: { [Ou.iLike]: `%${search}%` } }
+    ? { firstName: { [Op.iLike]: `%${search}%` } }
     : {};
 
   // Build appointment date filter based on the flag
   const now = new Date();
   let appointmentWhere = {};
-
-  if (status === 'PAST') {
-    where.appointmentDate = { [Op.lt]: new Date() };
-} else if (status === 'UPCOMING') {
-    where.appointmentDate = { [Op.gt]: new Date() };
-} else if (status === 'TODAY') {
-    const start = new Date();
-    start.setHours(0,0,0,0);
-    const end = new Date();
-    end.setHours(23,59,59,999);
-    where.appointmentDate = { [Op.between]: [start, end] };
-}
+  
+  if (status) appointmentWhere.status = status;
+  
+  if (timeFrame === 'PAST') {
+    appointmentWhere.appointmentDate = { [Op.lt]: now };
+ } else if (timeFrame === 'UPCOMING') {
+    appointmentWhere.appointmentDate = { [Op.gt]: now };
+  } else if (timeFrame === 'TODAY') {
+    const start = new Date().setHours(0,0,0,0);
+    const end = new Date().setHours(23,59,59,999);
+    appointmentWhere.appointmentDate = { [Op.between]: [new Date(start), new Date(end)] };
+  }
 
   const { count, rows } = await Appointment.findAndCountAll({
     limit: limitInt,
@@ -85,7 +86,7 @@ export async function listAppointments({ page = 1, pageSize = 20, search, status
 export async function getAppointmentById(id) {
   const appt = await Appointment.findByPk(id, {
     include: [
-      { model: Patient, as:patient, attributes: ['id', 'firstName','lastName', 'dob'] },
+      { model: Patient, as:'patient', attributes: ['id', 'firstName','lastName', 'dob'] },
       { model: User, as: 'staff', attributes: ['id', 'fullName', 'email'] }
     ]
   });
@@ -98,12 +99,13 @@ export async function getAppointmentById(id) {
     patientId: appt.patientId,
     staffId: appt.staffId,
     appointmentDate: appt.appointmentDate,
+    appointmentTime: appt.appointmentTime,
     durationMinutes: appt.durationMinutes,
     reason: appt.reason,
     notes: appt.notes,
     status: appt.status,
     patient: appt.patient ? { id: appt.patient.id, fullName: appt.patient.firstName+' '+ appt.patient.lastName, age: calculateAge(appt.patient.dob) } : null,
-    staff: appt.staff ? { id: appt.staff.id, fullName: appt.staff.full_name, email: appt.staff.email } : null
+    staff: appt.staff ? { id: appt.staff.id, fullName: appt.staff.fullName, email: appt.staff.email } : null
   };
 }
 
@@ -111,22 +113,38 @@ export async function getAppointmentById(id) {
 /**
  * Create a new appointment
  */
-export async function createAppointment({ patientId, staffId, appointmentDate, durationMinutes, reason, notes }) {
+export async function createAppointment({ 
+  patientId, 
+  staffId, 
+  createdBy, 
+  appointmentDate, 
+  appointmentTime, // 🔑 Added
+  reason, 
+  notes 
+}) {
   const when = new Date(appointmentDate);
   if (Number.isNaN(when.getTime())) throw new Error('Invalid appointmentDate');
-  if (when < new Date()) throw new Error('appointmentDate must be in the future');
+  
+  // Note: For a demo, you might want to allow "today" even if 'when' 
+  // is a few minutes in the past due to server clock lag.
+  if (when < new Date(new Date().setHours(0,0,0,0))) {
+    throw new Error('appointmentDate cannot be in the past');
+  }
 
-  const patient = await Patient.findByPk(patientId);
+  const [patient, staff] = await Promise.all([
+    Patient.findByPk(patientId),
+    User.findByPk(staffId)
+  ]);
+
   if (!patient) throw new Error('Patient not found');
-
-  const staff = await User.findByPk(staffId);
   if (!staff) throw new Error('Staff not found');
 
   const appt = await Appointment.create({
     patientId,
     staffId,
+    createdBy,
     appointmentDate: when,
-    durationMinutes: durationMinutes || null,
+    appointmentTime, // 🔑 Map from payload to DB
     reason: reason || null,
     notes: notes || null,
     status: 'scheduled'
@@ -157,6 +175,11 @@ export async function updateAppointment(id, updates) {
     const staff = await User.findByPk(updates.staffId);
     if (!staff) throw new Error('Staff not found');
     appt.staffId = updates.staffId;
+  }
+  else if (updates.updatedBy) {
+    const staff = await User.findByPk(updates.updatedBy);
+    if (!staff) throw new Error('Staff not found');
+    appt.updatedBy = updates.updatedBy;
   }
 
   await appt.save();

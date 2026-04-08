@@ -29,7 +29,33 @@ export async function getClinicalNotes(req, res) {
     return error(res, 500, 'Server error', err.message);
   }
 }
-
+/**
+ * Get clinical note by patient
+ */
+  export async function getClinicalNotesByPatientId(req, res) {
+    const { patientId } = req.params;
+    
+    if (!patientId) throw new ApiError(400, 'Patient ID is required');
+    try { 
+      const history = await clinicalService.getClinicalNotesByPatientId(patientId);
+      return ok(res, history);
+    }catch (err) {
+      console.error('clinical note:', err);
+      return error(res, 500, 'Server error', err.message);
+    }
+  }
+export async function getClinicalNotesByAppointment (req, res) {
+  const { appointmentId } = req.params;
+  
+  if (!appointmentId) throw new ApiError(400, 'Appointment ID is required');
+  try { 
+    const history = await clinicalService.getClinicalNotesByAppointmentId(appointmentId);
+    return ok(res, history);
+  }catch (err) {
+    console.error('clinical note:', err);
+    return error(res, 500, 'Server error', err.message);
+  }
+}
 /**
  * Create clinical note
  */

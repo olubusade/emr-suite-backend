@@ -7,20 +7,27 @@ import { attachAudit } from '../middlewares/audit.middleware.js';
  */
 export async function listBills(req, res) {
   try {
-    const { page, pageSize, ...filters } = req.query;
-
+    const { page, limit, offset, ...filters } = req.query;
+    const pageSize = limit;
     const result = await billService.listBills({
       page: parseInt(page, 10) || 1,
       pageSize: parseInt(pageSize, 10) || 50,
       filters,
     });
 
-    await attachAudit(req, 'VIEW_BILL', 'bill', null, { query: req.query });
+    await attachAudit(req, { 
+      action: 'VIEW_BILL', 
+      entity: 'bill', 
+      entityId: null, 
+      metadata: { query: req.query } 
+    });
 
     // Map DB snake_case to camelCase
     const rows = result.rows.map((bill) => ({
       id: bill.id,
-      customerId: bill.customerId,
+      patientId: bill.patientId,
+      paymentMethod: bill.paymentMethod,
+      patient:bill.patient,
       amount: bill.amount,
       status: bill.status,
       dueDate: bill.dueDate,
@@ -46,7 +53,13 @@ export async function listBills(req, res) {
 export async function createBill(req, res) {
   try {
     const bill = await billService.createBill(req.body);
-    await attachAudit(req, 'CREATE_BILL', 'bill', bill.id, req.body);
+    
+     await attachAudit(req, { 
+      action: 'CREATE_BILL', 
+      entity: 'bill', 
+      entityId: bill.id, 
+      metadata: { query: req.body } 
+    });
 
     return created(res, {
       id: bill.id,
@@ -69,7 +82,13 @@ export async function createBill(req, res) {
 export async function updateBill(req, res) {
   try {
     const bill = await billService.updateBill(req.params.id, req.body);
-    await attachAudit(req, 'UPDATE_BILL', 'bill', bill.id, req.body);
+
+    await attachAudit(req, { 
+      action: 'UPDATE_BILL', 
+      entity: 'bill', 
+      entityId: bill.id, 
+      metadata: { query: req.body } 
+    });
 
     return ok(res, {
       id: bill.id,
@@ -92,8 +111,14 @@ export async function updateBill(req, res) {
 export async function deleteBill(req, res) {
   try {
     const billId = req.params.id;
-    await billService.deleteBill(billId);
-    await attachAudit(req, 'DELETE_BILL', 'bill', billId);
+
+     await attachAudit(req, { 
+      action: 'DELETE_BILL', 
+      entity: 'bill', 
+      entityId: billId, 
+      metadata: { query: req.params } 
+    });
+
 
     return ok(res, { success: true }, 'Bill deleted successfully');
   } catch (err) {
@@ -115,7 +140,12 @@ export async function getBill(req, res) {
 
     if (!bill) return error(res, 404, 'Bill not found');
 
-    await attachAudit(req, 'VIEW_BILL', 'bill', billId);
+    await attachAudit(req, { 
+      action: 'VIEW_BILL', 
+      entity: 'bill', 
+      entityId: billId, 
+      metadata: { query: req.query } 
+    });
 
     return ok(res, bill, 'Bill retrieved successfully');
   } catch (err) {

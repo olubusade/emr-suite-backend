@@ -132,6 +132,10 @@ Vital.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 User.hasMany(Vital, { foreignKey: 'nurse_id', as: 'nurseVitals' });
 Vital.belongsTo(User, { foreignKey: 'nurse_id', as: 'nurse' });
 
+// Patient Vital ↔ Appointment
+Vital.belongsTo(Appointment, { foreignKey: 'appointmentId' });
+Appointment.hasOne(Vital, { foreignKey: 'appointmentId' });
+
 // Patient ↔ Clinical Notes
 Patient.hasMany(ClinicalNote, { foreignKey: 'patient_id', as: 'clinicalNotes' });
 ClinicalNote.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });

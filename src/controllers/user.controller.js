@@ -9,8 +9,12 @@ export async function registerUser(req, res) {
   try {
     const user = await userService.createUser(req.body);
 
-    await attachAudit(req, 'CREATE_USER', 'user', user.id, { email: user.email });
-
+      await attachAudit(req, { 
+            action: 'CREATE_USER', 
+            entity: 'user', 
+            entityId: user.id, 
+            metadata: { email: user.email } 
+        });
     return created(res, {
       id: user.id,
       email: user.email,
@@ -50,8 +54,12 @@ export async function updateProfile(req, res) {
   try {
     const user = await userService.updateUserProfile(req.user.id, req.body);
 
-    await attachAudit(req, 'UPDATE_PROFILE', 'user', user.id);
-
+    await attachAudit(req, { 
+            action: 'UPDATE_PROFILE', 
+            entity: 'user', 
+            entityId: user.id, 
+            metadata: { query: req.body } 
+        });
     return ok(res, {
       id: user.id,
       email: user.email,
@@ -78,6 +86,8 @@ export async function listStaff(req, res) {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
+      fName: user.fName,
+      lName: user.lName,
       role: user.designation,
       active:user.active,
       createdAt: user.createdAt,
@@ -102,8 +112,13 @@ export async function updateUser(req, res) {
   try {
     const user = await userService.updateUser(req.params.id, req.body);
 
-    await attachAudit(req, 'UPDATE_USER', 'user', user.id);
-
+    
+    await attachAudit(req, { 
+            action: 'UPDATE_USER', 
+            entity: 'user', 
+            entityId: user.id, 
+            metadata: { query: req.body } 
+        });
     return ok(res, {
       id: user.id,
       email: user.email,
@@ -123,8 +138,13 @@ export async function deleteUser(req, res) {
   try {
     await userService.deleteUser(req.params.id);
 
-    await attachAudit(req, 'DELETE_USER', 'user', req.params.id);
-
+  
+await attachAudit(req, { 
+            action: 'DELETE_USER', 
+            entity: 'user', 
+            entityId: req.params.id, 
+            metadata: { query: req.params } 
+        });
     return ok(res, { success: true }, 'User deleted successfully');
   } catch (err) {
     console.error('user.deleteUser', err);

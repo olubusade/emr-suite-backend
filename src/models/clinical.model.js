@@ -6,7 +6,8 @@ export const ClinicalNoteModel = (sequelize, DataTypes) => {
         patientId: { type: DataTypes.UUID, allowNull: false, field: 'patient_id' },
         staffId: { type: DataTypes.UUID, allowNull: false, field: 'staff_id' },
         
-        // 🔑 NEW FIELD: Diagnosis
+        appointmentId: { type: DataTypes.UUID, allowNull: false, field: 'appointment_id' },
+        
         diagnosis: { 
             type: DataTypes.TEXT, 
             allowNull: true,
@@ -16,7 +17,25 @@ export const ClinicalNoteModel = (sequelize, DataTypes) => {
         subjective: { type: DataTypes.TEXT, allowNull: true },
         objective: { type: DataTypes.TEXT, allowNull: true },
         assessment: { type: DataTypes.TEXT, allowNull: true },
-        plan: { type: DataTypes.TEXT, allowNull: true }
+        plan: { type: DataTypes.TEXT, allowNull: true },
+        createdBy: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        field: "created_by",
+        references: {
+          model: 'users',
+          key: 'id'
+        }
+      },
+      updatedBy: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        field: "updated_by",
+        references: {
+          model: 'users',
+          key: 'id'
+        }
+      }
       },
       { 
         tableName: 'clinical_notes', 
@@ -24,7 +43,8 @@ export const ClinicalNoteModel = (sequelize, DataTypes) => {
         timestamps: true,
         // Optional: Add index for faster lookup by patient/staff
         indexes: [
-            { fields: ['patient_id'] },
+          { fields: ['patient_id'] },
+            { fields: ['appointment_id'] },
             { fields: ['staff_id'] },
         ]
       }

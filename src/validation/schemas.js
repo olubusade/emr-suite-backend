@@ -148,18 +148,29 @@ export const deleteBillSchema = z.object({
 
 export const listBillSchema = z.object({
   query: z.object({
-    limit: z.preprocess((v) => (v ? Number(v) : 100), z.number().int().positive().max(1000).optional()),
-    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional())
-  })
+    page: z.preprocess((v) => Number(v) || 1, z.number()),
+    limit: z.preprocess((v) => Number(v) || 20, z.number()),
+    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
+    // Keep the actual database status separate
+    status: z.enum(['unpaid', 'pending', 'partially_paid', 'paid','cancelled'   
+    ]).optional(),
+    search: z.string().optional(),
+    paymentMethod: z.enum(['cash', 'card', 'insurance', 'transfer'   
+    ]).optional(),
+    sortBy: z.string().optional(),
+    sortDirection: z.enum(['desc', 'asc']).optional()
+  }).passthrough()    
 });
+
 
 /* -------------------- Appointments -------------------- */
 export const createAppointmentSchema = z.object({
   body: z.object({
     patientId: uuid(),
-    staffId: uuid(), // doctor/nurse
+    staffId: uuid(),
     appointmentDate: isoDateString(),
-    durationMinutes: z.number().int().positive().optional(),
+    // 🔑 Add validation for the time string
+    appointmentTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
     reason: z.string().max(255).optional(),
     notes: z.string().optional()
   })
@@ -169,7 +180,7 @@ export const updateAppointmentSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
     appointmentDate: isoDateString().optional(),
-    durationMinutes: z.number().int().positive().optional(),
+    appointmentTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(), // 🔑 Added
     reason: z.string().max(255).optional(),
     notes: z.string().optional(),
     status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
@@ -191,14 +202,16 @@ export const listAppointmentsSchema = z.object({
     limit: z.preprocess((v) => Number(v) || 20, z.number()),
     offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
     //Allow the new timeFrame flag
-    timeFrame: z.enum(['PAST', 'UPCOMING', 'TODAY']).optional(),
+    timeFrame: z.enum(['PAST', 'UPCOMING', 'TODAY', 'ALL']).optional(),
     staffId: uuid().optional(),
     patientId: uuid().optional(),
     // Keep the actual database status separate
     status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
     search: z.string().optional(),
+    sortBy: z.string().optional(),
+    sortDirection: z.enum(['desc', 'asc']).optional(),
   })
-    //.passthrough()
+    .passthrough()
 });
 
 /* -------------------- Clinical Notes (SOAP) -------------------- */
@@ -232,6 +245,34 @@ export const listClinicalNotesSchema = z.object({
   params: z.object({ id: uuid() })
 });
 
+/**
+ * Validates the request for retrieving all clinical notes for a patient (History)
+ * URL Pattern: /clinical/patient/:patientId
+ */
+export const getClinicalNotesByPatientSchema = z.object({
+  params: z.object({
+    patientId: z.string({
+      required_error: "Patient ID is required",
+    }).uuid({ message: "Invalid Patient ID format" }),
+  }),
+  query: z.object({
+    limit: z.string().optional(),
+    page: z.string().optional()
+  }).optional()
+});
+
+/**
+ * Validates the request for retrieving a note for a specific session
+ * URL Pattern: /clinical/appointment/:appointmentId
+ */
+export const getClinicalNotesByAppointmentSchema = z.object({
+  params: z.object({
+    appointmentId: z.string({
+      required_error: "Appointment ID is required",
+    }).uuid({ message: "Invalid Appointment ID format" }),
+  }),
+});
+
 export const deleteClinicalNoteSchema = z.object({
   params: z.object({ id: uuid() })
 });
@@ -239,49 +280,76 @@ export const deleteClinicalNoteSchema = z.object({
 /* -------------------- Vitals -------------------- */
 export const createVitalSchema = z.object({
   body: z.object({
-    // Mandatory field (Must match a valid patient)
-    patientId: z.string().uuid(), 
+    patientId: uuid(), 
+    appointmentId: uuid(), // 🔑 MANDATORY: Links the measurement to the visit
+    nurseId: uuid(),       // 🔑 MANDATORY: Track who took the reading
     
-    // Mandatory field (When the reading was taken)
-    readingAt: z.string().datetime(), // Ensures ISO 8601 format (e.g., 2025-10-25T14:30:00.000Z)
+    readingAt: z.string().datetime(), // ISO 8601 format
 
-    // Optional fields with specific types and ranges
-    temperature: z.number().min(30).max(45).optional(), // Realistic temperature range
+    // Clinical Data Points
+    temperature: z.number().min(30).max(45).optional(),
     heartRate: z.number().int().min(30).max(200).optional(),
     
-    // String format validation for "Systolic/Diastolic"
-    bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/, 'Format must be Sys/Dia (e.g., 120/80)').optional(), 
+    // BP Regex for "120/80" format
+    bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/, 'Format: Sys/Dia (e.g. 120/80)').optional(), 
     
-    respiratoryRate: z.number().int().min(5).max(40).optional(),
-
-    weightKg: z.number().min(0).optional(),
-    heightCm: z.number().min(0).optional(),
-    spo2: z.number().int().min(0).max(100).optional(), // Oxygen saturation
+    respiratoryRate: z.number().int().min(5).max(60).optional(),
+    weightKg: z.number().positive().optional(),
+    heightCm: z.number().positive().optional(),
+    spo2: z.number().int().min(0).max(100).optional(),
     painScale: z.number().int().min(0).max(10).optional(),
     
     notes: z.string().optional(),
-    
-    // nurseId is often pulled from req.user.id, but allow it to be passed if needed
-    nurseId: z.string().uuid().optional(),
   }),
 });
 
 export const updateVitalSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
+    // 🛡️ Note: patientId, appointmentId, and nurseId are omitted (Immutable)
     temperature: z.number().min(30).max(45).optional(),
     bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/).optional(),
     heartRate: z.number().int().min(30).max(220).optional(),
     respiratoryRate: z.number().int().min(5).max(60).optional(),
     spo2: z.number().min(50).max(100).optional(),
-    weight: z.number().positive().optional(),
-    height: z.number().positive().optional(),
+    weightKg: z.number().positive().optional(), // 🔑 Matched to weightKg
+    heightCm: z.number().positive().optional(), // 🔑 Matched to heightCm
     notes: z.string().optional()
   })
 });
 
 export const getVitalsSchema = z.object({
   params: z.object({ id: uuid() })
+});
+
+export const getVitalByPatientSchema = z.object({
+  params: z.object({
+    // Validates that /vitals/patient/:patientId is a valid UUID
+    patientId: z.string({
+      required_error: "Patient ID is required",
+    }).uuid({ message: "Invalid Patient ID format" }),
+  }),
+  query: z.object({
+    // Optional: useful if you want to limit history or filter by date
+    limit: z.string().optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+  }).optional(),
+});
+
+export const getVitalByAppointmentSchema = z.object({
+  params: z.object({
+    // Validates that /vitals/appointment/:appointmentId is a valid UUID
+    appointmentId: z.string({
+      required_error: "Appointment ID is required",
+    }).uuid({ message: "Invalid Appointment ID format" }),
+  }),
+  query: z.object({
+    // Optional: useful if you want to limit history or filter by date
+    limit: z.string().optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+  }).optional(),
 });
 
 export const deleteVitalSchema = z.object({

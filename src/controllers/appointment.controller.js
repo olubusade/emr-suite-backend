@@ -13,9 +13,10 @@ export async function listAppointments(req, res) {
     const pageSize = parseInt(query.pageSize, 10) || 20;
     const status = query.status;
     const search = query.search;
+    const timeFrame = query.timeFrame;
     
 
-    const appointments = await appointmentService.listAppointments({ page, pageSize, status, search });
+    const appointments = await appointmentService.listAppointments({ page, pageSize, search, status, timeFrame });
 
     return ok(res, appointments, 'Appointments retrieved successfully', {
       page: appointments.page,
@@ -45,7 +46,9 @@ export async function getAppointment(req, res) {
  * Create appointment
  */
 export async function createAppointment(req, res) {
+  
   try {
+    req.body.createdBy = req.user.id;
     const appointment = await appointmentService.createAppointment(req.body);
 
     await attachAudit(req, {
@@ -66,6 +69,7 @@ export async function createAppointment(req, res) {
  */
 export async function updateAppointment(req, res) {
   try {
+    req.body.updatedBy = req.user.id;
     const appointment = await appointmentService.updateAppointment(req.params.id, req.body);
 
     await attachAudit(req, {

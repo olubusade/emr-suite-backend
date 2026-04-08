@@ -7,7 +7,9 @@ import {
   createClinicalNoteSchema, 
   updateClinicalNoteSchema, 
   getClinicalNotesSchema, 
-  listClinicalNotesSchema 
+  listClinicalNotesSchema,
+  getClinicalNotesByPatientSchema,
+  getClinicalNotesByAppointmentSchema
 } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
 
@@ -41,11 +43,65 @@ const router = express.Router();
 router.get(
   '/',
   authRequired,
-  authorize(PERMISSIONS.CLINICAL_READ),
+  authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(listClinicalNotesSchema),
   clinicalController.listClinicalNotes
 );
+/**
+ * @swagger
+ * /clinical/patient/{patientId}:
+ *   get:
+ *     summary: Get clinical history for a specific patient
+ *     tags: [Clinical]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique identifier of the patient
+ *     responses:
+ *       200:
+ *         description: Array of historic clinical notes for the patient
+ */
+router.get(
+  '/patient/:patientId', 
+  authRequired, 
+  authorize(PERMISSIONS.CLINICAL_NOTE_READ), 
+  validate(getClinicalNotesByPatientSchema), 
+  clinicalController.getClinicalNotesByPatientId 
+);
 
+/**
+ * @swagger
+ * /clinical/patient/{patientId}:
+ *   get:
+ *     summary: Get clinical history for a specific patient
+ *     tags: [Clinical]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique identifier of the patient
+ *     responses:
+ *       200:
+ *         description: Array of historic clinical notes for the patient
+ */
+router.get(
+  '/appointment/:appointmentId', 
+  authRequired,
+  authorize(PERMISSIONS.CLINICAL_NOTE_READ),
+  validate(getClinicalNotesByAppointmentSchema),
+  clinicalController.getClinicalNotesByAppointment
+);
 /**
  * @swagger
  * /clinical:
@@ -66,7 +122,7 @@ router.get(
 router.post(
   '/',
   authRequired,
-  authorize(PERMISSIONS.CLINICAL_CREATE),
+  authorize(PERMISSIONS.CLINICAL_NOTE_CREATE),
   validate(createClinicalNoteSchema),
   clinicalController.createClinicalNote
 );
@@ -90,7 +146,7 @@ router.post(
 router.get(
   '/:id',
   authRequired,
-  authorize(PERMISSIONS.CLINICAL_READ),
+  authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(getClinicalNotesSchema),
   clinicalController.getClinicalNotes
 );
@@ -120,7 +176,7 @@ router.get(
 router.put(
   '/:id',
   authRequired,
-  authorize(PERMISSIONS.CLINICAL_UPDATE),
+  authorize(PERMISSIONS.CLINICAL_NOTE_UPDATE),
   validate(updateClinicalNoteSchema),
   clinicalController.updateClinicalNote
 );
@@ -144,7 +200,7 @@ router.put(
 router.delete(
   '/:id',
   authRequired,
-  authorize(PERMISSIONS.CLINICAL_DELETE),
+  authorize(PERMISSIONS.CLINICAL_NOTE_DELETE),
   validate(getClinicalNotesSchema),
   clinicalController.deleteClinicalNote
 );

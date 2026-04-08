@@ -61,8 +61,13 @@ export async function updateRolePermissions(req, res) {
         const { permissionKeys } = req.body; // Array of keys, e.g., ['PATIENT_READ', 'USER_CREATE']
 
         await roleService.updateRolePermissions(roleId, permissionKeys);
-        await attachAudit(req, 'UPDATE_ROLE_PERMISSIONS', 'role', roleId, { roleId, permissionKeys });
-
+        
+        await attachAudit(req, { 
+            action: 'UPDATE_ROLE_PERMISSIONS', 
+            entity: 'role', 
+            entityId: roleId, 
+            metadata: { query: permissionKeys } 
+        });
         return ok(res, null, `Permissions for role ${roleId} updated successfully`);
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
@@ -79,7 +84,13 @@ export async function updateRolePermissions(req, res) {
 export async function createRole(req, res) {
   try {
     const role = await roleService.createRole(req.body);
-    await attachAudit(req, 'CREATE_ROLE', 'role', role.id, req.body);
+      
+      await attachAudit(req, { 
+            action: 'CREATE_ROLE', 
+            entity: 'role', 
+            entityId: role.id, 
+            metadata: { query: req.body } 
+        });
 
     return created(res, {
       id: role.id,
@@ -100,7 +111,13 @@ export async function deleteRole(req, res) {
     try {
         const { roleId } = req.params;
         await roleService.deleteRole(roleId);
-        await attachAudit(req, 'DELETE_ROLE', 'role', roleId);
+        
+        await attachAudit(req, { 
+            action: 'DELETE_ROLE', 
+            entity: 'role', 
+            entityId: roleId, 
+            metadata: { query: req.params } 
+        });
 
         return noContent(res); // 204 No Content for successful deletion
     } catch (err) {
@@ -119,8 +136,13 @@ export async function deleteRole(req, res) {
 export async function createPermission(req, res) {
   try {
     const permission = await roleService.createPermission(req.body);
-    await attachAudit(req, 'CREATE_PERMISSION', 'permission', permission.id, req.body);
-
+    
+  await attachAudit(req, { 
+            action: 'CREATE_PERMISSION', 
+            entity: 'permission', 
+            entityId: permission.id, 
+            metadata: { query: req.body } 
+        });
     return created(res, {
       id: permission.id,
       key: permission.key,

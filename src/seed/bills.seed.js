@@ -7,6 +7,7 @@ export async function seedBills(Bill, patients, createdBy) {
       patient_id: patients[0].id,
       amount: 1500,
       status: 'paid',
+      payment_method:'card',
       created_by: createdBy.id
     },
     {
@@ -14,6 +15,7 @@ export async function seedBills(Bill, patients, createdBy) {
       patient_id: patients[1].id,
       amount: 2500,
       status: 'unpaid',
+      
       created_by: createdBy.id
     },
     {
@@ -21,6 +23,7 @@ export async function seedBills(Bill, patients, createdBy) {
       patient_id: patients[2].id,
       amount: 1800,
       status: 'pending',
+      payment_method:'insurance',
       created_by: createdBy.id
     }
   ];
