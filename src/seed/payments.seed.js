@@ -1,33 +1,39 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export async function seedPayments(Payment, bills) {
-  const paymentsData = [
-    {
-      id: uuidv4(),
-      billId: bills[0].id,
-      amountPaid: 1500.00,
-      paymentDate: new Date(),
-      method: 'cash',
-      reference: 'PAY-' + Math.floor(Math.random() * 1000000),
-    },
-    {
-      id: uuidv4(),
-      billId: bills[1].id,
-      amountPaid: 1000.00,
-      paymentDate: new Date(),
-      method: 'card',
-      reference: 'PAY-' + Math.floor(Math.random() * 1000000),
-    },
-    {
-      id: uuidv4(),
-      billId: bills[2].id,
-      amountPaid: 1800.00,
-      paymentDate: new Date(),
-      method: 'transfer',
-      reference: 'PAY-' + Math.floor(Math.random() * 1000000),
-    },
-  ];
+  const paymentsData = [];
 
-  await Payment.bulkCreate(paymentsData);
-  console.log('Demo payments created');
+  bills.forEach((bill) => {
+    const amount = parseFloat(bill.amount);
+
+    // FULL PAYMENT
+    if (bill.status === 'paid') {
+      paymentsData.push({
+        id: uuidv4(),
+        billId: bill.id,
+        amountPaid: amount,
+        method: 'card',
+        status: 'completed',
+        reference: `SEED-FULL-${uuidv4().substring(0,8)}`,
+      });
+    }
+
+    // PARTIAL PAYMENT (Matches the 5,000 paid in Appointment seed)
+    if (bill.status === 'partially_paid') {
+      paymentsData.push({
+        id: uuidv4(),
+        billId: bill.id,
+        amountPaid: 5000.00,
+        method: 'transfer',
+        status: 'completed',
+        reference: `SEED-PART-${uuidv4().substring(0,8)}`,
+      });
+    }
+  });
+
+  if (paymentsData.length === 0) return [];
+
+  const created = await Payment.bulkCreate(paymentsData, { returning: true });
+  console.log(`✅ Created ${created.length} payment transactions.`);
+  return created.map(p => p.get({ plain: true }));
 }

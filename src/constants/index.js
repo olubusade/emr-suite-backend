@@ -109,6 +109,7 @@ export const STAFF_ROLES_ARRAY = [
     SUCCESS: "SUCCESS",
     FAIL: "FAIL",
     ERROR: "ERROR",
+    NOTFOUND: "NOTFOUND",
   };
 
   export const BILL_STATUS = {

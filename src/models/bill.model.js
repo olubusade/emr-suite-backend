@@ -3,7 +3,12 @@ export const BillModel = (sequelize, DataTypes) => {
     'Bill',
     {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-
+      appointmentId: { 
+        type: DataTypes.UUID, 
+        allowNull: false, 
+        field: 'appointment_id',
+        references: { model: 'appointments', key: 'id' }
+      },
       patientId: { type: DataTypes.UUID, allowNull: false, field: 'patient_id' },
 
       amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },

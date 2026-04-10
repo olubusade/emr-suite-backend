@@ -15,21 +15,42 @@ export async function listAppointments({ page = 1, pageSize = 20, search, status
     ? { firstName: { [Op.iLike]: `%${search}%` } }
     : {};
 
-  // Build appointment date filter based on the flag
-  const now = new Date();
-  let appointmentWhere = {};
-  
-  if (status) appointmentWhere.status = status;
-  
-  if (timeFrame === 'PAST') {
-    appointmentWhere.appointmentDate = { [Op.lt]: now };
- } else if (timeFrame === 'UPCOMING') {
-    appointmentWhere.appointmentDate = { [Op.gt]: now };
-  } else if (timeFrame === 'TODAY') {
-    const start = new Date().setHours(0,0,0,0);
-    const end = new Date().setHours(23,59,59,999);
-    appointmentWhere.appointmentDate = { [Op.between]: [new Date(start), new Date(end)] };
-  }
+const now = new Date();
+const currentTimeString = now.toTimeString().slice(0, 5); // Returns "HH:MM" format (e.g., "07:55")
+
+let appointmentWhere = {};
+
+if (status) appointmentWhere.status = status;
+
+if (timeFrame === 'PAST') {
+  appointmentWhere[Op.or] = [
+    // 1. Any date before today
+    { appointmentDate: { [Op.lt]: new Date(now.setHours(0, 0, 0, 0)) } },
+    // 2. Today, but the time has already passed
+    {
+      [Op.and]: [
+        { appointmentDate: { [Op.between]: [new Date(now.setHours(0, 0, 0, 0)), new Date(now.setHours(23, 59, 59, 999))] } },
+        { appointmentTime: { [Op.lt]: currentTimeString } }
+      ]
+    }
+  ];
+} else if (timeFrame === 'UPCOMING') {
+  appointmentWhere[Op.or] = [
+    // 1. Any date after today
+    { appointmentDate: { [Op.gt]: new Date(now.setHours(23, 59, 59, 999)) } },
+    // 2. Today, but the time is in the future
+    {
+      [Op.and]: [
+        { appointmentDate: { [Op.between]: [new Date(now.setHours(0, 0, 0, 0)), new Date(now.setHours(23, 59, 59, 999))] } },
+        { appointmentTime: { [Op.gt]: currentTimeString } }
+      ]
+    }
+  ];
+} else if (timeFrame === 'TODAY') {
+  const start = new Date().setHours(0, 0, 0, 0);
+  const end = new Date().setHours(23, 59, 59, 999);
+  appointmentWhere.appointmentDate = { [Op.between]: [new Date(start), new Date(end)] };
+}
 
   const { count, rows } = await Appointment.findAndCountAll({
     limit: limitInt,
@@ -56,7 +77,8 @@ export async function listAppointments({ page = 1, pageSize = 20, search, status
     patientId: appt.patientId,
     staffId: appt.staffId,
     appointmentDate: appt.appointmentDate,
-    durationMinutes: appt.durationMinutes,
+    appointmentTime: appt.appointmentTime,
+    createdAt: appt.createdAt,
     reason: appt.reason,
     notes: appt.notes,
     status: appt.status,

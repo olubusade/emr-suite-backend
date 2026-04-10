@@ -7,25 +7,30 @@ import { attachAudit } from '../middlewares/audit.middleware.js';
  */
 export async function listBills(req, res) {
   try {
-    const { page, limit, offset, ...filters } = req.query;
-    const pageSize = limit;
+    const { page, limit, search } = req.query;
+    
     const result = await billService.listBills({
       page: parseInt(page, 10) || 1,
-      pageSize: parseInt(pageSize, 10) || 50,
-      filters,
+      pageSize: parseInt(limit, 10) || 50,
+      search
     });
-
+  
     await attachAudit(req, { 
       action: 'VIEW_BILL', 
       entity: 'bill', 
-      entityId: null, 
-      metadata: { query: req.query } 
+      entityId: req.user.id, 
+      metadata: {
+        query: req.query,
+        filters: search,
+        resultCount: result.rows.length
+      } 
     });
 
     // Map DB snake_case to camelCase
     const rows = result.rows.map((bill) => ({
       id: bill.id,
       patientId: bill.patientId,
+      appointmentId: bill.appointmentId,
       paymentMethod: bill.paymentMethod,
       patient:bill.patient,
       amount: bill.amount,
@@ -33,6 +38,8 @@ export async function listBills(req, res) {
       dueDate: bill.dueDate,
       createdAt: bill.createdAt,
       updatedAt: bill.updatedAt,
+      staff: bill.staff,     
+      details: bill.details
     }));
 
     return ok(res, rows, 'Bills retrieved successfully', {
@@ -46,19 +53,48 @@ export async function listBills(req, res) {
     return error(res, 500, err.message || 'Server error');
   }
 }
+export async function getPendingBills(req, res) {
+  try {
+    const { page = 1, limit = 10, search = '' } = req.query;
 
+    const result = await billService.getPendingBills({
+      page: parseInt(page, 10),
+      pageSize: parseInt(limit, 10),
+      search: search.trim()
+    });
+
+    // Using your 'ok' utility function
+    return ok(res, result.items, 'Pending Bills retrieved successfully', {
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      pages: Math.ceil(result.total / result.pageSize),
+    });
+  } catch (err) {
+    console.error('pendingbill.list', err);
+    // Be careful with 500 error messages in production (candor check)
+    return error(res, 500, 'Unable to retrieve pending bills at this time');
+  }
+}
 /**
  * Create a new bill
  */
 export async function createBill(req, res) {
   try {
-    const bill = await billService.createBill(req.body);
+    const billData = {
+      ...req.body,
+      createdBy: req.user.id // 🛡️ Secure: comes from JWT
+    };
+
+    console.log('appointmentId>>>',billData);
+    const bill = await billService.createBill(billData);
     
      await attachAudit(req, { 
       action: 'CREATE_BILL', 
       entity: 'bill', 
       entityId: bill.id, 
-      metadata: { query: req.body } 
+      metadata: { query: billData } 
+      
     });
 
     return created(res, {
@@ -67,7 +103,10 @@ export async function createBill(req, res) {
       amount: bill.amount,
       status: bill.status,
       dueDate: bill.dueDate,
+      paymentMethod: bill.paymentMethod,
+      notes: bill.notes,
       createdAt: bill.createdAt,
+      createdBy: bill.createdBy,
       updatedAt: bill.updatedAt,
     }, 'Bill created successfully');
   } catch (err) {
@@ -81,7 +120,7 @@ export async function createBill(req, res) {
  */
 export async function updateBill(req, res) {
   try {
-    const bill = await billService.updateBill(req.params.id, req.body);
+    const bill = await billService.updateBill(req.params.id, req.body,req.user.id);
 
     await attachAudit(req, { 
       action: 'UPDATE_BILL', 
@@ -96,6 +135,8 @@ export async function updateBill(req, res) {
       amount: bill.amount,
       status: bill.status,
       dueDate: bill.dueDate,
+      paymentMethod: bill.paymentMethod,
+      notes: bill.notes,
       createdAt: bill.createdAt,
       updatedAt: bill.updatedAt,
     }, 'Bill updated successfully');

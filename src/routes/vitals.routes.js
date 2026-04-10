@@ -8,7 +8,7 @@ import {
   updateVitalSchema, 
   getVitalsSchema,
   getVitalByPatientSchema,
-  getVitalByAppointmentSchema
+  getVitalsByAppointmentSchema
 } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
 
@@ -135,7 +135,7 @@ router.get(
  * /vitals/appointment/{appointmentId}:
  *   get:
  *     summary: Get all vitals for a specific appointment
- *     description: Retrieves the full vital history for an appointment.
+ *     description: Retrieves the vital records associated with a given appointment. Optionally filters by patient.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
@@ -148,26 +148,39 @@ router.get(
  *           format: uuid
  *         description: Unique identifier of the appointment
  *       - in: query
+ *         name: patientId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Optional patient ID to further filter results
+ *       - in: query
  *         name: page
  *         required: false
  *         schema:
  *           type: integer
+ *           example: 1
  *       - in: query
  *         name: limit
  *         required: false
  *         schema:
  *           type: integer
+ *           example: 10
  *     responses:
  *       200:
- *         description: Patient vitals retrieved successfully
+ *         description: Vitals retrieved successfully
  *       400:
- *         description: Invalid patient ID
+ *         description: Invalid appointment or patient ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
 router.get(
   '/appointment/:appointmentId',
   authRequired,
   authorize(PERMISSIONS.VITAL_READ),
-  validate(getVitalByAppointmentSchema),
+  validate(getVitalsByAppointmentSchema),
   vitalsController.getVitalsByAppointment
 );
 

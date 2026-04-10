@@ -9,11 +9,11 @@ export const PaymentModel = (sequelize, DataTypes) => {
       },
 
       billId: { 
-        type: DataTypes.UUID,  // matches bills.id
+        type: DataTypes.UUID,
         allowNull: false,
         field: 'bill_id',
         references: {
-          model: 'bills', // table name
+          model: 'bills',
           key: 'id'
         },
         onDelete: 'CASCADE',
@@ -37,6 +37,11 @@ export const PaymentModel = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
+      status: {
+        type: DataTypes.ENUM('pending', 'completed', 'failed'),
+        defaultValue: 'completed',
+      },
+
       reference: { 
         type: DataTypes.STRING, 
         allowNull: true 
@@ -45,7 +50,7 @@ export const PaymentModel = (sequelize, DataTypes) => {
     { 
       tableName: 'payments', 
       timestamps: true,
-      underscored: true, // maps camelCase JS -> snake_case DB
+      underscored: true,
     }
   );
 

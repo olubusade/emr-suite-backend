@@ -98,6 +98,17 @@ Permission.belongsToMany(User, {
 Patient.hasMany(Bill, { foreignKey: 'patient_id', as: 'bills' });
 Bill.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
+// Appointment ↔ Bill
+Appointment.hasOne(Bill, { 
+  foreignKey: 'appointmentId',
+  as: 'bill' 
+});
+
+Bill.belongsTo(Appointment, { 
+  foreignKey: 'appointmentId',
+  as: 'appointment'
+});
+
 // Bill ↔ User
 Bill.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
@@ -141,8 +152,12 @@ Patient.hasMany(ClinicalNote, { foreignKey: 'patient_id', as: 'clinicalNotes' })
 ClinicalNote.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
 // Doctor (User) ↔ Clinical Notes
-User.hasMany(ClinicalNote, { foreignKey: 'doctor_id', as: 'doctorNotes' });
-ClinicalNote.belongsTo(User, { foreignKey: 'doctor_id', as: 'doctor' });
+User.hasMany(ClinicalNote, { foreignKey: 'staffId', as: 'doctorNotes' });
+ClinicalNote.belongsTo(User, { foreignKey: 'staffId', as: 'doctor' });
+
+// Patient ClinicalNote ↔ Appointment
+ClinicalNote.belongsTo(Appointment, { foreignKey: 'appointmentId' });
+Appointment.hasOne(ClinicalNote, { as: 'clinicalNote', foreignKey: 'appointmentId' });
 
 // ----------------- Exports -----------------
 export {

@@ -80,6 +80,7 @@ router.get(
  * /clinical/patient/{patientId}:
  *   get:
  *     summary: Get clinical history for a specific patient
+ *     description: Retrieves all clinical notes (SOAP records) associated with a patient, with optional pagination support.
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
@@ -90,10 +91,50 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
- *         description: The unique identifier of the patient
+ *         description: Unique identifier of the patient
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for paginated results
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of records per page
  *     responses:
  *       200:
- *         description: Array of historic clinical notes for the patient
+ *         description: Clinical notes retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ClinicalNote'
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *       400:
+ *         description: Invalid patient ID format
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Patient not found or no clinical records available
  */
 router.get(
   '/appointment/:appointmentId', 

@@ -46,10 +46,14 @@ export async function getClinicalNotes(req, res) {
   }
 export async function getClinicalNotesByAppointment (req, res) {
   const { appointmentId } = req.params;
+  const { patientId } = req.query;
   
   if (!appointmentId) throw new ApiError(400, 'Appointment ID is required');
+
+  if (!patientId) throw new ApiError(400, 'Patient ID is required');
   try { 
-    const history = await clinicalService.getClinicalNotesByAppointmentId(appointmentId);
+    const data = { appointmentId, patientId };
+    const history = await clinicalService.getClinicalNotesByAppointmentId(data);
     return ok(res, history);
   }catch (err) {
     console.error('clinical note:', err);
@@ -63,8 +67,9 @@ export async function createClinicalNote(req, res) {
   try {
     // 🔑 Inject staffId (Doctor/Clinician) from the authenticated user
     const clinicalData = { 
-        ...req.body, 
-        staffId: req.body.staffId || req.user.id 
+      ...req.body,
+      staffId:req.user.id,
+      createdBy: req.user.id 
     };
     
     const clinical = await clinicalService.createClinicalNote(clinicalData);

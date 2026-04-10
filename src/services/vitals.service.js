@@ -35,7 +35,11 @@ export async function listVitals({ limit = 200 }) {
 export async function getVitalById(id) {
   const vital = await Vital.findByPk(id, {
     include: [
-      { model: Patient, attributes: ['id', 'fName', 'lName'] },
+      {
+        model: Patient,
+        as: 'patient',
+        attributes: ['id', 'firstName', 'lastName']
+      },
       { model: User, as: 'nurse', attributes: ['id', 'fName', 'lName'] },
       { model: Appointment, attributes: ['id', 'status'] }
     ],
@@ -59,36 +63,53 @@ export async function getVitalsByPatientId(patientId) {
 }
 
 // vitals.controller.js
-export async function getVitalsByAppointment(appointmentId) {
+export async function getVitalsByAppointment(data) {
   
+  const { appointmentId, patientId} = data;
   return await Vital.findOne({
-    where: { appointmentId },
-    // You might want to include the staff who took the vitals
-    include: [{ model: User, as: 'recordedBy', attributes: ['id','fName', 'lName'] }]
+    where: { appointmentId,patientId },
+    // Standardized to 'nurse' to match your associations
+    include: [{ model: User, as: 'nurse', attributes: ['id','fName', 'lName'] }]
   });
 }
 /**
- * Create a new vital record and advance appointment status
+ * Create or Update a vital record and advance appointment status.
+ * This ensures one visit = one vital record, even with multiple saves.
  */
 export async function createVital(data) {
-  // 🔑 DOMAIN LOGIC: Calculate BMI
-  data.bmi = calculateBMI(data.weightKg, data.heightCm);
-  
-  // 🛡️ Ensure clinical links are present
-  if (!data.patientId || !data.nurseId || !data.appointmentId) {
-      throw new ApiError(400, 'Patient, Nurse, and Appointment IDs are required.');
+  const { appointmentId, weightKg, heightCm, patientId } = data;
+
+  // 1. Logic: Context Validation
+  if (!appointmentId || !patientId) {
+      throw new ApiError(400, 'Appointment and Patient context are required.');
   }
 
-  // Use a transaction if your setup supports it, otherwise a standard sequence:
-  const vital = await Vital.create(data);
+  // 2. Intellectual Calculation: BMI
+  // We calculate this on the fly so the DB always has the latest derived value
+  if (weightKg && heightCm) {
+    data.bmi = calculateBMI(weightKg, heightCm);
+  }
+  
+  // 3. The "Engine" Strategy: Upsert (Find or Create)
+  // Prevents duplicate vital rows if the nurse clicks "Save" multiple times
+  const [vital, created] = await Vital.findOrCreate({
+    where: { appointmentId },
+    defaults: { ...data }
+  });
 
-  // 🚀 STATUS BUMP: This moves the patient from 'checked_in' to 'vitals_taken'
-  // This is what makes them appear on the Doctor's "Ready" list.
+  if (!created) {
+    // If record exists, update with latest measurements
+    await vital.update(data);
+  }
+
+  // 4. Status Bump: Move the clinic workflow forward
+  // This notifies the Doctor's dashboard that the patient is ready
   await Appointment.update(
     { status: 'vitals_taken' },
-    { where: { id: data.appointmentId } }
+    { where: { id: appointmentId } }
   );
 
+  // 5. Return standardized response with associations
   return getVitalById(vital.id);
 }
 

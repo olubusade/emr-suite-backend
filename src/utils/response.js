@@ -14,9 +14,15 @@ export function fail(res, statusCode = 400, message = 'Bad Request', details = n
     return res.status(statusCode).json({ status: STATUS.FAIL, message, details });
 }
 
+export function notFound(res, statusCode = 404, message = 'Internal Server Error', details = null) {
+    return res.status(statusCode).json({ status: STATUS.NOTFOUND, message, details });
+}
+
 export function error(res, statusCode = 500, message = 'Internal Server Error', details = null) {
     return res.status(statusCode).json({ status: STATUS.ERROR, message, details });
 }
+
+
 
 /**
  * Successful response with no content (204 No Content)

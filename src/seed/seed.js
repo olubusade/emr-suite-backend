@@ -12,6 +12,7 @@ import { seedBills } from './bills.seed.js';
 import { seedPayments } from './payments.seed.js';
 import { seedVitals } from './vitals.seed.js';
 import { seedClinicalNotes } from './clinical.seed.js';
+import { computeBillStatus } from './../utils/billCompute.js';
 
 async function seed() {
   try {
@@ -20,25 +21,29 @@ async function seed() {
 
     const roles = await seedRoles(Role);
     const permissions = await seedPermissions(Permission);
-
     await seedRolePermissions(roles, permissions, RolePermission);
-
     const users = await seedUsers(User);
-
     await seedUserRoles(users, roles, UserRole);
     await seedUserPermissions(users, permissions, UserPermission, roles, RolePermission);
 
-
+    // 1. Seed Patients
     const patients = await seedPatients(Patient, users.admin);
 
+    // 2. Seed Appointments (Store them to link others)
     const appointments = await seedAppointments(Appointment, patients, users.doctor);
 
-    const bills = await seedBills(Bill, patients, users.receptionist);
-    await seedPayments(Payment, bills);
+    // 3. Seed Vitals (Filtered for the 'completed' appointment)
+    const vitals = await seedVitals(Vital, users.nurse, appointments);
 
-    await seedVitals(Vital, users.nurse,appointments);
-    await seedClinicalNotes(ClinicalNote, patients, users.doctor,appointments);
+    // 4. Seed Clinical Notes (Linked via Vitals -> Appointment)
+    await seedClinicalNotes(ClinicalNote, users.doctor, vitals);
 
+    // 5. Seed Bills (Pass appointments here to link Sola's bill to her past visit)
+    const bills = await seedBills(Bill, appointments, users.receptionist);
+
+    // 6. Seed Payments
+    const payments = await seedPayments(Payment, bills);
+    await syncBillStatuses(Bill, bills, payments);
     console.log('Seed completed successfully!');
     process.exit(0);
 
@@ -46,6 +51,31 @@ async function seed() {
     console.error('Seed failed:', err);
     process.exit(1);
   }
+}
+
+export async function syncBillStatuses(Bill, bills, payments) {
+  const paymentMap = {};
+
+  // Group payments by billId
+  payments.forEach(p => {
+    if (!paymentMap[p.billId]) {
+      paymentMap[p.billId] = [];
+    }
+    paymentMap[p.billId].push(p);
+  });
+
+  for (const bill of bills) {
+    const relatedPayments = paymentMap[bill.id] || [];
+
+    const status = computeBillStatus(bill, relatedPayments);
+
+    await Bill.update(
+      { status },
+      { where: { id: bill.id } }
+    );
+  }
+
+  console.log('✅ Bill statuses synced with payments');
 }
 
 seed();

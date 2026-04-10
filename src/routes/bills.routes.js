@@ -3,7 +3,7 @@ import * as billController from '../controllers/bill.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
-import { listBillSchema, createBillSchema, updateBillSchema, getBillSchema } from '../validation/schemas.js';
+import { listBillSchema, createBillSchema, updateBillSchema, getBillSchema,getPendingBillsSchema } from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
 
 const r = express.Router();
@@ -42,7 +42,13 @@ r.get(
   validate(listBillSchema),
   billController.listBills
 );
-
+r.get(
+  '/patients',
+  authRequired,
+  authorize(PERMISSIONS.BILL_CREATE),
+  validate(getPendingBillsSchema),
+  billController.getPendingBills
+);
 /**
  * @swagger
  * /api/bills:
@@ -135,7 +141,7 @@ r.get(
  *       404:
  *         description: Bill not found
  */
-r.put(
+r.patch(
   '/:id',
   authRequired,
   authorize(PERMISSIONS.BILL_UPDATE),

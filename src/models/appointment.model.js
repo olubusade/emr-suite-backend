@@ -47,6 +47,27 @@ export const AppointmentModel = (sequelize, DataTypes) => {
         ),
         defaultValue: "scheduled",
       },
+      // 💰 FINANCIAL TRACKING ADDITIONS
+      paymentStatus: {
+        type: DataTypes.ENUM(
+          "unpaid",          // Default after consultation
+          "partially_paid",  // Deposit made
+          "fully_paid",      // Cleared for exit
+          "waived"           // Free/Charity service
+        ),
+        defaultValue: "unpaid",
+        field: "payment_status",
+      },
+      totalAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.00,
+        field: "total_amount",
+      },
+      amountPaid: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.00,
+        field: "amount_paid",
+      },
       createdBy: {
         type: DataTypes.UUID,
         allowNull: false,

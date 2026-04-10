@@ -24,9 +24,9 @@ export async function seedRolePermissions(roles, permissions, RolePermission) {
       'METRICS_READ','USER_READ'
     ],
     receptionist: [
-      'PATIENT_CREATE','PATIENT_READ','APPOINTMENT_CREATE',
+      'PATIENT_CREATE','PATIENT_READ','PATIENT_UPDATE','APPOINTMENT_CREATE',
       'APPOINTMENT_READ','APPOINTMENT_UPDATE','BILL_CREATE',
-      'BILL_READ','DASHBOARD_VIEW','METRICS_READ','USER_READ','VITAL_READ'
+      'BILL_READ','BILL_UPDATE','DASHBOARD_VIEW','METRICS_READ','USER_READ'
     ]
   };
 

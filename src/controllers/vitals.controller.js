@@ -1,4 +1,4 @@
-import { ok, created, error } from '../utils/response.js';
+import { ok, created, error, fail, notFound } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 import * as vitalsService from '../services/vitals.service.js';
 
@@ -37,10 +37,17 @@ export async function getVitalsByPatient(req, res) {
 }
 export async function getVitalsByAppointment(req, res) {
   const { appointmentId } = req.params;
+  const { patientId } = req.query;
   
   if (!appointmentId) throw new ApiError(400, 'Appointment ID is required');
+
+  if (!patientId) throw new ApiError(400, 'Patient ID is required');
   try { 
-    const history = await vitalsService.getVitalsByAppointment(appointmentId);
+    const data = { appointmentId, patientId };
+    const history = await vitalsService.getVitalsByAppointment(data);
+    if (!history) { 
+      return notFound(res, 'No vitals found for this specific visit');
+    }
     return ok(res, history);
   }catch (err) {
     console.error('vitals.getVitalsByAppointment', err);
@@ -53,8 +60,9 @@ export async function createVital(req, res) {
   try {
     // 🔑 Inject nurseId from the authenticated user
     const vitalData = { 
-        ...req.body, 
-        nurseId: req.body.nurseId || req.user.id 
+      ...req.body,
+        createdBy:req.user.id,
+        nurseId: req.user.id 
     };
 
     const vital = await vitalsService.createVital(vitalData);

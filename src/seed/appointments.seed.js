@@ -4,46 +4,70 @@ export async function seedAppointments(Appointment, patients, staff) {
   const now = new Date();
 
   const appointmentsData = [
-    // Past Appointment (yesterday)
+    // Completed & Fully Paid
     {
       id: uuidv4(),
       patientId: patients[0].id,
       staffId: staff.id,
       createdBy: staff.id,
-      appointmentDate: new Date(now.getTime() - 24 * 60 * 60 * 1000), // yesterday
-      appointmentTime: "10:30",
-      notes: "Follow-up appointment from last month.",
-      reason: 'Follow-up',
+      appointmentDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+      appointmentTime: "09:00",
+      reason: 'Hypertension Review',
+      notes: "Follow-up consultation",
       status: 'completed',
+      paymentStatus: 'fully_paid',
+      totalAmount: 15000.00,
+      amountPaid: 15000.00
     },
-    // Today Appointment
+
+    // Completed but Unpaid (Will show in your new Billing Search)
+    {
+      id: uuidv4(),
+      patientId: patients[0].id,
+      staffId: staff.id,
+      createdBy: staff.id,
+      appointmentDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+      appointmentTime: "11:00",
+      reason: 'Routine Checkup',
+      notes: "General check",
+      status: 'completed',
+      paymentStatus: 'unpaid',
+      totalAmount: 17500.00,
+      amountPaid: 0.00
+    },
+
+    // Completed & Partially Paid (Will show in your new Billing Search)
     {
       id: uuidv4(),
       patientId: patients[1].id,
       staffId: staff.id,
       createdBy: staff.id,
-      appointmentDate: now, // now
-      appointmentTime: "11:30",
-      notes: "Routine checkup appointment.",
-      reason: 'Routine Checkup',
-      status: 'scheduled',
+      appointmentDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
+      appointmentTime: "10:00",
+      reason: 'Malaria Treatment',
+      status: 'completed',
+      paymentStatus: 'partially_paid',
+      totalAmount: 20000.00,
+      amountPaid: 5000.00
     },
-    // Upcoming Appointment (tomorrow)
+
+    // Scheduled for Today (Not billable yet)
     {
       id: uuidv4(),
-      patientId: patients[2].id,
+      patientId: patients[0].id,
       staffId: staff.id,
       createdBy: staff.id,
-      appointmentDate: new Date(now.getTime() + 24 * 60 * 60 * 1000), // tomorrow
-      appointmentTime: "14:00",
-      notes: "Appointment for lab results review.",
-      reason: 'Lab Results Review',
+      appointmentDate: now,
+      appointmentTime: "13:00",
+      reason: 'Consultation',
       status: 'scheduled',
-    },
+      paymentStatus: 'unpaid',
+      totalAmount: 0.00,
+      amountPaid: 0.00
+    }
   ];
 
   const createdAppointments = await Appointment.bulkCreate(appointmentsData, { returning: true });
-  console.log('✅ Demo appointments seeded');
-  
+  console.log('✅ Demo appointments seeded with Financial Status');
   return createdAppointments;
 }

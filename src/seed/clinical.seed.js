@@ -1,29 +1,31 @@
 import { v4 as uuidv4 } from 'uuid';
 
-export async function seedClinicalNotes(ClinicalNote, patients, doctor, appointments) {
+export async function seedClinicalNotes(ClinicalNote, doctor, createdVitals) {
+  // Ensure we have an array to map over
+  const vitalsArray = Array.isArray(createdVitals) ? createdVitals : [createdVitals];
+
+  if (!vitalsArray.length || !vitalsArray[0].id) {
+    console.log('⚠️ No vitals available to link clinical notes to. Skipping...');
+    return [];
+  }
+
   const doctorId = doctor.id; 
 
-  // We only seed notes for appointments that are 'completed' or 'in_consultation'
-  const notesData = appointments
-    .filter(app => app.status === 'completed' || app.status === 'scheduled')
-    .map((app, index) => ({
-      id: uuidv4(),
-      patientId: app.patientId,
-      appointmentId: app.id, // 🔑 THE LINK: Legal record for this specific visit
-      staffId: doctorId,
-      diagnosis: index === 0 ? 'Tension Headache (G44.2)' : 'Acute Pharyngitis (J02.9)',
-      subjective: `Patient complains of persistent symptoms since yesterday.`,
-      objective: `Physical exam shows normal reflex responses. Heart rate and temperature are within range.`,
-      assessment: `Condition appears stable; initial diagnosis confirmed.`,
-      plan: `Prescribed rest and 500mg Paracetamol. Follow-up if symptoms persist beyond 72 hours.`,
-      createdAt: new Date(),
-      createdBy: doctorId,
-      updatedAt: new Date(),
-    }));
+  const notesData = vitalsArray.map((vital, index) => ({
+    id: uuidv4(),
+    patientId: vital.patientId,
+    appointmentId: vital.appointmentId,
+    staffId: doctorId,    // This was null because of the parameter shift
+    createdBy: doctorId,
+    diagnosis: index % 2 === 0 ? 'Hypertension (I10)' : 'Type 2 Diabetes (E11)',
+    subjective: 'Patient reports mild fatigue.',
+    objective: `BP is ${vital.bloodPressure}, BMI is ${vital.bmi}.`,
+    assessment: 'Patient stable.',
+    plan: 'Maintain current medication.',
+  }));
 
   if (notesData.length > 0) {
-   const createdClinicalNote = await ClinicalNote.bulkCreate(notesData);
-    console.log(`✅ Demo clinical notes linked to ${notesData.length} appointments.`);
-    return createdClinicalNote;
+    await ClinicalNote.bulkCreate(notesData);
+    console.log(`✅ Linked ${notesData.length} notes to existing vital records.`);
   }
 }

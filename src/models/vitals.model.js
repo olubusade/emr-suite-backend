@@ -30,7 +30,11 @@ export const VitalModel = (sequelize, DataTypes) => {
         bmi: { type: DataTypes.FLOAT },
         spo2: { type: DataTypes.INTEGER, comment: 'Oxygen Saturation Percentage' },
         
-        painScale: { type: DataTypes.INTEGER, comment: '0 to 10 scale' }, // 0=none, 10=worst
+        painScale: {
+          type: DataTypes.INTEGER,
+          validate: { min: 0, max: 10 },
+          comment: '0 to 10 scale'
+        }, // 0=none, 10=worst
 
         notes: { type: DataTypes.TEXT },
         createdBy: {
@@ -57,7 +61,7 @@ export const VitalModel = (sequelize, DataTypes) => {
         underscored: true, 
         timestamps: true,
         indexes: [
-            { fields: ['patient_id', 'reading_at','appointment_id'] }, // Index for chronological lookups
+          { fields: ['patient_id', 'reading_at', 'appointment_id'] },
         ]
       }
     );
