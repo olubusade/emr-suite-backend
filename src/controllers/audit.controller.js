@@ -2,8 +2,14 @@ import * as auditService from '../services/audit.service.js';
 import { ok, error } from '../utils/response.js';
 
 /**
- * List audit logs
- * GET /api/audits
+ * AUDIT CONTROLLER
+ * Provides transparency into system activities for compliance officers.
+ * Handles the mapping between the flat persistence layer and the structured API response.
+ */
+
+/**
+ * List audit logs with multi-dimensional filtering
+ * GET /api/v1/audits
  */
 export async function listAudits(req, res) {
   try {
@@ -13,13 +19,15 @@ export async function listAudits(req, res) {
       userId,
       action,
       entity,
+      entityId
     } = req.query;
 
-    // Build filters object only with provided query params
+    // Filter construction - Only passing defined values to the Service
     const filters = {};
-    if (userId) filters.userId = userId; // JS camelCase; service handles conversion to snake_case
+    if (userId) filters.userId = userId; 
     if (action) filters.action = action;
     if (entity) filters.entity = entity;
+    if (entityId) filters.entityId = entityId;
 
     const result = await auditService.listAuditLogs({
       page: Number(page),
@@ -27,14 +35,20 @@ export async function listAudits(req, res) {
       filters,
     });
 
-    // Map DB snake_case to camelCase for JS response
+    /**
+     * DTO MAPPING (Data Transfer Object)
+     * Ensuring the API response matches our frontend's expectations 
+     * and hides internal DB specifics if necessary.
+     */
     const rows = result.rows.map((row) => ({
       id: row.id,
       userId: row.userId,
       action: row.action,
       entity: row.entity,
       entityId: row.entityId,
-      metadata: row.metadata,
+      ipAddress: row.ipAddress,
+      userAgent: row.userAgent,
+      details: row.details, // Structured JSONB data
       createdAt: row.createdAt,
     }));
 
@@ -50,7 +64,10 @@ export async function listAudits(req, res) {
       }
     );
   } catch (err) {
-    console.error('audit.listAudits', err);
+    /**
+     * Centralized error handling: We pass the error to our utility 
+     * which handles the winston logging, keeping this controller lean.
+     */
     return error(res, 500, err.message || 'Failed to fetch audit logs');
   }
 }

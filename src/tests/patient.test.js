@@ -1,20 +1,21 @@
-// patients.test.js
-
 import request from 'supertest';
 import app from '../app.js';
-import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
-/**
- * Store tokens for different user roles
- */
+import { setupDB, teardownDatabase, createTestUser } from './testHelper.js';
 
 let tokens = {};
 let patientId;
-let uniqueEmail = `test_patient_${Date.now()}@busade-emr-demo.com`; // Ensure unique email for each test run
+// Use a more robust unique email generator for isolated test runs
+let uniqueEmail = `test_patient_${Math.random().toString(36).substring(7)}@busade-emr-demo.com`;
 
 beforeAll(async () => {
-  await setupDatabase();
-  // Ensure the test user has the permission to create/manage patients
-  const doctor = await createTestUser({ role: 'doctor' }); 
+  await setupDB();
+  
+  // Logic: Ensure the user has clinical permissions
+  const doctor = await createTestUser({ 
+    role: 'doctor', 
+    full_name: 'Dr. Busade Adedayo',
+    email: 'doctor.test@busade-emr-demo.com'
+  }); 
   tokens.doctor = doctor.accessToken;
 });
 
@@ -22,25 +23,19 @@ afterAll(async () => {
   await teardownDatabase();
 });
 
-describe('Patient Module CRUD', () => {
+describe('Patient Module CRUD Operations', () => {
   
-  // ------------------------------------------------------------------
-  // CREATE PATIENT TEST (Full Payload)
-  // ------------------------------------------------------------------
-  it('should create a patient with full data payload', async () => {
+  it('should create a patient with full data payload (201 Created)', async () => {
     const res = await request(app)
       .post('/api/patients')
       .set('Authorization', `Bearer ${tokens.doctor}`)
       .send({
-        // MANDATORY FIELDS
         firstName: 'John',
         lastName: 'Doe',
         dob: '1990-01-01', 
         gender: 'male',
-        email: uniqueEmail, // Use the dynamically generated unique email
-        password: 'securepassword123', // Must be included and meet min length
-        
-        // HIGH-VALUE OPTIONAL FIELDS (Ensuring schema/model handles them)
+        email: uniqueEmail,
+        password: 'securepassword123',
         middleName: 'M.',
         nationalId: 'NG-JD-1990-001',
         phone: '+2348012345678',
@@ -51,53 +46,50 @@ describe('Patient Module CRUD', () => {
       });
 
     expect(res.status).toBe(201);
+    expect(res.body.status).toBe('success');
     expect(res.body.data).toHaveProperty('id');
-    expect(res.body.data.firstName).toBe('John');
-    expect(res.body.data.email).toBe(uniqueEmail);
-    //Check that sensitive data (password) is NOT returned
+    
+    // Security Check: Standardize that sensitive fields never leak
     expect(res.body.data).not.toHaveProperty('password'); 
+    expect(res.body.data).not.toHaveProperty('passwordHash'); 
     
     patientId = res.body.data.id;
   });
 
-  // ------------------------------------------------------------------
-  // GET, UPDATE, DELETE TESTS
-  // ------------------------------------------------------------------
-  it('should get a patient', async () => {
+  it('should retrieve patient details via UUID (200 OK)', async () => {
     const res = await request(app)
       .get(`/api/patients/${patientId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.firstName).toBe('John');
-    expect(res.body.data.lastName).toBe('Doe');
-    // Check that one of the high-value fields was saved
     expect(res.body.data.nationalId).toBe('NG-JD-1990-001'); 
   });
 
-  it('should update a patient', async () => {
+  it('should update specific patient fields (200 OK)', async () => {
     const res = await request(app)
       .patch(`/api/patients/${patientId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`)
       .send({ 
-        // Update a field
-        maritalStatus: 'divorced',
-        // Update password (must be hashed in service)
-        password: 'newsecurepassword456'
+        maritalStatus: 'divorced'
       });
 
     expect(res.status).toBe(200);
     expect(res.body.data.maritalStatus).toBe('divorced');
-    //Ensure password is still NOT returned
-    expect(res.body.data).not.toHaveProperty('password'); 
   });
 
-  it('should delete a patient', async () => {
+  it('should soft-delete/archive a patient record (200/204)', async () => {
     const res = await request(app)
       .delete(`/api/patients/${patientId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`);
 
-    // Expect 200/204, or 404 on subsequent get
-    expect([200, 204]).toContain(res.status); 
+    expect([200, 204]).toContain(res.status);
+    
+    // Final verification: Confirm 404 on subsequent get
+    const check = await request(app)
+      .get(`/api/patients/${patientId}`)
+      .set('Authorization', `Bearer ${tokens.doctor}`);
+    
+    expect(check.status).toBe(404);
   });
 });

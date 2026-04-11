@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-
+import { reportError } from '../utils/monitoring.js';
 export async function seedPayments(Payment, bills) {
   const paymentsData = [];
 
@@ -31,9 +31,28 @@ export async function seedPayments(Payment, bills) {
     }
   });
 
-  if (paymentsData.length === 0) return [];
+  if (paymentsData.length === 0) {
+    process.stdout.write('ℹ️  No billable transactions found to reconcile.\n');
+    return [];
+  }
 
-  const created = await Payment.bulkCreate(paymentsData, { returning: true });
-  console.log(`✅ Created ${created.length} payment transactions.`);
-  return created.map(p => p.get({ plain: true }));
+  try {
+    process.stdout.write(`⏳ Reconciling ${paymentsData.length} payment transactions... `);
+
+    const created = await Payment.bulkCreate(paymentsData, { returning: true });
+
+    process.stdout.write('Success (Ledger balanced)\n');
+    
+    return created.map(p => p.get({ plain: true }));
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedPayments',
+      context: 'Finalizing financial transactions for demo records'
+    });
+
+    throw error;
+  }
 }

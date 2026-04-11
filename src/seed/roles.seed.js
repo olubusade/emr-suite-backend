@@ -1,5 +1,7 @@
+import { reportError } from '../utils/monitoring.js';
 export async function seedRoles(Role) {
-    const roleNames = [
+  try {
+      const roleNames = [
       'super_admin',
       'admin',
       'doctor',
@@ -14,7 +16,19 @@ export async function seedRoles(Role) {
       roles[name] = role;
     }
   
-    console.log('Roles seeded');
+    process.stdout.write('✅ Success (Staff categories established)\n');
     return roles;
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedRoles',
+      context: 'Initializing RBAC authority keys'
+    });
+
+    throw error;
+  }
+    
   }
   

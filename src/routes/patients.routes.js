@@ -10,7 +10,7 @@ const r = express.Router();
  * @swagger
  * tags:
  *   name: Patients
- *   description: API endpoints to manage patient records
+ *   description: Patient management endpoints
  */
 
 /**
@@ -24,18 +24,18 @@ const r = express.Router();
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of patients
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Patient'
+ *         description: Patients retrieved successfully
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */
+r.get(
+  '/',
+  authRequired,
+  authorize(PERMISSIONS.PATIENT_READ),
+  patientController.listPatients
+);
 
 /**
  * @swagger
@@ -55,15 +55,46 @@ const r = express.Router();
  *     responses:
  *       201:
  *         description: Patient created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Patient'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */
+r.post(
+  '/',
+  authRequired,
+  authorize(PERMISSIONS.PATIENT_CREATE),
+  patientController.createPatient
+);
+
+/**
+ * @swagger
+ * /api/patients/{id}:
+ *   get:
+ *     summary: Get patient by ID
+ *     description: Retrieve a single patient record by UUID
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Patient retrieved successfully
+ *       404:
+ *         description: Patient not found
+ */
+r.get(
+  '/:id',
+  authRequired,
+  authorize(PERMISSIONS.PATIENT_READ),
+  patientController.getPatient
+);
 
 /**
  * @swagger
@@ -75,12 +106,12 @@ const r = express.Router();
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
- *         description: Patient ID
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -90,17 +121,15 @@ const r = express.Router();
  *     responses:
  *       200:
  *         description: Patient updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Patient'
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- *       403:
- *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         description: Patient not found
  */
+r.put(
+  '/:id',
+  authRequired,
+  authorize(PERMISSIONS.PATIENT_UPDATE),
+  patientController.updatePatient
+);
 
 /**
  * @swagger
@@ -112,51 +141,18 @@ const r = express.Router();
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
- *         description: Patient ID
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *     responses:
  *       204:
  *         description: Patient deleted successfully
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- *       403:
- *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         description: Patient not found
  */
-
-r.get(
-  '/',
-  authRequired,
-  authorize(PERMISSIONS.PATIENT_READ),
-  patientController.listPatients
-);
-
-r.post(
-  '/',
-  authRequired,
-  authorize(PERMISSIONS.PATIENT_CREATE),
-  patientController.createPatient
-);
-
-r.get(
-  '/:id',
-  authRequired,
-  authorize(PERMISSIONS.PATIENT_READ),
-  patientController.getPatient
-);
-
-r.put(
-  '/:id',
-  authRequired,
-  authorize(PERMISSIONS.PATIENT_UPDATE),
-  patientController.updatePatient
-);
-
 r.delete(
   '/:id',
   authRequired,

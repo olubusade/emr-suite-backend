@@ -3,9 +3,9 @@ import * as vitalsController from '../controllers/vitals.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
-import { 
-  createVitalSchema, 
-  updateVitalSchema, 
+import {
+  createVitalSchema,
+  updateVitalSchema,
   getVitalsSchema,
   getVitalByPatientSchema,
   getVitalsByAppointmentSchema
@@ -21,38 +21,37 @@ const router = express.Router();
  *   description: Patient vital signs management
  */
 
+/* -------------------------------------------------------------------------- */
+/* LIST VITALS                                                                */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals:
+ * /api/vitals:
  *   get:
- *     summary: List all vitals
- *     description: Retrieve all vital records, optionally filtered by patient.
+ *     summary: Get all vitals
+ *     description: Retrieve all vital records with optional filtering by patientId.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: patientId
- *         required: false
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Filter vitals by patient ID
  *       - in: query
  *         name: page
- *         required: false
  *         schema:
  *           type: integer
  *           example: 1
  *       - in: query
  *         name: limit
- *         required: false
  *         schema:
  *           type: integer
  *           example: 10
  *     responses:
  *       200:
- *         description: List of vitals retrieved successfully
+ *         description: Vitals retrieved successfully
  */
 router.get(
   '/',
@@ -61,12 +60,15 @@ router.get(
   vitalsController.listVitals
 );
 
+/* -------------------------------------------------------------------------- */
+/* CREATE VITAL                                                              */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals:
+ * /api/vitals:
  *   post:
- *     summary: Create a new vital record
- *     description: Capture a new set of patient vital readings.
+ *     summary: Create a vital record
+ *     description: Create a new patient vital reading.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
@@ -78,9 +80,7 @@ router.get(
  *             $ref: '#/components/schemas/CreateVital'
  *     responses:
  *       201:
- *         description: Vital record created successfully
- *       400:
- *         description: Validation error
+ *         description: Vital created successfully
  */
 router.post(
   '/',
@@ -90,12 +90,15 @@ router.post(
   vitalsController.createVital
 );
 
+/* -------------------------------------------------------------------------- */
+/* GET BY PATIENT                                                           */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals/patient/{patientId}:
+ * /api/vitals/patient/{patientId}:
  *   get:
- *     summary: Get all vitals for a specific patient
- *     description: Retrieves the full vital history for a patient.
+ *     summary: Get vitals by patient
+ *     description: Retrieve full vital history for a patient.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
@@ -106,22 +109,9 @@ router.post(
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Unique identifier of the patient
- *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
  *     responses:
  *       200:
  *         description: Patient vitals retrieved successfully
- *       400:
- *         description: Invalid patient ID
  */
 router.get(
   '/patient/:patientId',
@@ -130,12 +120,16 @@ router.get(
   validate(getVitalByPatientSchema),
   vitalsController.getVitalsByPatient
 );
+
+/* -------------------------------------------------------------------------- */
+/* GET BY APPOINTMENT                                                      */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals/appointment/{appointmentId}:
+ * /api/vitals/appointment/{appointmentId}:
  *   get:
- *     summary: Get all vitals for a specific appointment
- *     description: Retrieves the vital records associated with a given appointment. Optionally filters by patient.
+ *     summary: Get vitals by appointment
+ *     description: Retrieve vitals linked to a specific appointment.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
@@ -146,35 +140,9 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Unique identifier of the appointment
- *       - in: query
- *         name: patientId
- *         required: false
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Optional patient ID to further filter results
- *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           example: 10
  *     responses:
  *       200:
- *         description: Vitals retrieved successfully
- *       400:
- *         description: Invalid appointment or patient ID
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
+ *         description: Appointment vitals retrieved successfully
  */
 router.get(
   '/appointment/:appointmentId',
@@ -184,12 +152,15 @@ router.get(
   vitalsController.getVitalsByAppointment
 );
 
+/* -------------------------------------------------------------------------- */
+/* GET SINGLE VITAL                                                        */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals/{id}:
+ * /api/vitals/{id}:
  *   get:
- *     summary: Get a single vital record
- *     description: Retrieve details of a specific vital record.
+ *     summary: Get a vital record
+ *     description: Retrieve a single vital record by ID.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
@@ -200,12 +171,9 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Unique identifier of the vital record
  *     responses:
  *       200:
- *         description: Vital record retrieved successfully
- *       404:
- *         description: Vital not found
+ *         description: Vital retrieved successfully
  */
 router.get(
   '/:id',
@@ -215,9 +183,12 @@ router.get(
   vitalsController.getVital
 );
 
+/* -------------------------------------------------------------------------- */
+/* UPDATE VITAL                                                             */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals/{id}:
+ * /api/vitals/{id}:
  *   put:
  *     summary: Update a vital record
  *     description: Update an existing vital record.
@@ -239,7 +210,7 @@ router.get(
  *             $ref: '#/components/schemas/UpdateVital'
  *     responses:
  *       200:
- *         description: Vital record updated successfully
+ *         description: Vital updated successfully
  */
 router.put(
   '/:id',
@@ -249,12 +220,15 @@ router.put(
   vitalsController.updateVital
 );
 
+/* -------------------------------------------------------------------------- */
+/* DELETE VITAL                                                            */
+/* -------------------------------------------------------------------------- */
 /**
  * @swagger
- * /vitals/{id}:
+ * /api/vitals/{id}:
  *   delete:
  *     summary: Delete a vital record
- *     description: Permanently remove a vital record.
+ *     description: Permanently delete a vital record.
  *     tags: [Vitals]
  *     security:
  *       - bearerAuth: []
@@ -267,7 +241,7 @@ router.put(
  *           format: uuid
  *     responses:
  *       204:
- *         description: Vital record deleted successfully
+ *         description: Vital deleted successfully
  */
 router.delete(
   '/:id',

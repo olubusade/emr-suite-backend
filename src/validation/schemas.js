@@ -9,24 +9,33 @@ import { z } from 'zod';
  * schema.parse({ id: 'invalid-uuid' }); // throws error
  * 
  */
-/**
- * Helper Validators
+/** * 1. DOMAIN ENUMERATIONS
+ * Centralized constants matching the Database and Clinical standards.
+ * Moving these to the top ensures they act as a "Single Source of Truth."
  */
-const uuid = () => z.string().uuid({ message: 'Must be a valid UUID' });
-const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{7,15}$/;
-
-// ENUMS matching the PatientModel.js
 const GENDER_ENUM = z.enum(['male', 'female', 'other', 'unknown']);
 const MARITAL_ENUM = z.enum(['single', 'married', 'divorced', 'widowed', 'separated']);
 const BLOOD_ENUM = z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']);
 const GENOTYPE_ENUM = z.enum(['AA', 'AS', 'SS', 'AC', 'SC']);
+const BILL_STATUS_ENUM = z.enum(['unpaid', 'pending', 'partially_paid', 'paid', 'cancelled']);
+const APPOINTMENT_STATUS_ENUM = z.enum(["scheduled", "checked_in", "awaiting_vitals", "vitals_taken", "in_consultation", "completed","canceled"]);
+const APPOINTMENT_TIMEFRAME_ENUM = z.enum(['PAST', 'UPCOMING', 'TODAY', 'ALL']);
+const PAYMENT_METHOD_ENUM = z.enum(['cash', 'card', 'insurance', 'transfer']);
+const SORT_DIRECTION_ENUM = z.enum(['desc', 'asc']);
+
+/**
+ * 2. SHARED VALIDATION PRIMITIVES
+ * Reusable helpers for structural integrity (UUIDs, Dates, Regex).
+ */
+const uuid = () => z.string().uuid({ message: 'Must be a valid UUID' });
+const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{7,15}$/;
 
 const isoDateString = () =>
   z.string().refine((s) => !Number.isNaN(Date.parse(s)), {
     message: 'Must be a valid ISO date string'
   });
 
-/* -------------------- Auth -------------------- */
+/* -------------------- AUTHENTICATION -------------------- */
 export const loginSchema = z.object({
   body: z.object({
     email: z.string().email(),
@@ -65,7 +74,7 @@ export const setPermissionSchema = z.object({
   body: z.object({ permission: z.string(), enabled: z.boolean() })
 });
 
-/* -------------------- Patients -------------------- */
+/* -------------------- PATIENT MANAGEMENT -------------------- */
 export const createPatientSchema = z.object({
   body: z.object({
     // --- MANDATORY FIELDS (Core Identity & Auth) ---
@@ -121,15 +130,15 @@ export const deletePatientSchema = z.object({
   params: z.object({ id: uuid() })
 });
 
-/* -------------------- Bills -------------------- */
+/* -------------------- FINANCIAL (BILLING) -------------------- */
 export const createBillSchema = z.object({
   body: z.object({
     patientId: uuid(),
     appointmentId: uuid(),
     amount: z.number().positive(),
-    status: z.enum(['unpaid', 'pending', 'partially_paid', 'paid', 'cancelled']).default('unpaid'),
-    dueDate: z.string().or(z.date()).optional(), // Matches your "2026-04-10" string
-    paymentMethod: z.enum(['cash', 'card', 'insurance', 'transfer']).nullable().optional(),
+    status: BILL_STATUS_ENUM.default('unpaid'),
+    dueDate: z.string().or(z.date()).optional(),
+    paymentMethod: PAYMENT_METHOD_ENUM.nullable().optional(),
     notes: z.string().max(500).optional()
   })
 });
@@ -140,8 +149,8 @@ export const updateBillSchema = z.object({
   }),
   body: z.object({
     amount: z.number().positive().optional(),
-    status: z.enum(['unpaid', 'pending', 'partially_paid', 'paid', 'cancelled']).optional(),
-    paymentMethod: z.enum(['cash', 'card', 'insurance', 'transfer']).nullable().optional(),
+    status: BILL_STATUS_ENUM.optional(),
+    paymentMethod: PAYMENT_METHOD_ENUM.nullable().optional(),
     dueDate: z.string().or(z.date()).optional(),
     notes: z.string().max(500).optional()
   })
@@ -161,13 +170,11 @@ export const listBillSchema = z.object({
     limit: z.preprocess((v) => Number(v) || 20, z.number()),
     offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
     // Keep the actual database status separate
-    status: z.enum(['unpaid', 'pending', 'partially_paid', 'paid','cancelled'   
-    ]).optional(),
+    status: BILL_STATUS_ENUM.optional(),
     search: z.string().optional(),
-    paymentMethod: z.enum(['cash', 'card', 'insurance', 'transfer'   
-    ]).optional(),
+    paymentMethod: PAYMENT_METHOD_ENUM.optional(),
     sortBy: z.string().optional(),
-    sortDirection: z.enum(['desc', 'asc']).optional()
+    sortDirection: SORT_DIRECTION_ENUM.optional()
   }).passthrough()    
 });
 
@@ -200,7 +207,7 @@ export const updateAppointmentSchema = z.object({
     appointmentTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(), // 🔑 Added
     reason: z.string().max(255).optional(),
     notes: z.string().optional(),
-    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
+    status: APPOINTMENT_STATUS_ENUM.optional(),
     staffId: uuid().optional()
   })
 });
@@ -219,14 +226,14 @@ export const listAppointmentsSchema = z.object({
     limit: z.preprocess((v) => Number(v) || 20, z.number()),
     offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
     //Allow the new timeFrame flag
-    timeFrame: z.enum(['PAST', 'UPCOMING', 'TODAY', 'ALL']).optional(),
+    timeFrame: APPOINTMENT_TIMEFRAME_ENUM.optional(),
     staffId: uuid().optional(),
     patientId: uuid().optional(),
     // Keep the actual database status separate
-    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
+    status: APPOINTMENT_STATUS_ENUM.optional(),
     search: z.string().optional(),
     sortBy: z.string().optional(),
-    sortDirection: z.enum(['desc', 'asc']).optional(),
+    sortDirection: SORT_DIRECTION_ENUM.optional(),
   })
     .passthrough()
 });
@@ -296,7 +303,7 @@ export const deleteClinicalNoteSchema = z.object({
 export const createVitalSchema = z.object({
   body: z.object({
     patientId: uuid(), 
-    appointmentId: uuid(), // 🔑 MANDATORY: Links the measurement to the visit
+    appointmentId: uuid(),
     
     readingAt: z.string().datetime(), // ISO 8601 format
 
@@ -319,7 +326,10 @@ export const createVitalSchema = z.object({
     respiratoryRate: z.number().int().min(5).max(60).optional(),
     weightKg: z.number().positive().optional(),
     heightCm: z.number().positive().optional(),
-    spo2: z.number().int().min(0).max(100).optional(),
+    spo2: z.preprocess(
+      (val) => (val === '' ? null : val), // Pre-processor handles empty strings from HTML forms
+      z.number().min(0).max(100).nullable()
+    ),
     painScale: z.number().int().min(0).max(10).optional(),
     
     notes: z.string().optional(),
@@ -329,7 +339,7 @@ export const createVitalSchema = z.object({
 export const updateVitalSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
-    // 🛡️ Note: patientId, appointmentId, and nurseId are omitted (Immutable)
+    //Note: patientId, appointmentId, and nurseId are omitted (Immutable)
     temperature: z.number().min(30).max(45).optional(),
     bloodPressure: z.string()
     .regex(/^\d{2,3}\/\d{2,3}$/, "Invalid format. Use Sys/Dia")

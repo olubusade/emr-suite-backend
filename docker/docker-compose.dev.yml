@@ -12,7 +12,8 @@ services:
       - ../src:/usr/src/app/src
       - ../package.json:/usr/src/app/package.json
       - ../package-lock.json:/usr/src/app/package-lock.json
-      - /usr/src/app/node_modules
+      - /usr/src/app/node_modules # Anonymous volume to prevent host node_modules override
+      - ../logs:/usr/src/app/logs
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

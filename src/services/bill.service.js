@@ -1,8 +1,15 @@
 import { Bill, ClinicalNote, Patient,Appointment, User,Payment,sequelize } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
+import { reportError, logSecurityAlert } from '../utils/monitoring.js';
 import { Op, fn, col, cast, where  } from 'sequelize';
 /**
- * List bills with pagination and filters
+ * BILLING SERVICE
+ * Handles the financial lifecycle: Billing, Payments, and Revenue Integrity.
+ * Every financial change is wrapped in a transaction for ACID compliance.
+ */
+
+/**
+ * List bills with deep-search across Patient, Clinical, and Staff records
  */
 export async function listBills({ page = 1, pageSize = 50, search }) {
   const pageInt = Number(page) || 1;
@@ -11,116 +18,84 @@ export async function listBills({ page = 1, pageSize = 50, search }) {
 
  let globalWhere = {};
 
-const searchTerm = typeof search === 'string' ? search.trim() : '';
+  const searchTerm = typeof search === 'string' ? search.trim() : '';
 
-if (searchTerm) {
-  globalWhere[Op.or] = [
-    // Bill fields
-    // ENUM FIX
-    { notes: { [Op.iLike]: `%${searchTerm}%` } },
-    where(cast(col('Bill.status'), 'TEXT'), {
-      [Op.iLike]: `%${searchTerm}%`
-    }),
-    where(cast(col('Bill.payment_method'), 'TEXT'), {
-      [Op.iLike]: `%${searchTerm}%`
-    }),
-    
-    // Patient
-    { '$patient.first_name$': { [Op.iLike]: `%${searchTerm}%` } },
-    { '$patient.last_name$': { [Op.iLike]: `%${searchTerm}%` } },
-
-    // Creator
-    { '$creator.fname$': { [Op.iLike]: `%${searchTerm}%` } },
-    { '$creator.lname$': { [Op.iLike]: `%${searchTerm}%` } },
-
-    // Appointment
-    { '$appointment.reason$': { [Op.iLike]: `%${searchTerm}%` } },
-
-    // Clinical
-    { '$appointment.clinicalNote.diagnosis$': { [Op.iLike]: `%${searchTerm}%` } },
-    { '$appointment.clinicalNote.assessment$': { [Op.iLike]: `%${searchTerm}%` } },
-  ];
-}
-
-  const { count, rows } = await Bill.findAndCountAll({
-    where: globalWhere, // Apply global search here
-    limit: limitInt,
-    offset,
-    order: [['createdAt', 'DESC']],
-    // subQuery: false is REQUIRED when searching across associations with limit/offset
-    subQuery: false,
-    distinct: true,
-    include: [
-      {
-        model: Patient,
-        as: 'patient',
-        required: true,
-        attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
-      },
-      {
-        model: User,
-        as: 'creator',
-        required:false,
-        attributes: ['id', 'fName', 'lName'] 
-      },
-      {
-        model: Appointment,
-        as: 'appointment',
-        attributes: ['id', 'reason', 'appointmentDate','appointmentTime', 'totalAmount', 'amountPaid', 'paymentStatus'],
-        include: [{
-          model: ClinicalNote,
-          as: 'clinicalNote',
-          required: false,
-          attributes: ['id', 'diagnosis', 'assessment', 'plan']
-        }]
-      }
-    ]
-  });
-  const mappedRows = rows.map((bill) => {
-    const plainBill = bill.get({ plain: true });
-    
-    return {
-      id: plainBill.id,
-      amount: plainBill.amount,
-      status: plainBill.status,
-      dueDate: plainBill.dueDate,
-      paymentMethod: plainBill.paymentMethod,
-      createdAt: plainBill.createdAt,
+  if (searchTerm) {
+    globalWhere[Op.or] = [
+      // Bill fields
+      // ENUM FIX
+      { notes: { [Op.iLike]: `%${searchTerm}%` } },
+      where(cast(col('Bill.status'), 'TEXT'), {
+        [Op.iLike]: `%${searchTerm}%`
+      }),
+      where(cast(col('Bill.payment_method'), 'TEXT'), {
+        [Op.iLike]: `%${searchTerm}%`
+      }),
       
-      // Flattened for easy Frontend consumption
-      patient: plainBill.patient ? {
-        id: plainBill.patient.id,
-        fullName: `${plainBill.patient.firstName} ${plainBill.patient.lastName}`,
-        phone: plainBill.patient.phone
-      } : null,
+      // Patient
+      { '$patient.first_name$': { [Op.iLike]: `%${searchTerm}%` } },
+      { '$patient.last_name$': { [Op.iLike]: `%${searchTerm}%` } },
 
-      staff: plainBill.creator ? {
-        fullName: `${plainBill.creator.fName} ${plainBill.creator.lName}`
-      } : null,
+      // Creator
+      { '$creator.fname$': { [Op.iLike]: `%${searchTerm}%` } },
+      { '$creator.lname$': { [Op.iLike]: `%${searchTerm}%` } },
 
-      details: plainBill.appointment ? {
-        appointmentId: plainBill.appointment.id,
-        reason: plainBill.appointment.reason,
-        date: plainBill.appointment.appointmentDate,
-        diagnosis: plainBill.appointment.clinicalNote?.diagnosis || 'N/A',
-        
-        // Financial Summary for the frontend "Balance" column
-        visitTotal: plainBill.appointment.totalAmount,
-        visitPaid: plainBill.appointment.amountPaid,
-        visitBalance: parseFloat(plainBill.appointment.totalAmount) - parseFloat(plainBill.appointment.amountPaid),
-        visitStatus: plainBill.appointment.paymentStatus
-      } : { reason: 'General Service', diagnosis: 'N/A', visitBalance: 0 }
+      // Appointment
+      { '$appointment.reason$': { [Op.iLike]: `%${searchTerm}%` } },
+
+      // Clinical
+      { '$appointment.clinicalNote.diagnosis$': { [Op.iLike]: `%${searchTerm}%` } },
+      { '$appointment.clinicalNote.assessment$': { [Op.iLike]: `%${searchTerm}%` } },
+    ];
+  }
+  try {
+      const { count, rows } = await Bill.findAndCountAll({
+      where: globalWhere, // Apply global search here
+      limit: limitInt,
+      offset,
+      order: [['createdAt', 'DESC']],
+      // subQuery: false is REQUIRED when searching across associations with limit/offset
+      subQuery: false,
+      distinct: true,
+      include: [
+        {
+          model: Patient,
+          as: 'patient',
+          required: true,
+          attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+        },
+        {
+          model: User,
+          as: 'creator',
+          required:false,
+          attributes: ['id', 'fName', 'lName'] 
+        },
+        {
+          model: Appointment,
+          as: 'appointment',
+          attributes: ['id', 'reason', 'appointmentDate','appointmentTime', 'totalAmount', 'amountPaid', 'paymentStatus'],
+          include: [{
+            model: ClinicalNote,
+            as: 'clinicalNote',
+            required: false,
+            attributes: ['id', 'diagnosis', 'assessment', 'plan']
+          }]
+        }
+      ]
+    });
+
+    return {
+      total: count,
+      rows: rows.map(formatBillList),
+      page: Number(page),
+      page: pageInt,
+      pages: Math.ceil(count / limitInt)
     };
-  });
-
-
-  return {
-    total: count,
-    rows: mappedRows,
-    page: Number(page),
-    page: pageInt,
-    pages: Math.ceil(count / limitInt)
-  };
+  }catch (err) {
+    reportError(err, { service: 'BillingService', operation: 'listBills' });
+    throw err;
+  }
+  
 }
 /**
  * getPendingBills()
@@ -139,46 +114,51 @@ export async function getPendingBills({ page, pageSize, search = '' }) {
     ]
   } : {};
 
-  const { count, rows } = await Appointment.findAndCountAll({
-    where: {
-      status: 'completed',
-      paymentStatus: { [Op.or]: ['unpaid', 'partially_paid'] },
-      ...searchFilter
-    },
-    include: [
-      {
-        model: Patient,
-        as: 'patient',
-        attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
-      },
-      {
-        model: User,
-        as: 'staff',
-        attributes: ['id', 'fName', 'lName'] 
-      },
-      {
-        model: ClinicalNote,
-        as: 'clinicalNote',
-        attributes: ['id', 'diagnosis']
-      }
-      /* {
-        model: Bill,
-        as: 'bill',
-        attributes: ['id', 'amount', 'status']
-      } */
-    ],
-    limit: pageSize,
-    offset: offset,
-    order: [['updatedAt', 'DESC']],
-    subQuery: false // Necessary when filtering on included models with limit/offset
-  });
+    try {
+        const { count, rows } = await Appointment.findAndCountAll({
+        where: {
+          status: 'completed',
+          paymentStatus: { [Op.or]: ['unpaid', 'partially_paid'] },
+          ...searchFilter
+        },
+        include: [
+          {
+            model: Patient,
+            as: 'patient',
+            attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+          },
+          {
+            model: User,
+            as: 'staff',
+            attributes: ['id', 'fName', 'lName'] 
+          },
+          {
+            model: ClinicalNote,
+            as: 'clinicalNote',
+            attributes: ['id', 'diagnosis']
+          }
+          /* {
+            model: Bill,
+            as: 'bill',
+            attributes: ['id', 'amount', 'status']
+          } */
+        ],
+        limit: pageSize,
+        offset: offset,
+        order: [['updatedAt', 'DESC']],
+        subQuery: false // Necessary when filtering on included models with limit/offset
+      });
 
-  return {
-    items: rows,
-    total: count,
-    page,
-    pageSize
-  };
+      return {
+        items: rows,
+        total: count,
+        page,
+        pageSize
+      };
+    } catch (err) {
+    reportError(err, { service: 'BillingService', operation: 'getPendingBills' });
+    throw err;
+  }
 }
 /**
  * Get a single bill by ID
@@ -231,28 +211,26 @@ export async function getBill(id) {
 }
 
 /**
- * Create a new bill
+ * Create a bill and sync the linked Appointment status
  */
 
 export async function createBill(data) {
-  const { 
-    patientId, appointmentId, amount, status,
-    createdBy, paymentMethod, dueDate, notes 
-  } = data;
-
-  console.log('data>>>', data);
-  console.log('appointmentId>>>',appointmentId);
-
   const transaction = await sequelize.transaction();
+ 
+  
 
   try {
+    const { 
+      patientId, appointmentId, amount, status,
+      createdBy, paymentMethod, dueDate, notes 
+    } = data;
+
     let appt = null;
     // 1. Fetch the Appointment to get the "Source of Truth"
     if (appointmentId) {
       appt = await Appointment.findByPk(appointmentId, { transaction });
       if (!appt) throw new ApiError(404, 'Linked Appointment not found');
     }
-    console.log('Appt::',appt);
     
     const totalExpected = parseFloat(amount);
 
@@ -298,14 +276,15 @@ export async function createBill(data) {
     await transaction.commit();
     return bill;
 
-  } catch (error) {
+  } catch (err) {
     await transaction.rollback();
-    throw error;
+    reportError(err, { service: 'BillingService', operation: 'createBill' });
+    throw err;
   }
 }
 
 /**
- * Update an existing bill
+ * Processes payment and locks bill from further edits
  */
 export async function updateBill(id, changes, userId) {
   const transaction = await sequelize.transaction();
@@ -379,9 +358,10 @@ export async function updateBill(id, changes, userId) {
       updatedAt: bill.updatedAt
     };
 
-  } catch (error) {
-    if (transaction) await transaction.rollback();
-    throw error;
+  } catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'BillingService', operation: 'updateBill', billId: id });
+    throw err;
   }
 }
 
@@ -389,7 +369,32 @@ export async function updateBill(id, changes, userId) {
  * Delete a bill
  */
 export async function deleteBill(id) {
-  const deleted = await Bill.destroy({ where: { id } });
-  if (!deleted) throw new ApiError(404, 'Bill not found');
-  return true;
+  try {
+      const deleted = await Bill.destroy({ where: { id } });
+      if (!deleted) throw new ApiError(404, 'Bill not found');
+      return true;  
+  } catch (err) {
+    reportError(err, { service: 'BillingService', operation: 'deleteBill', billId: id });
+    throw err;
+  }
+  
+}
+
+/**
+ * Standardized DTO for frontend consumption
+ */
+function formatBillList(bill) {
+  const b = bill.get({ plain: true });
+  return {
+    id: b.id,
+    amount: b.amount,
+    status: b.status,
+    createdAt: b.createdAt,
+    patient: b.patient ? {
+      fullName: `${b.patient.firstName} ${b.patient.lastName}`,
+      phone: b.patient.phone
+    } : null,
+    creator: b.creator ? `${b.creator.fName} ${b.creator.lName}` : 'System',
+    visitBalance: b.appointment ? (parseFloat(b.appointment.totalAmount) - parseFloat(b.appointment.amountPaid)) : 0
+  };
 }

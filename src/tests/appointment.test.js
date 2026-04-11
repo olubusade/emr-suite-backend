@@ -1,60 +1,94 @@
 import request from 'supertest';
 import app from '../app.js';
-import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
+import { setupDB, teardownDatabase, createTestUser } from './testHelper.js';
 
 let tokens = {};
 let appointmentId;
+let testPatientId;
 
 beforeAll(async () => {
-  await setupDatabase();
-  const doctor = await createTestUser({ role: 'doctor' });
+  const setup = await setupDB();
+  
+  // Logic: We need a real patient UUID to satisfy foreign key constraints
+  const doctor = await createTestUser({ 
+    role: 'doctor',
+    email: 'appointment.doc@busade-emr-demo.com' 
+  });
   tokens.doctor = doctor.accessToken;
+
+  // Create a dummy patient for the appointment tests
+  const patientRes = await request(app)
+    .post('/api/patients')
+    .set('Authorization', `Bearer ${tokens.doctor}`)
+    .send({
+      firstName: 'Test',
+      lastName: 'Subject',
+      email: 'subject@demo.com',
+      dob: '1995-05-05',
+      gender: 'other',
+      password: 'Password123!'
+    });
+  
+  testPatientId = patientRes.body.data.id;
 });
 
 afterAll(async () => {
   await teardownDatabase();
 });
 
-describe('Appointment Module CRUD', () => {
-  it('should create an appointment', async () => {
+describe('Appointment Module Integration', () => {
+  
+  it('should schedule a new clinical encounter (201 Created)', async () => {
     const res = await request(app)
       .post('/api/appointments')
       .set('Authorization', `Bearer ${tokens.doctor}`)
-      .send({ patientId: 1, date: '2025-08-25T10:00:00Z' });
+      .send({ 
+        patientId: testPatientId, 
+        appointmentDate: '2026-08-25T10:00:00.000Z',
+        reason: 'General Checkup',
+        status: 'scheduled'
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.data).toHaveProperty('id');
     appointmentId = res.body.data.id;
   });
 
-  it('should get appointment', async () => {
+  it('should retrieve encounter details by UUID', async () => {
     const res = await request(app)
       .get(`/api/appointments/${appointmentId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty('id', appointmentId);
-    expect(res.body.data).toHaveProperty('patientId');
-    expect(res.body.data).toHaveProperty('date');
+    expect(res.body.data.id).toBe(appointmentId);
+    expect(res.body.data.patientId).toBe(testPatientId);
   });
 
-  it('should update appointment', async () => {
+  it('should reschedule (patch) an existing appointment', async () => {
+    const newDate = '2026-08-25T14:00:00.000Z';
     const res = await request(app)
       .patch(`/api/appointments/${appointmentId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`)
-      .send({ date: '2025-08-25T12:00:00Z' });
+      .send({ appointmentDate: newDate });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty('id', appointmentId);
-    expect(res.body.data.date).toBe('2025-08-25T12:00:00.000Z');
+    // Logic: Standardize comparison to ISO string
+    expect(new Date(res.body.data.appointmentDate).toISOString()).toBe(newDate);
   });
 
-  it('should delete appointment', async () => {
+  it('should cancel (soft-delete) an appointment', async () => {
     const res = await request(app)
       .delete(`/api/appointments/${appointmentId}`)
       .set('Authorization', `Bearer ${tokens.doctor}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ success: true });
+    expect(res.body.status).toBe('success');
+    
+    // Final Check: Verify it is no longer in the active list
+    const check = await request(app)
+      .get(`/api/appointments/${appointmentId}`)
+      .set('Authorization', `Bearer ${tokens.doctor}`);
+    
+    expect(check.status).toBe(404);
   });
 });

@@ -19,7 +19,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Clinical
- *   description: Clinical notes management (SOAP)
+ *   description: Clinical notes management (SOAP-based documentation)
  */
 
 /**
@@ -28,14 +28,19 @@ const router = express.Router();
  *   get:
  *     summary: List all clinical notes
  *     tags: [Clinical]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: patientId
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *       - in: query
  *         name: staffId
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: List of clinical notes
@@ -47,40 +52,13 @@ router.get(
   validate(listClinicalNotesSchema),
   clinicalController.listClinicalNotes
 );
-/**
- * @swagger
- * /clinical/patient/{patientId}:
- *   get:
- *     summary: Get clinical history for a specific patient
- *     tags: [Clinical]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: patientId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: The unique identifier of the patient
- *     responses:
- *       200:
- *         description: Array of historic clinical notes for the patient
- */
-router.get(
-  '/patient/:patientId', 
-  authRequired, 
-  authorize(PERMISSIONS.CLINICAL_NOTE_READ), 
-  validate(getClinicalNotesByPatientSchema), 
-  clinicalController.getClinicalNotesByPatientId 
-);
 
 /**
  * @swagger
  * /clinical/patient/{patientId}:
  *   get:
- *     summary: Get clinical history for a specific patient
- *     description: Retrieves all clinical notes (SOAP records) associated with a patient, with optional pagination support.
+ *     summary: Get clinical history for a patient
+ *     description: Retrieves all SOAP notes associated with a patient (supports pagination)
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
@@ -91,65 +69,68 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Unique identifier of the patient
  *       - in: query
  *         name: page
- *         required: false
  *         schema:
  *           type: integer
  *           example: 1
- *         description: Page number for paginated results
  *       - in: query
  *         name: limit
- *         required: false
  *         schema:
  *           type: integer
  *           example: 10
- *         description: Number of records per page
  *     responses:
  *       200:
- *         description: Clinical notes retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/ClinicalNote'
- *                 meta:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     total:
- *                       type: integer
- *       400:
- *         description: Invalid patient ID format
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
+ *         description: Patient clinical history retrieved successfully
  *       404:
- *         description: Patient not found or no clinical records available
+ *         description: Patient not found or no records available
  */
 router.get(
-  '/appointment/:appointmentId', 
+  '/patient/:patientId',
+  authRequired,
+  authorize(PERMISSIONS.CLINICAL_NOTE_READ),
+  validate(getClinicalNotesByPatientSchema),
+  clinicalController.getClinicalNotesByPatientId
+);
+
+/**
+ * @swagger
+ * /clinical/appointment/{appointmentId}:
+ *   get:
+ *     summary: Get clinical note by appointment
+ *     description: Retrieves the clinical note tied to a specific appointment
+ *     tags: [Clinical]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: appointmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Clinical note retrieved successfully
+ *       404:
+ *         description: No clinical note found for this appointment
+ */
+router.get(
+  '/appointment/:appointmentId',
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(getClinicalNotesByAppointmentSchema),
   clinicalController.getClinicalNotesByAppointment
 );
+
 /**
  * @swagger
  * /clinical:
  *   post:
- *     summary: Create a new clinical note
+ *     summary: Create a clinical note
  *     tags: [Clinical]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -158,7 +139,7 @@ router.get(
  *             $ref: '#/components/schemas/CreateClinicalNote'
  *     responses:
  *       201:
- *         description: Clinical note created
+ *         description: Clinical note created successfully
  */
 router.post(
   '/',
@@ -172,17 +153,22 @@ router.post(
  * @swagger
  * /clinical/{id}:
  *   get:
- *     summary: Get a single clinical note
+ *     summary: Get a clinical note by ID
  *     tags: [Clinical]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
- *         description: Clinical note found
+ *         description: Clinical note retrieved successfully
+ *       404:
+ *         description: Clinical note not found
  */
 router.get(
   '/:id',
@@ -198,12 +184,15 @@ router.get(
  *   put:
  *     summary: Update a clinical note
  *     tags: [Clinical]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -212,7 +201,7 @@ router.get(
  *             $ref: '#/components/schemas/UpdateClinicalNote'
  *     responses:
  *       200:
- *         description: Clinical note updated
+ *         description: Clinical note updated successfully
  */
 router.put(
   '/:id',
@@ -228,15 +217,18 @@ router.put(
  *   delete:
  *     summary: Delete a clinical note
  *     tags: [Clinical]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       204:
- *         description: Clinical note deleted
+ *         description: Clinical note deleted successfully
  */
 router.delete(
   '/:id',

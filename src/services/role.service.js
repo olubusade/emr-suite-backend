@@ -1,40 +1,19 @@
 import { Role, Permission,User,sequelize } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
+import { reportError, logSecurityAlert } from '../utils/monitoring.js';
 /**
- * Get role-permission matrix
+ * RBAC SERVICE
+ * Manages the Role-Based Access Control matrix.
+ * Handles the assignment of permissions to roles and roles to users.
  */
-/* export async function getRoleMatrix() {
-  const roles = await Role.findAll({ order: [['name', 'ASC']] });
-  const permissions = await Permission.findAll({ order: [['name', 'ASC']] });
 
-  const matrix = await Promise.all(
-    roles.map(async (role) => {
-      const rolePerms = await role.getPermissions();
-      const enabledNames = rolePerms.map(p => p.name);
-
-      return {
-        role: role.name,
-        permissions: permissions.map(p => ({
-          name: p.name,
-          enabled: enabledNames.includes(p.name)
-        }))
-      };
-    })
-  );
-
-  return {
-    roles: roles.map(r => r.name),
-    permissions: permissions.map(p => p.name),
-    matrix
-  };
-} */
-
-/**
- * Get all roles (simple list for the sidebar)
- */
+/* -------------------------------------------------------------------------- */
+/* Roles & Permissions Discovery                */
+/* -------------------------------------------------------------------------- */
 export async function getAllRoles() {
     return Role.findAll({
-        attributes: ['id', 'name']
+        attributes: ['id', 'name'],
+        order: [['name', 'ASC']]
     });
 }
 
@@ -43,7 +22,8 @@ export async function getAllRoles() {
  */
 export async function getAllPermissions() {
     return Permission.findAll({
-        attributes: ['id', 'key', 'name']
+        attributes: ['id', 'key', 'name'],
+        order: [['key', 'ASC']]
     });
 }
 
@@ -51,23 +31,40 @@ export async function getAllPermissions() {
  * Get assigned permissions for a single role
  * @param {number} roleId
  */
+/**
+ * Retrieves the full permission set for a specific role.
+ */
 export async function getRolePermissions(roleId) {
-    const role = await Role.findByPk(roleId, {
-        include: [{
-            model: Permission,
-            as: 'permissions',
-            attributes: ['id', 'key', 'name'],
-            through: { attributes: [] } // Exclude the join table fields
-        }]
-    });
+    try {
+        const role = await Role.findByPk(roleId, {
+            include: [{
+                model: Permission,
+                as: 'permissions',
+                attributes: ['id', 'key', 'name'],
+                through: { attributes: [] } // Exclude the join table fields
+            }]
+        });
 
-    if (!role) {
-        throw new ApiError(`Role with ID ${roleId} not found.`, 404);
+        if (!role) {
+            throw new ApiError(`Role with ID ${roleId} not found.`, 404);
+        }
+        // Return an array of simple Permission objects: { id, key, name }
+        return role.permissions;
+    } catch (err) {
+        reportError(err, { service: 'RBAC', operation: 'getRolePermissions', roleId });
+        throw err;
     }
-    // Return an array of simple Permission objects: { id, key, name }
-    return role.permissions;
+    
 }
 
+/* -------------------------------------------------------------------------- */
+/* Matrix Management (Updates)                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Syncs a role with a new set of permission keys.
+ * This is the primary engine for the "Admin Matrix" UI.
+ */
 /**
  * Update the full set of permissions for a role (The Matrix Save)
  * @param {number} roleId 
@@ -81,12 +78,12 @@ export async function updateRolePermissions(roleId, permissionKeys) {
             throw new ApiError(404, `Role with ID ${roleId} not found.`);
         }
 
-        // 🔑 CHECK 1: Ensure Role ID is valid before proceeding
+        //Ensure Role ID is valid before proceeding
         if (!role.id) {
             throw new ApiError(500, `Found role instance, but ID is missing.`);
         }
         
-        // 1. Find all Permission objects corresponding to the provided keys
+        //Find all Permission objects corresponding to the provided keys
         const permissions = await Permission.findAll({
             where: {
                 key: permissionKeys
@@ -95,34 +92,23 @@ export async function updateRolePermissions(roleId, permissionKeys) {
         }, { transaction: t });
 
         const permissionIds = permissions.map(p => p.id);
-        
-        // 🔑 CHECK 2: Debugging the IDs passed to setPermissions
-        console.log(`[DEBUG] Role ID: ${role.id}`);
-        console.log(`[DEBUG] Permission IDs found for setPermissions:`, permissionIds);
 
-        // 2. Use the Sequelize setPermissions method.
+        //REPLACEMENT LOGIC: Overwrites existing permissions for this role
         await role.setPermissions(permissionIds, { transaction: t });
 
         await t.commit();
+        logSecurityAlert('Role Permissions Updated', { roleId, keys: permissionKeys });
         return true;
-     } catch (error) {
-        await t.rollback();
-        
-        // 🔑 IMPROVED LOGGING: Log the entire error object if message/original are missing
-        console.error(`[CRITICAL DB ERROR - updateRolePermissions]:`);
-        console.error(`Error Message: ${error.message}`);
-        console.error(`Error Original: ${error.original ? error.original.stack : 'N/A'}`);
-        console.error(`Full Error Object:`, error);
-        
-        // Propagate custom errors (like the 404)
-        if (error instanceof ApiError) throw error; 
-        
-        // Throw a generic 500 error for unexpected database failures
-        throw new ApiError(500, 'Failed to update role permissions due to an internal database error. See server logs for details.');
+     } catch (err) {
+        await transaction.rollback();
+        reportError(err, { service: 'RBAC', operation: 'updateRolePermissions' });
+        throw err;
     }
 }
 
-// --- Original CRUD Methods ---
+/* -------------------------------------------------------------------------- */
+/* CRUD Operations                              */
+/* -------------------------------------------------------------------------- */
 
 export async function createRole(data) {
     const { key, name } = data;
@@ -168,23 +154,36 @@ export async function getUserRoles(userId) {
 }
 
 /**
+ * Assigns or replaces the roles assigned to a user.
+ */
+
+/**
  * Updates/replaces all roles assigned to a user based on role keys.
  * @param {string} userId
  * @param {string[]} roleKeys - Array of role keys to assign.
  * @returns {Promise<void>}
  */
 export async function updateUserRoles(userId, roleKeys) {
-    const user = await User.findByPk(userId);
-    if (!user) {
-        throw new ApiError(404,'User not found');
-    }
+  const transaction = await sequelize.transaction();
+  try {
+    const user = await User.findByPk(userId, { transaction });
+    if (!user) throw new ApiError(404, 'User not found');
 
     const roles = await Role.findAll({
-        where: { key: { [Op.in]: roleKeys } }
+      where: { key: { [Op.in]: roleKeys } },
+      transaction
     });
 
-    // Replace existing assignments
-    await user.setRoles(roles); // Ensure this method exists on your User model
+    // 🛡️ REPLACEMENT LOGIC: Syncs user roles to the provided set
+    await user.setRoles(roles, { transaction });
+
+    await transaction.commit();
+    return true;
+  } catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'RBAC', operation: 'updateUserRoles', userId });
+    throw err;
+  }
 }
 // --- NEW: User Direct Permission Assignment ---
 
@@ -204,6 +203,10 @@ export async function getUserPermissions(userId) {
     return user ? user.directPermissions : [];
 }
 /**
+ * PBAC (Policy Based Access Control) Override:
+ * Assigns permissions directly to a user, bypassing their roles.
+ */
+/**
  * Updates/replaces all direct permissions assigned to a user based on permission keys.
  * This is used for the permission assignment matrix view.
  * @param {string} userId
@@ -211,17 +214,26 @@ export async function getUserPermissions(userId) {
  * @returns {Promise<void>}
  */
 export async function updateUserPermissions(userId, permissionKeys) {
-    const user = await User.findByPk(userId);
-    if (!user) {
-        throw new ApiError(404,'User not found');
-    }
+  const transaction = await sequelize.transaction();
+  try {
+    const user = await User.findByPk(userId, { transaction });
+    if (!user) throw new ApiError(404, 'User not found');
 
     const permissions = await Permission.findAll({
-        where: { key: { [Op.in]: permissionKeys } }
+      where: { key: { [Op.in]: permissionKeys } },
+      transaction
     });
 
-    // Replace existing assignments
-    await user.setDirectPermissions(permissions); // Ensure this method exists on your User model
+    // This uses the 'permissions' alias directly on the User model
+    await user.setPermissions(permissions, { transaction });
+
+    await transaction.commit();
+    return true;
+  } catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'RBAC', operation: 'updateUserPermissions', userId });
+    throw err;
+  }
 }
 
 /**

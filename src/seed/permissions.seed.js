@@ -1,3 +1,4 @@
+import { reportError } from '../utils/monitoring.js';
 export async function seedPermissions(Permission) {
   const permissionKeys = [
     // User Management
@@ -36,21 +37,37 @@ export async function seedPermissions(Permission) {
   ];
 
   const permissions = {};
-  for (const key of permissionKeys) {
-    const permission = await Permission.findOrCreate({
-      where: { key },
-      defaults: {
-        key,
-        // Convert "USER_READ" -> "User Read"
-        name: key
-          .split("_")
-          .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-          .join(" "),
-      },
-    });
-    permissions[key] = permission[0];
-  }
+  try {
+    process.stdout.write(`⏳ Synchronizing ${permissionKeys.length} authority keys... `);
 
-  console.log("Permissions seeded successfully");
-  return permissions;
+    for (const key of permissionKeys) {
+      const [permissionRecord] = await Permission.findOrCreate({
+        where: { key },
+        defaults: {
+          key,
+          // Refined formatting: "USER_READ" -> "User Read"
+          name: key
+            .toLowerCase()
+            .split("_")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" "),
+        },
+      });
+      permissions[key] = permissionRecord;
+    }
+
+    process.stdout.write('Success (Security matrix initialized)\n');
+    return permissions;
+
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedPermissions',
+      context: 'Initializing RBAC authority keys'
+    });
+
+    throw error;
+  }
 }

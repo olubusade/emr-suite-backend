@@ -4,24 +4,32 @@ import { authRequired } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../constants/index.js';
 
-const r = express.Router();
+const router = express.Router();
 
 /**
  * @swagger
  * tags:
  *   name: Metrics
- *   description: API endpoints to retrieve various system metrics
+ *   description: EMR system analytics and operational dashboard metrics
  */
 
 /**
  * @swagger
- * /api/metrics:
+ * /metrics:
  *   get:
- *     summary: Get system and EMR metrics
- *     description: Returns patient counts, revenue, monthly trend, and Prometheus metrics.
+ *     summary: Get EMR system metrics
+ *     description: Returns aggregated hospital KPIs including patients, users, appointments, revenue, clinical and nurse dashboards, plus Prometheus metrics.
  *     tags: [Metrics]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: months
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 12
+ *         description: Number of months for patient trend analytics
  *     responses:
  *       200:
  *         description: Metrics retrieved successfully
@@ -33,36 +41,50 @@ const r = express.Router();
  *                 patientCount:
  *                   type: integer
  *                   example: 120
+ *                 userCount:
+ *                   type: integer
+ *                   example: 45
+ *                 totalAppointments:
+ *                   type: integer
+ *                   example: 320
  *                 revenue:
  *                   type: number
- *                   format: float
  *                   example: 12500.50
- *                 monthlyTrend:
+ *                 revenuePending:
+ *                   type: number
+ *                   example: 2300.00
+ *                 monthlyPatientTrend:
  *                   type: array
  *                   items:
  *                     type: object
  *                     properties:
  *                       month:
  *                         type: string
- *                         example: January
- *                       value:
- *                         type: number
- *                         example: 4500
+ *                         example: "2026-01"
+ *                       visits:
+ *                         type: integer
+ *                         example: 45
+ *                 clinical:
+ *                   type: object
+ *                   description: Doctor-facing dashboard metrics
+ *                 nurse:
+ *                   type: object
+ *                   description: Nurse operational dashboard metrics
  *                 prometheusMetrics:
  *                   type: string
- *                   description: Raw Prometheus metrics in text format
+ *                   description: Raw Prometheus metrics output
  *       401:
- *         $ref: '#/components/responses/Unauthorized'
+ *         description: Unauthorized
  *       403:
- *         $ref: '#/components/responses/Forbidden'
+ *         description: Forbidden
  *       500:
- *         $ref: '#/components/responses/InternalServerError'
+ *         description: Internal server error
  */
-r.get(
+router.get(
   '/',
   authRequired,
   authorize(PERMISSIONS.METRICS_READ),
   metricsController.getMetrics
 );
 
-export default r;
+export default router;

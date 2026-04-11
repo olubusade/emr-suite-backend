@@ -1,36 +1,58 @@
 import { Vital, Patient, User, Appointment } from '../models/index.js'; // 🔑 Added Appointment
 import ApiError from '../utils/ApiError.js';
+import { reportError } from '../utils/monitoring.js';
 
 /**
- * Helper function to calculate BMI
+ * VITALS SERVICE
+ * The Triage Engine. Captures patient physiological data and triggers
+ * the "Ready for Consultation" state in the clinical workflow.
+ */
+
+/**
+ * Utility: Calculate BMI and provide clinical interpretation
  */
 function calculateBMI(weightKg, heightCm) {
-  if (weightKg && heightCm && heightCm > 0) {
-    const heightMeters = heightCm / 100;
-    const bmi = weightKg / (heightMeters * heightMeters);
-    return parseFloat(bmi.toFixed(1));
-  }
-  return null;
+ if (!weightKg || !heightCm || heightCm <= 0) return { bmi: null, category: null };
+  
+  const heightMeters = heightCm / 100;
+  const bmi = parseFloat((weightKg / (heightMeters * heightMeters)).toFixed(1));
+  
+  let category = 'Normal';
+  if (bmi < 18.5) category = 'Underweight';
+  else if (bmi >= 25 && bmi < 29.9) category = 'Overweight';
+  else if (bmi >= 30) category = 'Obese';
+
+  return { bmi, category };
 }
 
 /**
- * List vitals with Appointment context
+ * Retrieves latest triage records across the hospital
  */
+/* export async function listVitals({ page = 1, pageSize = 20 }) {
+  const limit = Math.min(Number(pageSize) || 20, 100);
+  const offset = (Math.max(Number(page) || 1, 1) - 1) * limit; */
 export async function listVitals({ limit = 200 }) {
   const safeLimit = Math.min(Number(limit) || 200, 1000);
-  return Vital.findAll({
-    limit: safeLimit,
-    order: [['reading_at', 'DESC']],
-    include: [
-      { model: Patient, attributes: ['id', 'fName', 'lName'] },
-      { model: User, as: 'nurse', attributes: ['id', 'fName', 'lName'] },
-      { model: Appointment, attributes: ['id', 'status'] } // 🔑 Useful for timeline audit
-    ],
-  });
+  
+   try { 
+      return Vital.findAll({
+        limit: safeLimit,
+        order: [['reading_at', 'DESC']],
+        include: [
+          { model: Patient, attributes: ['id', 'firstName', 'lastName'] },
+          { model: User, as: 'nurse', attributes: ['id', 'fName', 'lName'] },
+          { model: Appointment, attributes: ['id', 'status'] } 
+        ],
+      });
+  } catch (err) {
+      reportError(err, { service: 'VitalsService', operation: 'listVitals' });
+      throw err;
+    }
 }
 
+
 /**
- * Get vital by ID
+ * Fetch specific triage record with full history context
  */
 export async function getVitalById(id) {
   const vital = await Vital.findByPk(id, {
@@ -49,8 +71,8 @@ export async function getVitalById(id) {
 }
 
 /**
-  * Get all vitals for a specific patient(History)
-  */
+ * Historical View: Get all past vitals for a patient to track trends
+ */
 export async function getVitalsByPatientId(patientId) {
   return await Vital.findAll({
     where: { patientId },
@@ -62,7 +84,6 @@ export async function getVitalsByPatientId(patientId) {
   });
 }
 
-// vitals.controller.js
 export async function getVitalsByAppointment(data) {
   
   const { appointmentId, patientId} = data;
@@ -76,71 +97,91 @@ export async function getVitalsByAppointment(data) {
  * Create or Update a vital record and advance appointment status.
  * This ensures one visit = one vital record, even with multiple saves.
  */
+/**
+ * The "Workflow Engine" for Triage.
+ * Saves measurements and signals the doctor's queue.
+ */
 export async function createVital(data) {
-  const { appointmentId, weightKg, heightCm, patientId } = data;
+  const { appointmentId, patientId, weightKg, heightCm } = data;
 
-  // 1. Logic: Context Validation
   if (!appointmentId || !patientId) {
-      throw new ApiError(400, 'Appointment and Patient context are required.');
+    throw new ApiError(400, 'Context Missing: Vitals must be linked to a Patient and Appointment.');
   }
 
-  // 2. Intellectual Calculation: BMI
-  // We calculate this on the fly so the DB always has the latest derived value
-  if (weightKg && heightCm) {
-    data.bmi = calculateBMI(weightKg, heightCm);
+  const transaction = await sequelize.transaction();
+
+  try {
+    // 1. Calculate clinical derived values
+    const { bmi, category } = getBMIData(weightKg, heightCm);
+    const vitalData = { ...data, bmi, notes: data.notes || category };
+
+    // 2. Upsert: One triage record per visit
+    const [vital, created] = await Vital.findOrCreate({
+      where: { appointmentId },
+      defaults: vitalData,
+      transaction
+    });
+
+    if (!created) {
+      await vital.update(vitalData, { transaction });
+    }
+
+    // 3.WORKFLOW TRIGGER
+    // Transition appointment to 'vitals_taken'. This moves the patient 
+    // from the Nurse's list to the Doctor's "Ready" list.
+    await Appointment.update(
+      { status: 'vitals_taken' },
+      { where: { id: appointmentId }, transaction }
+    );
+
+    await transaction.commit();
+    return getVitalById(vital.id);
+  } catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'VitalsService', operation: 'createVital', appointmentId });
+    throw err;
   }
-  
-  // 3. The "Engine" Strategy: Upsert (Find or Create)
-  // Prevents duplicate vital rows if the nurse clicks "Save" multiple times
-  const [vital, created] = await Vital.findOrCreate({
-    where: { appointmentId },
-    defaults: { ...data }
-  });
-
-  if (!created) {
-    // If record exists, update with latest measurements
-    await vital.update(data);
-  }
-
-  // 4. Status Bump: Move the clinic workflow forward
-  // This notifies the Doctor's dashboard that the patient is ready
-  await Appointment.update(
-    { status: 'vitals_taken' },
-    { where: { id: appointmentId } }
-  );
-
-  // 5. Return standardized response with associations
-  return getVitalById(vital.id);
 }
 
 /**
- * Update an existing vital record
+ * Update logic with re-calculation of BMI
  */
 export async function updateVital(id, updates) {
-  const vital = await Vital.findByPk(id);
-  if (!vital) throw new ApiError(404, 'Vital record not found');
-  
-  // 🔑 DOMAIN LOGIC: Recalculate BMI on updates
-  if (updates.weightKg || updates.heightCm) {
-    const newWeight = updates.weightKg ?? vital.weightKg;
-    const newHeight = updates.heightCm ?? vital.heightCm;
-    updates.bmi = calculateBMI(newWeight, newHeight);
+  try {
+    const vital = await Vital.findByPk(id);
+    if (!vital) throw new ApiError(404, 'Vital record not found');
+
+    if (updates.weightKg || updates.heightCm) {
+      const { bmi } = getBMIData(
+        updates.weightKg ?? vital.weightKg,
+        updates.heightCm ?? vital.heightCm
+      );
+      updates.bmi = bmi;
+    }
+
+    // Protection: Prevent shifting the record to a different patient/visit
+    delete updates.patientId;
+    delete updates.appointmentId;
+
+    await vital.update(updates);
+    return getVitalById(id);
+  } catch (err) {
+    reportError(err, { service: 'VitalsService', operation: 'updateVital', vitalId: id });
+    throw err;
   }
-
-  // 🛡️ SECURITY: Lock relational links
-  delete updates.patientId;
-  delete updates.nurseId;
-  delete updates.appointmentId; 
-
-  await vital.update(updates);
-  return vital;
 }
 
 /**
  * Delete a vital record
  */
 export async function deleteVital(id) {
-  const deleted = await Vital.destroy({ where: { id } });
-  if (!deleted) throw new ApiError(404, 'Vital record not found');
-  return true;
+  try {
+    const deleted = await Vital.destroy({ where: { id } });
+    if (!deleted) throw new ApiError(404, 'Vital record not found');
+    return true;
+  } catch (err) {
+    reportError(err, { service: 'VitalsService', operation: 'deleteVital', vitalId: id });
+    throw err;
+  }
+ 
 }

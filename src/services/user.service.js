@@ -1,38 +1,65 @@
-import { User, Role } from '../models/index.js';
-import { hash } from '../utils/passwords.js';
+import { User, Role, RefreshToken } from '../models/index.js';
+import { hashPassword } from '../utils/passwords.js';
 
 import ApiError from '../utils/ApiError.js';
+import { reportError, logSecurityAlert } from '../utils/monitoring.js';
 import { Op } from 'sequelize'; // You need Op for the listStaff search
 import { STAFF_ROLES_ARRAY } from '../constants/index.js';
 
+/**
+ * STAFF SERVICE
+ * Manages the hospital personnel registry.
+ * Handles the lifecycle of staff accounts from onboarding to deactivation.
+ */
 /* -------------------------------------------------------------------------- */
-/* Helper to retrieve user with roles for consistent formatting */
+/* Internal Helpers                             */
 /* -------------------------------------------------------------------------- */
-async function getUserWithRoles(userId) {
-    // Assuming the User model is associated with Role via the alias 'roles'
-    return User.findByPk(userId, { include: [{ model: Role, as: 'roles' }] });
+
+function formatStaffMember(u) {
+  return {
+    id: u.id,
+    fName: u.fName,
+    lName: u.lName,
+    fullName: u.fullName || `${u.fName} ${u.lName}`,
+    email: u.email,
+    active: u.active,
+    designation: u.roles && u.roles.length ? u.roles[0].name : 'Staff',
+    createdAt: u.createdAt
+  };
 }
 
-/* -------------------- User creation / login -------------------- */
-export async function createUser({ email, password, fullName, roleIds = [] }) {
-  const existing = await User.findOne({ where: { email } });
-  if (existing) throw new ApiError(409, 'Email already registered');
+/* -------------------------------------------------------------------------- */
+/* Core Staff Services                          */
+/* -------------------------------------------------------------------------- */
 
-  const passwordHash = await hash(password);
-  const user = await User.create({ email, fullName, passwordHash });
+/**
+ * Onboards a new staff member and assigns initial roles
+ */
+export async function createUser({ email, password, fullName,fName,lName, roleIds = [] }) {
+  const transaction = await sequelize.transaction();
+  try {
+    const existing = await User.findOne({ where: { email } });
+    if (existing) throw new ApiError(409, 'Email already registered');
 
-  if (roleIds.length) {
-    const roles = await Role.findAll({ where: { id: roleIds } });
-    await user.setRoles(roles);
+    const passwordHash = await hashPassword(password);
+    const user = await User.create({ email, fullName, passwordHash, active: true }, { transaction });
+
+    if (roleIds.length) {
+      const roles = await Role.findAll({ where: { id: roleIds } });
+      await user.setRoles(roles, { transaction });
+    }
+    await transaction.commit();
+    // To return a complete, consistently formatted object, you might need a formatUser helper
+    // For now, we'll return a simple object.
+    const roleName = roleIds.length ? (await user.getRoles())[0]?.name : null;
+    return { ...user.toJSON(), roleName };
+  } catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'StaffService', operation: 'createUser', email });
+    throw err;
   }
-
-  // To return a complete, consistently formatted object, you might need a formatUser helper
-  // For now, we'll return a simple object.
-  const roleName = roleIds.length ? (await user.getRoles())[0]?.name : null;
-  return { ...user.toJSON(), roleName };
+  
 }
-
-// ... listStaff function (as provided, but needs Op imported) ...
 
 /**
  * List users with pagination and optional search
@@ -46,14 +73,14 @@ export async function listStaff({ page = 1, pageSize = 20, search,roleKey }) {
     ? { fullName: { [Op.iLike]: `%${search}%` } } // 🔑 FIX: Using imported Op
     : {};
   
-  // 🔑 NOTE: The WHERE clause should filter by role KEY, not name, for robustness.
+  // NOTE: The WHERE clause should filter by role KEY, not name, for robustness.
   // Assuming STAFF_ROLES_ARRAY contains the role keys (e.g., ['DOCTOR', 'NURSE'])
   const roleWhere = roleKey 
     ? { name: roleKey.toLowerCase() } // Filter specifically for 'doctor'
     : { name: STAFF_ROLES_ARRAY.map(r => r.toLowerCase()) }; // Default to all staff
 
-
-  const { count, rows } = await User.findAndCountAll({
+  try {
+         const { count, rows } = await User.findAndCountAll({
     where: { ...where, active: true },
     include: [
     {
@@ -69,29 +96,22 @@ export async function listStaff({ page = 1, pageSize = 20, search,roleKey }) {
     order: [['created_at', 'DESC']]
   });
 
-  const items = rows.map(u => ({
-    id: u.id,
-    fullName: u.fName + ' ' + u.lName,
-    fName: u.fName,
-    lName: u.lName,
-    active:u.active,
-    email: u.email,
-    designation: u.roles[0]?.name || null,
-    createdAt: u.createdAt,
-    updatedAt: u.updatedAt
-  }));
-
   return {
-    items,
+    items:rows.map(formatStaffMember),
     total: count,
     page: pageInt,
     pages: Math.ceil(count / limitInt)
   };
+  } catch (err) {
+    reportError(err, { service: 'StaffService', operation: 'listStaff' });
+    throw err;
+  }
+ 
 }
 
 
 /* -------------------------------------------------------------------------- */
-/* NEW: User Update and Delete Services        */
+/* User Update and Delete Services        */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -102,26 +122,35 @@ export async function listStaff({ page = 1, pageSize = 20, search,roleKey }) {
  * @returns {object} The updated user object.
  */
 export async function updateUser(userId, updateData, newRoleIds) {
-    const user = await User.findByPk(userId);
+  const transaction = await sequelize.transaction();
+  try {
+      const user = await User.findByPk(userId,{ transaction });
     if (!user) throw new ApiError(404, 'User not found');
     
     // 1. Update basic user fields
-    await user.update(updateData);
+    await user.update(updateData, { transaction });
 
     // 2. Update roles if newRoleIds is explicitly provided (allows setting empty roles)
-    if (newRoleIds !== undefined) {
-        const roles = await Role.findAll({ where: { id: newRoleIds } });
-        await user.setRoles(roles); // This replaces existing roles
+    if (Array.isArray(newRoleIds) && newRoleIds !== undefined) {
+        const roles = await Role.findAll({ where: { id: newRoleIds } , transaction });
+        await user.setRoles(roles, { transaction }); // This replaces existing roles
     }
-
+    await transaction.commit();
     // 3. Retrieve and return the updated user object
-    const updatedUser = await getUserWithRoles(userId);
+    const updatedUser = User.findByPk(userId, { include: [{ model: Role, as: 'roles' }] }, { transaction });
     
     // For consistency with createUser, we'll return a similar structure
     const roleName = updatedUser.roles.length ? updatedUser.roles[0]?.name : null;
     return { ...updatedUser.toJSON(), roleName };
+  }catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'StaffService', operation: 'updateUser', userId });
+    throw err;
+  }
 }
-
+/**
+ * Deactivates staff and executes "Security Kill-Switch"
+ */
 /**
  * Deletes or deactivates a user. Best practice is soft delete for personnel records.
  * @param {string} userId - UUID of the user to delete/deactivate.
@@ -129,20 +158,33 @@ export async function updateUser(userId, updateData, newRoleIds) {
  * @returns {boolean} True if the operation was successful.
  */
 export async function deleteUser(userId, softDelete = true) {
-    const user = await User.findByPk(userId);
+  const transaction = await sequelize.transaction();
+  try {
+    const user = await User.findByPk(userId, { transaction });
     if (!user) throw new ApiError(404, 'User not found');
 
     if (softDelete) {
         // Soft Delete: Set the user to inactive
         user.active = false;
-        await user.save();
+        await user.save({ transaction });
+        //SECURITY KILL-SWITCH: Instantly revoke all active refresh tokens
+      // This prevents the user from using existing sessions to access the EMR.
+      await RefreshToken.update(
+          { revokedAt: new Date() },
+          { where: { userId, revokedAt: null }, transaction }
+        );
         
-        // 🔑 NOTE: In a complete system, you'd also revoke their active refresh tokens here for security.
-        
-    } else {
-        // Permanent Delete: Destroy the user record
-        await user.destroy();
-    }
-
+        logSecurityAlert('Staff Account Deactivated', { userId });
+      } else {
+          // Permanent Delete: Destroy the user record
+          await user.destroy({ transaction });
+      }
+    await transaction.commit();
     return true;
+  } catch (err) {
+    await transaction.rollback();
+    reportError(err, { service: 'StaffService', operation: 'deleteUser', userId });
+    throw err;
+  }
+    
 }

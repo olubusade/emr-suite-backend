@@ -13,7 +13,7 @@ import { seedPayments } from './payments.seed.js';
 import { seedVitals } from './vitals.seed.js';
 import { seedClinicalNotes } from './clinical.seed.js';
 import { computeBillStatus } from './../utils/billCompute.js';
-
+import { reportError } from '../utils/monitoring.js';
 async function seed() {
   try {
     await sequelize.sync({ force: true });
@@ -47,35 +47,42 @@ async function seed() {
     console.log('Seed completed successfully!');
     process.exit(0);
 
-  } catch (err) {
-    console.error('Seed failed:', err);
+  }catch (err) {
+    process.stdout.write('\n❌ CRITICAL SEED FAILURE\n');
+    reportError(err, { context: 'Global Seeder Orchestrator' });
+    console.error(err);
     process.exit(1);
   }
 }
 
+/**
+ * Reconciles bill statuses based on finalized payment transactions
+ */
 export async function syncBillStatuses(Bill, bills, payments) {
-  const paymentMap = {};
+  try {
+    process.stdout.write('📊 Reconciling bill statuses with payments... ');
+    
+    const paymentMap = {};
+    payments.forEach(p => {
+      if (!paymentMap[p.billId]) paymentMap[p.billId] = [];
+      paymentMap[p.billId].push(p);
+    });
 
-  // Group payments by billId
-  payments.forEach(p => {
-    if (!paymentMap[p.billId]) {
-      paymentMap[p.billId] = [];
+    for (const bill of bills) {
+      const relatedPayments = paymentMap[bill.id] || [];
+      const status = computeBillStatus(bill, relatedPayments);
+
+      await Bill.update(
+        { status },
+        { where: { id: bill.id } }
+      );
     }
-    paymentMap[p.billId].push(p);
-  });
 
-  for (const bill of bills) {
-    const relatedPayments = paymentMap[bill.id] || [];
-
-    const status = computeBillStatus(bill, relatedPayments);
-
-    await Bill.update(
-      { status },
-      { where: { id: bill.id } }
-    );
+    process.stdout.write('Ledger Synced.\n');
+  } catch (err) {
+    process.stdout.write('⚠️  Reconciliation failed.\n');
+    reportError(err, { context: 'syncBillStatuses' });
   }
-
-  console.log('✅ Bill statuses synced with payments');
 }
 
 seed();

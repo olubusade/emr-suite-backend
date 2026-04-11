@@ -8,35 +8,49 @@ import { PERMISSIONS } from '../constants/index.js';
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication and session management for staff users
+ */
+
 // -------------------- Public Routes -------------------- //
 
 /**
  * @swagger
  * /auth/login:
  *   post:
- *     summary: User login
+ *     summary: Authenticate user and generate access/refresh tokens
  *     tags: [Auth]
+ *     description: Logs in a staff user and returns JWT tokens for API access
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
- *               - password
+ *             required: [email, password]
  *             properties:
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: admin@busade-emr-demo.com
  *               password:
  *                 type: string
+ *                 format: password
  *                 example: password123
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
  *       401:
  *         description: Invalid credentials
+ *       400:
+ *         description: Validation error
  */
 router.post('/login', validate(loginSchema), authController.login);
 
@@ -46,22 +60,27 @@ router.post('/login', validate(loginSchema), authController.login);
  *   post:
  *     summary: Refresh access token
  *     tags: [Auth]
+ *     description: Generates a new access token using a valid refresh token
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - refreshToken
+ *             required: [refreshToken]
  *             properties:
  *               refreshToken:
  *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *     responses:
  *       200:
- *         description: Token refreshed
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
  *       401:
- *         description: Invalid or revoked refresh token
+ *         description: Invalid or expired refresh token
  */
 router.post('/refresh', validate(refreshSchema), authController.refresh);
 
@@ -72,13 +91,20 @@ router.use(authRequired);
  * @swagger
  * /auth/logout:
  *   post:
- *     summary: Logout user
+ *     summary: Logout user and invalidate session
  *     tags: [Auth]
+ *     description: Logs out the current user and invalidates refresh tokens
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Logged out successfully
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Logged out successfully
+ *       401:
+ *         description: Unauthorized
  */
 router.post('/logout', authController.logout);
 
@@ -86,8 +112,9 @@ router.post('/logout', authController.logout);
  * @swagger
  * /auth/change-password:
  *   post:
- *     summary: Change password
+ *     summary: Change user password
  *     tags: [Auth]
+ *     description: Allows authenticated users to update their password securely
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -96,19 +123,29 @@ router.post('/logout', authController.logout);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - oldPassword
- *               - newPassword
+ *             required: [oldPassword, newPassword]
  *             properties:
  *               oldPassword:
  *                 type: string
+ *                 format: password
+ *                 example: oldPassword123
  *               newPassword:
  *                 type: string
+ *                 format: password
+ *                 example: newSecurePassword456
  *     responses:
  *       200:
  *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Password updated successfully
  *       400:
  *         description: Invalid old password
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - insufficient permissions
  */
 router.post(
   '/change-password',

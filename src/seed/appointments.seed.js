@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { reportError } from '../utils/monitoring.js';
 
 export async function seedAppointments(Appointment, patients, staff) {
   const now = new Date();
@@ -67,7 +68,24 @@ export async function seedAppointments(Appointment, patients, staff) {
     }
   ];
 
-  const createdAppointments = await Appointment.bulkCreate(appointmentsData, { returning: true });
-  console.log('✅ Demo appointments seeded with Financial Status');
-  return createdAppointments;
+  try {
+    // Professional Progress Indicator
+    process.stdout.write('⏳ Seeding demo appointments... ');
+
+    const createdAppointments = await Appointment.bulkCreate(appointmentsData, { returning: true });
+
+    process.stdout.write('Success (Financial statuses mapped)\n');
+    return createdAppointments;
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    // Log the error through your monitoring utility for a permanent record
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedAppointments',
+      message: 'Failed to populate demo financial data' 
+    });
+
+    throw error; // Re-throw so the main seeder knows to stop
+  }
 }

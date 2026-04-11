@@ -1,69 +1,58 @@
+import { reportError } from '../utils/monitoring.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * SEED USERS
+ * Populates the core staff and demo accounts.
+ * Uses findOrCreate to ensure idempotency across multiple seed runs.
+ */
 export async function seedUsers(User) {
+  const usersToSeed = [
+    { key: 'super_admin', fName: 'Super', lName: 'Admin', email: 'superadmin@busade-emr-demo.com', pass: 'superadmin@123' },
+    { key: 'admin', fName: 'Admin', lName: 'User', email: 'admin@busade-emr-demo.com', pass: 'admin@123' },
+    { key: 'doctor', fName: 'John', lName: 'Doe', email: 'doctor@busade-emr-demo.com', pass: 'doctor@123' },
+    { key: 'nurse', fName: 'Mary', lName: 'Smith', email: 'nurse@busade-emr-demo.com', pass: 'nurse@123' },
+    { key: 'receptionist', fName: 'Jane', lName: 'Williams', email: 'reception@busade-emr-demo.com', pass: 'reception@123' },
+    { key: 'patient', fName: 'Paul', lName: 'Martins', email: 'patient@busade-emr-demo.com', pass: 'patient@123' }
+  ];
+
   const users = {};
 
-  users.super_admin = await User.create({
-    id: uuidv4(),
-    fName: 'Super',
-    lName: 'Admin',
-    fullName: 'Super Admin',
-    email: 'superadmin@busade-emr-demo.com',
-    passwordHash: await bcrypt.hash('superadmin@123', 10),
-    active: true
-  });
+  try {
+    process.stdout.write(`⏳ Provisioning ${usersToSeed.length} core staff accounts... `);
 
-  users.admin = await User.create({
-    id: uuidv4(),
-    fName: 'Admin',
-    lName: 'User',
-    fullName: 'Admin User',
-    email: 'admin@busade-emr-demo.com',
-    passwordHash: await bcrypt.hash('admin@123', 10),
-    active: true
-  });
+    for (const u of usersToSeed) {
+      const hashedPassword = await bcrypt.hash(u.pass, 10);
+      
+      const [userRecord] = await User.findOrCreate({
+        where: { email: u.email },
+        defaults: {
+          id: uuidv4(),
+          fName: u.fName,
+          lName: u.lName,
+          fullName: `${u.fName} ${u.lName}`,
+          email: u.email,
+          passwordHash: hashedPassword,
+          active: true
+        }
+      });
+      
+      users[u.key] = userRecord;
+    }
 
-  users.doctor = await User.create({
-    id: uuidv4(),
-    fName: 'John',
-    lName: 'Doe',
-    fullName: 'John Doe',
-    email: 'doctor@busade-emr-demo.com',
-    passwordHash: await bcrypt.hash('doctor@123', 10),
-    active: true
-  });
+    process.stdout.write('Success (Personnel accounts active)\n');
+    return users;
 
-  users.nurse = await User.create({
-    id: uuidv4(),
-    fName: 'Mary',
-    lName: 'Smith',
-    fullName: 'Mary Smith',
-    email: 'nurse@busade-emr-demo.com',
-    passwordHash: await bcrypt.hash('nurse@123', 10),
-    active: true
-  });
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedUsers',
+      context: 'Initializing core system and demo personnel' 
+    });
 
-  users.receptionist = await User.create({
-    id: uuidv4(),
-    fName: 'Jane',
-    lName: 'Williams',
-    fullName: 'Jane Williams',
-    email: 'reception@busade-emr-demo.com',
-    passwordHash: await bcrypt.hash('reception@123', 10),
-    active: true
-  });
-
-  users.patient = await User.create({
-    id: uuidv4(),
-    fName: 'Paul',
-    lName: 'Martins',
-    fullName: 'Paul Martins',
-    email: 'patient@busade-emr-demo.com',
-    passwordHash: await bcrypt.hash('patient@123', 10),
-    active: true
-  });
-
-  console.log('Users seeded');
-  return users;
+    throw error;
+  }
 }

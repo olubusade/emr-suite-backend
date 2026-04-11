@@ -1,3 +1,4 @@
+import { reportError } from '../utils/monitoring.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function seedVitals(Vital, nurse, appointments) {
@@ -7,7 +8,10 @@ export async function seedVitals(Vital, nurse, appointments) {
   const eligibleApps = appointments.filter(
     app => app.status === 'completed' || app.status === 'vitals_taken'
   );
-
+  if (eligibleApps.length === 0) {
+    process.stdout.write('⚠️  No eligible appointments found for vitals; skipping.\n');
+    return [];
+  }
   const vitalsData = eligibleApps.map((app, index) => {
     const heightCm = 175;
     const weightKg = 70 + index;
@@ -29,17 +33,28 @@ export async function seedVitals(Vital, nurse, appointments) {
       bmi,
       spo2: 98,
       painScale: 0,
-      notes: 'Initial vitals captured.',
+      notes: 'Standard triage readings captured during intake.',
     };
   });
 
-  if (vitalsData.length > 0) {
-    
+  try {
+    process.stdout.write(`⏳ Recording triage data for ${vitalsData.length} encounters... `);
+
     const created = await Vital.bulkCreate(vitalsData, { returning: true });
-    console.log(`✅ Created ${created.length} vitals`);
+
+    process.stdout.write('Success (Physiological records synced)\n');
     
-    // 🔑 Convert Sequelize instances to plain objects
+    // Return plain objects to avoid Sequelize circular references in subsequent seeders
     return created.map(v => v.get({ plain: true })); 
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedVitals',
+      context: 'Populating triage measurements from appointment list'
+    });
+
+    throw error;
   }
-  return [];
 }

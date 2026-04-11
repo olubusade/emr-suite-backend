@@ -1,3 +1,9 @@
+/**
+ * APPOINTMENT MODEL
+ * Central entity for the EMR scheduling and billing workflow.
+ * Implements a comprehensive state machine for patient transit
+ * and integrated financial tracking.
+ */
 export const AppointmentModel = (sequelize, DataTypes) => {
   const Appointment = sequelize.define(
     "Appointment",
@@ -18,14 +24,18 @@ export const AppointmentModel = (sequelize, DataTypes) => {
         field: "staff_id",
       },
       appointmentDate: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY, // Using DATEONLY for the calendar day
         allowNull: false,
         field: "appointment_date"
       },
       appointmentTime: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING, // Store as "HH:mm"
         allowNull: false,
         field: "appointment_time",
+      },
+      durationMinutes: {
+        type: DataTypes.INTEGER,
+        defaultValue: 30
       },
       reason: {
         type: DataTypes.TEXT,
@@ -35,6 +45,10 @@ export const AppointmentModel = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      /**
+       * CLINICAL STATE MACHINE
+       * Tracks the patient's physical location and stage in the clinic.
+       */
       status: {
         type: DataTypes.ENUM(
           "scheduled",      // Booked, not yet at the clinic
@@ -47,7 +61,7 @@ export const AppointmentModel = (sequelize, DataTypes) => {
         ),
         defaultValue: "scheduled",
       },
-      // 💰 FINANCIAL TRACKING ADDITIONS
+      // FINANCIAL TRACKING
       paymentStatus: {
         type: DataTypes.ENUM(
           "unpaid",          // Default after consultation
@@ -91,6 +105,12 @@ export const AppointmentModel = (sequelize, DataTypes) => {
       tableName: "appointments",
       underscored: true, // automatically maps camelCase JS -> snake_case DB
       timestamps: true,
+      // Logic for multi-column indexes for performance
+      indexes: [
+        { fields: ['appointment_date'] },
+        { fields: ['status'] },
+        { fields: ['patient_id'] }
+      ]
     }
   );
 

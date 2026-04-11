@@ -3,7 +3,14 @@ import { ok, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 
 /**
+ * AUTH CONTROLLER
+ * Orchestrates the secure entry and exit points for the EMR suite.
+ * Implements Token Rotation and Audit-on-Auth patterns.
+ */
+
+/**
  * User login
+ * POST /api/v1/auth/login
  */
 export async function login(req, res) {
   try {
@@ -14,22 +21,23 @@ export async function login(req, res) {
       ip: req.ip,
     });
     
+    // Manually trigger audit for high-security events like login
     await attachAudit(req, {
-      action: 'LOGIN',
+      action: 'USER_LOGIN',
       entity: 'user',
       entityId: user.id,
-      metadata: { email: user.email }
+      details: { email: user.email }
     });
 
-    return ok(res, { user, accessToken, refreshToken });
+    return ok(res, { user, accessToken, refreshToken }, 'Login successful');
   } catch (err) {
-    console.error('auth.login', err);
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    return error(res, err.statusCode || 500, err.message || 'Authentication failed');
   }
 }
 
 /**
- * Refresh access token
+ * Refresh access token (Implements Token Rotation)
+ * POST /api/v1/auth/refresh
  */
 export async function refresh(req, res) {
   try {
@@ -39,38 +47,38 @@ export async function refresh(req, res) {
       req.ip
     );
 
-    return ok(res, { user, accessToken, refreshToken });
+    return ok(res, { user, accessToken, refreshToken }, 'Token refreshed');
   } catch (err) {
-    console.error('auth.refresh', err);
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    return error(res, err.statusCode || 500, err.message || 'Session expired');
   }
 }
 
 /**
  * User logout
+ * POST /api/v1/auth/logout
  */
 export async function logout(req, res) {
   try {
     const userId = req.user?.id;
     
-    
+    // Revokes the refresh token in the database
     await authService.logout(userId, req.body.refreshToken);
 
     await attachAudit(req, {
-      action: 'LOGOUT',
+      action: 'USER_LOGOUT',
       entity: 'user',
       entityId: userId,
     });
 
     return ok(res, { success: true }, 'Logged out successfully');
   } catch (err) {
-    console.error('auth.logout', err);
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    return error(res, err.statusCode || 500, err.message || 'Logout failed');
   }
 }
 
 /**
  * Change user password
+ * PUT /api/v1/auth/change-password
  */
 export async function changePassword(req, res) {
   try {
@@ -78,14 +86,13 @@ export async function changePassword(req, res) {
     await authService.changePassword(userId, req.body.oldPassword, req.body.newPassword);
 
     await attachAudit(req, {
-      action: 'CHANGE_PASSWORD',
+      action: 'PASSWORD_CHANGE',
       entity: 'user',
       entityId: userId,
     });
 
     return ok(res, { success: true }, 'Password changed successfully');
   } catch (err) {
-    console.error('auth.changePassword', err);
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    return error(res, err.statusCode || 500, err.message || 'Password update failed');
   }
 }

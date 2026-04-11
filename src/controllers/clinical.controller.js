@@ -3,21 +3,26 @@ import { attachAudit } from '../middlewares/audit.middleware.js';
 import * as clinicalService from '../services/clinical.service.js';
 
 /**
- * List clinical notes
+ * CLINICAL CONTROLLER
+ * Manages patient encounter documentation. 
+ * This data represents the core medical record and requires strict auditability.
+ */
+
+/**
+ * List clinical notes with pagination
  */
 export async function listClinicalNotes(req, res) {
   try {
     const limit = req.query.limit;
-    const clinicals = await clinicalService.listClinicalNotes({ limit });
-    return ok(res, clinicals);
+    const result = await clinicalService.listClinicalNotes({ limit });
+    return ok(res, result);
   } catch (err) {
-    console.error('clinical.list', err);
     return error(res, 500, 'Server error', err.message);
   }
 }
 
 /**
- * Get single clinical note
+ * Get single clinical note by ID
  */
 export async function getClinicalNotes(req, res) {
   try {
@@ -25,47 +30,48 @@ export async function getClinicalNotes(req, res) {
     if (!clinical) return error(res, 404, 'Clinical note not found');
     return ok(res, clinical);
   } catch (err) {
-    console.error('clinical.get', err);
+
     return error(res, 500, 'Server error', err.message);
   }
 }
 /**
- * Get clinical note by patient
+ * Get all clinical notes for a specific patient (Medical History)
  */
   export async function getClinicalNotesByPatientId(req, res) {
-    const { patientId } = req.params;
     
-    if (!patientId) throw new ApiError(400, 'Patient ID is required');
+    
     try { 
+      const { patientId } = req.params;
+      if (!patientId) throw new ApiError(400, 'Patient ID is required');
       const history = await clinicalService.getClinicalNotesByPatientId(patientId);
-      return ok(res, history);
-    }catch (err) {
-      console.error('clinical note:', err);
-      return error(res, 500, 'Server error', err.message);
+      return ok(res, history, 'Patient medical history retrieved');
+    } catch (err) {
+        return error(res, 500, 'Error retrieving patient history');
     }
   }
+/**
+ * Get clinical note for a specific appointment
+ */
 export async function getClinicalNotesByAppointment (req, res) {
-  const { appointmentId } = req.params;
-  const { patientId } = req.query;
-  
-  if (!appointmentId) throw new ApiError(400, 'Appointment ID is required');
-
-  if (!patientId) throw new ApiError(400, 'Patient ID is required');
   try { 
+    const { appointmentId } = req.params;
+    const { patientId } = req.query;
+    if (!appointmentId) throw new ApiError(400, 'Appointment ID is required');
+
+    if (!patientId) throw new ApiError(400, 'Patient ID is required');
     const data = { appointmentId, patientId };
     const history = await clinicalService.getClinicalNotesByAppointmentId(data);
     return ok(res, history);
   }catch (err) {
-    console.error('clinical note:', err);
     return error(res, 500, 'Server error', err.message);
   }
 }
 /**
- * Create clinical note
+ * Create clinical note (Doctor/Nurse Encounter)
  */
 export async function createClinicalNote(req, res) {
   try {
-    // 🔑 Inject staffId (Doctor/Clinician) from the authenticated user
+    // SECURITY: Inject staffId (Doctor/Clinician) from the authenticated user
     const clinicalData = { 
       ...req.body,
       staffId:req.user.id,
@@ -76,15 +82,14 @@ export async function createClinicalNote(req, res) {
 
     // 🔑 Audit Trail
     await attachAudit(req, {
-      action: 'CREATE_CLINICAL',
+      action: 'CLINICAL_NOTE_CREATE',
       entity: 'clinical',
       entityId: clinical.id,
-      metadata: { ...clinicalData },
+      metadata: { appointmentId: clinical.appointmentId, patientId: clinical.patientId },
     });
 
-    return created(res, clinical, 'Clinical note created');
+    return created(res, clinical, 'Clinical note recorded successfully');
   } catch (err) {
-    console.error('clinical.create', err);
     return error(res, err.statusCode || 400, 'Error creating clinical note', err.message);
   }
 }
@@ -96,23 +101,22 @@ export async function updateClinicalNote(req, res) {
   try {
     const clinical = await clinicalService.updateClinicalNote(req.params.id, req.body);
 
-    // 🔑 Audit Trail
+    //Audit Trail
     await attachAudit(req, {
-      action: 'UPDATE_CLINICAL',
+      action: 'CLINICAL_NOTE_UPDATE',
       entity: 'clinical',
       entityId: clinical.id,
-      metadata: { ...req.body, updaterId: req.user.id },
+      metadata: { ...req.body, updatedBy: req.user.id },
     });
 
-    return ok(res, clinical);
+    return ok(res, clinical, 'Clinical note updated successfully');
   } catch (err) {
-    console.error('clinical.update', err);
     return error(res, err.statusCode || 400, 'Error updating clinical note', err.message);
   }
 }
 
 /**
- * Delete clinical note
+ * Delete clinical note (Soft Delete recommended in Service layer)
  */
 export async function deleteClinicalNote(req, res) {
   try {
@@ -120,15 +124,14 @@ export async function deleteClinicalNote(req, res) {
 
     // 🔑 Audit Trail
     await attachAudit(req, {
-      action: 'DELETE_CLINICAL',
+      action: 'CLINICAL_NOTE_DELETE',
       entity: 'clinical',
       entityId: clinical.id,
-      metadata: { deleted: true, deleterId: req.user.id },
+      metadata: { deleted: true, deleteDbY: req.user.id },
     });
 
-    return ok(res, { id: clinical.id }, 'Clinical note deleted');
+    return ok(res, { id: clinical.id }, 'Clinical note REMOVED');
   } catch (err) {
-    console.error('clinical.delete', err);
     return error(res, err.statusCode || 400, 'Error deleting clinical note', err.message);
   }
 }

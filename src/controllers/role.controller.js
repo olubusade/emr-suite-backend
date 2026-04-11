@@ -2,18 +2,19 @@ import * as roleService from '../services/role.service.js';
 import { ok, created, noContent, fail, error } from '../utils/response.js'; // Added noContent
 import { attachAudit } from '../middlewares/audit.middleware.js';
 
-// --- New Methods for Front-end Init ---
-
 /**
- * Get all roles (simple list)
+ * ROLE & PERMISSION CONTROLLER
+ * Manages the global security matrix including Roles, Permissions, 
+ * and their associations to Users.
  */
+
+// --- GLOBAL LOOKUPS ---
 export async function getAllRoles(req, res) {
   try {
     const roles = await roleService.getAllRoles();
     // Assuming roleService.getAllRoles returns an array of { id, name, key }
     return ok(res, roles, 'All roles retrieved successfully');
   } catch (err) {
-    console.error('roles.getAllRoles', err);
     return error(res, 500, err.message || 'Unable to fetch roles');
   }
 }
@@ -27,7 +28,6 @@ export async function getAllPermissions(req, res) {
         // Assuming roleService.getAllPermissions returns an array of { id, key, name }
         return ok(res, permissions, 'Master permissions retrieved successfully');
     } catch (err) {
-        console.error('roles.getAllPermissions', err);
         return error(res, 500, err.message || 'Unable to fetch master permissions');
     }
 }
@@ -47,7 +47,6 @@ export async function getRolePermissions(req, res) {
         return ok(res, permissions, `Permissions for role ${roleId} retrieved successfully`);
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
-        console.error('roles.getRolePermissions', err);
         return error(res, 500, err.message || 'Unable to fetch role permissions');
     }
 }
@@ -63,7 +62,7 @@ export async function updateRolePermissions(req, res) {
         await roleService.updateRolePermissions(roleId, permissionKeys);
         
         await attachAudit(req, { 
-            action: 'UPDATE_ROLE_PERMISSIONS', 
+            action: 'RBAC_ROLE_PERMISSIONS_UPDATE', 
             entity: 'role', 
             entityId: roleId, 
             metadata: { query: permissionKeys } 
@@ -71,12 +70,11 @@ export async function updateRolePermissions(req, res) {
         return ok(res, null, `Permissions for role ${roleId} updated successfully`);
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
-        console.error('roles.updateRolePermissions', err);
         return error(res, 500, err.message || 'Unable to update role permissions');
     }
 }
 
-// --- Role CRUD Methods ---
+// --- ROLE & PERMISSION CRUD ---
 
 /**
  * Create a new role (Updated endpoint to use base path)
@@ -86,7 +84,7 @@ export async function createRole(req, res) {
     const role = await roleService.createRole(req.body);
       
       await attachAudit(req, { 
-            action: 'CREATE_ROLE', 
+            action: 'RBAC_ROLE_CREATE', 
             entity: 'role', 
             entityId: role.id, 
             metadata: { query: req.body } 
@@ -99,7 +97,6 @@ export async function createRole(req, res) {
     }, 'Role created successfully');
   } catch (err) {
     if (err.statusCode === 409) return fail(res, err.message, 409);
-    console.error('roles.createRole', err);
     return error(res, 500, err.message || 'Unable to create role');
   }
 }
@@ -113,7 +110,7 @@ export async function deleteRole(req, res) {
         await roleService.deleteRole(roleId);
         
         await attachAudit(req, { 
-            action: 'DELETE_ROLE', 
+            action: 'RBAC_ROLE_DELETE', 
             entity: 'role', 
             entityId: roleId, 
             metadata: { query: req.params } 
@@ -122,7 +119,6 @@ export async function deleteRole(req, res) {
         return noContent(res); // 204 No Content for successful deletion
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
-        console.error('roles.deleteRole', err);
         return error(res, 500, err.message || 'Unable to delete role');
     }
 }
@@ -154,7 +150,7 @@ export async function createPermission(req, res) {
     return error(res, 500, err.message || 'Unable to create permission');
   }
 }
-
+// --- ROLE & PERMISSION CRUD ---
 export const getUserRoles = async (req, res) => {
     try {
         const { userId } = req.params;

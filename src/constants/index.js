@@ -1,3 +1,8 @@
+/**
+ * SYSTEM CONSTANTS & RBAC POLICY
+ * Centralized source of truth for Roles, Permissions, and Status codes.
+ */
+
 export const ROLES = {
     SUPER_ADMIN: "SUPER_ADMIN",
     ADMIN: "ADMIN",
@@ -7,6 +12,10 @@ export const ROLES = {
     PATIENT: "PATIENT",
 };
   
+/**
+ * STAFF_ROLES_ARRAY
+ * Helper used for administrative filtering and staff-only middleware logic.
+ */
 export const STAFF_ROLES_ARRAY = [
     ROLES.SUPER_ADMIN,
     ROLES.ADMIN,
@@ -15,8 +24,7 @@ export const STAFF_ROLES_ARRAY = [
     ROLES.RECEPTIONIST,
 ];
 
-  
-  export const PERMISSIONS = {
+export const PERMISSIONS = {
     // User Management
     USER_READ: "USER_READ",
     USER_CREATE: "USER_CREATE",
@@ -62,7 +70,6 @@ export const STAFF_ROLES_ARRAY = [
     CLINICAL_NOTE_UPDATE: "CLINICAL_NOTE_UPDATE",
     CLINICAL_NOTE_DELETE: "CLINICAL_NOTE_DELETE",
 
-  
     // Doctors-Patients
     DOCTOR_PATIENT_READ: "DOCTOR_PATIENT_READ",
   
@@ -103,20 +110,19 @@ export const STAFF_ROLES_ARRAY = [
     // Metrics & Dashboard
     METRICS_READ: "METRICS_READ",
     DASHBOARD_VIEW: "DASHBOARD_VIEW",
-  };
+};
   
-  export const STATUS = {
+export const STATUS = {
     SUCCESS: "SUCCESS",
     FAIL: "FAIL",
     ERROR: "ERROR",
     NOTFOUND: "NOTFOUND",
-  };
+};
 
-  export const BILL_STATUS = {
+export const BILL_STATUS = {
     PAID: "paid",
     UNPAID: "unpaid",
     PENDING: "pending",
     CANCEL: "cancelled",
     PARTIALLY_PAID: "partially_paid",
-  };
-  
+};

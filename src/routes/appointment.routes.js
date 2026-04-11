@@ -3,17 +3,28 @@ import * as appt from '../controllers/appointment.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
-import { createAppointmentSchema, updateAppointmentSchema, getAppointmentSchema, listAppointmentsSchema } from '../validation/schemas.js';
+import {
+  createAppointmentSchema,
+  updateAppointmentSchema,
+  getAppointmentSchema,
+  listAppointmentsSchema
+} from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
 
 const router = express.Router();
 
-// -------------------- List appointments -------------------- //
+/**
+ * @swagger
+ * tags:
+ *   name: Appointments
+ *   description: Clinical scheduling and patient workflow management
+ */
+
 /**
  * @swagger
  * /appointments:
  *   get:
- *     summary: List all appointments
+ *     summary: List appointments with filters and pagination
  *     tags: [Appointments]
  *     security:
  *       - bearerAuth: []
@@ -22,15 +33,36 @@ const router = express.Router();
  *         name: page
  *         schema:
  *           type: integer
- *         description: Page number
+ *         example: 1
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *         description: Number of items per page
+ *         example: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [scheduled, checked_in, awaiting_vitals, vitals_taken, in_consultation, completed, canceled]
+ *       - in: query
+ *         name: timeFrame
+ *         schema:
+ *           type: string
+ *           enum: [PAST, UPCOMING, TODAY, ALL]
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by patient name
  *     responses:
  *       200:
- *         description: List of appointments
+ *         description: Paginated list of appointments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedAppointments'
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  */
@@ -39,17 +71,11 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_READ),
   validate(listAppointmentsSchema),
-  async (req, res, next) => {
-    try {
-      await appt.listAppointments(req, res);
-      next();
-    } catch (err) {
-      next(err);
-    }
+  async (req, res) => {
+    await appt.listAppointments(req, res);
   }
 );
 
-// -------------------- Create appointment -------------------- //
 /**
  * @swagger
  * /appointments:
@@ -64,9 +90,23 @@ router.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateAppointment'
+ *           example:
+ *             patientId: "550e8400-e29b-41d4-a716-446655440000"
+ *             staffId: "550e8400-e29b-41d4-a716-446655440001"
+ *             appointmentDate: "2026-04-12"
+ *             appointmentTime: "10:30"
+ *             reason: "Routine checkup"
  *     responses:
  *       201:
- *         description: Appointment created
+ *         description: Appointment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Appointment'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  */
@@ -75,17 +115,11 @@ router.post(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_CREATE),
   validate(createAppointmentSchema),
-  async (req, res, next) => {
-    try {
-      await appt.createAppointment(req, res);
-      next();
-    } catch (err) {
-      next(err);
-    }
+  async (req, res) => {
+    await appt.createAppointment(req, res);
   }
 );
 
-// -------------------- Get single appointment -------------------- //
 /**
  * @swagger
  * /appointments/{id}:
@@ -99,11 +133,19 @@ router.post(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Appointment ID
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Appointment details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Appointment'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *       404:
  *         description: Appointment not found
  */
@@ -112,17 +154,11 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_READ),
   validate(getAppointmentSchema),
-  async (req, res, next) => {
-    try {
-      await appt.getAppointment(req, res);
-      next();
-    } catch (err) {
-      next(err);
-    }
+  async (req, res) => {
+    await appt.getAppointment(req, res);
   }
 );
 
-// -------------------- Update appointment -------------------- //
 /**
  * @swagger
  * /appointments/{id}:
@@ -136,7 +172,8 @@ router.get(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -145,7 +182,15 @@ router.get(
  *             $ref: '#/components/schemas/UpdateAppointment'
  *     responses:
  *       200:
- *         description: Appointment updated
+ *         description: Appointment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Appointment'
+ *       400:
+ *         description: Invalid request or transition
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  */
@@ -154,17 +199,11 @@ router.put(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_UPDATE),
   validate(updateAppointmentSchema),
-  async (req, res, next) => {
-    try {
-      await appt.updateAppointment(req, res);
-      next();
-    } catch (err) {
-      next(err);
-    }
+  async (req, res) => {
+    await appt.updateAppointment(req, res);
   }
 );
 
-// -------------------- Cancel appointment -------------------- //
 /**
  * @swagger
  * /appointments/{id}:
@@ -178,11 +217,13 @@ router.put(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Appointment ID
+ *           type: string
+ *           format: uuid
  *     responses:
- *       200:
- *         description: Appointment canceled
+ *       204:
+ *         description: Appointment cancelled successfully
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  */
@@ -191,13 +232,8 @@ router.delete(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_DELETE),
   validate(getAppointmentSchema),
-  async (req, res, next) => {
-    try {
-      await appt.cancelAppointment(req, res);
-      next();
-    } catch (err) {
-      next(err);
-    }
+  async (req, res) => {
+    await appt.cancelAppointment(req, res);
   }
 );
 

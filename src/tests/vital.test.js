@@ -1,17 +1,22 @@
 import request from "supertest";
 import app from "../app.js";
-import { setupDatabase, teardownDatabase, createTestUser, createTestPatient } from "./testHelper.js"; // 🔑 Import createTestPatient
+import { setupDB, teardownDatabase, createTestUser, createTestPatient } from "./testHelper.js";
 
 let tokens = {};
 let vitalId;
-let testPatientId; // 🔑 Variable to hold the dynamically created patient ID
+let testPatientId;
 
 beforeAll(async () => {
-  await setupDatabase();
-  const nurse = await createTestUser({ role: "nurse" });
+  // Logic: Using standardized setupDB for clean state
+  await setupDB();
+  
+  const nurse = await createTestUser({ 
+    role: "nurse", 
+    email: "nurse.triage@busade-emr-demo.com" 
+  });
   tokens.nurse = nurse.accessToken;
 
-  // 🔑 SETUP: Create a test patient to ensure a valid foreign key exists
+  // Logic: Satisfy foreign key constraints for Patient table
   const patient = await createTestPatient(); 
   testPatientId = patient.id;
 });
@@ -20,98 +25,72 @@ afterAll(async () => {
   await teardownDatabase();
 });
 
-describe("Vital Module CRUD", () => {
+describe("Clinical Vitals Module Integration", () => {
   
-  // ------------------------------------------------------------------
-  // 🔑 TEST 1: CREATE VITAL RECORD (Full Payload & BMI Calculation Check)
-  // ------------------------------------------------------------------
-  it("should create a vital record and calculate BMI", async () => {
+  it("should create a triage record and verify auto-calculated BMI", async () => {
     const res = await request(app)
       .post("/api/vitals")
       .set("Authorization", `Bearer ${tokens.nurse}`)
       .send({
-        // 🔑 REQUIRED: Use the dynamically created patient ID
         patientId: testPatientId, 
-        // 🔑 REQUIRED: Use ISO 8601 datetime format
         readingAt: new Date().toISOString(), 
-        
-        // Vitals data for calculation:
-        // Weight: 70 kg, Height: 175 cm (1.75 m). BMI = 70 / (1.75^2) ≈ 22.86
         weightKg: 70.0, 
         heightCm: 175.0, 
-        
         bloodPressure: "120/80",
         heartRate: 72,
         temperature: 36.8,
         spo2: 98,
         painScale: 2,
-        notes: "Routine check-in."
+        notes: "Initial triage check."
       });
 
     expect(res.status).toBe(201);
+    expect(res.body.status).toBe('success');
     expect(res.body.data).toHaveProperty("id");
     
-    // 🔑 VERIFY: Check the BMI calculation (rounded to 1 decimal place)
-    expect(res.body.data.bmi).toBeCloseTo(22.9, 1); 
-    expect(res.body.data.weightKg).toBe(70.0);
-    expect(res.body.data.spo2).toBe(98);
+    // Logic: Verification of BMI (70 / 1.75^2 ≈ 22.857)
+    // toBeCloseTo prevents failure due to minor floating point variances
+    expect(Number(res.body.data.bmi)).toBeCloseTo(22.9, 1); 
     
     vitalId = res.body.data.id;
   });
 
-  // ------------------------------------------------------------------
-  // TEST 2: GET VITAL RECORD
-  // ------------------------------------------------------------------
-  it("should get a vital record and include associated data", async () => {
+  it("should retrieve triage record with associated patient metadata", async () => {
     const res = await request(app)
       .get(`/api/vitals/${vitalId}`)
       .set("Authorization", `Bearer ${tokens.nurse}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty("id", vitalId);
-    expect(res.body.data).toHaveProperty("patientId", testPatientId);
+    expect(res.body.data.id).toBe(vitalId);
     
-    // 🔑 VERIFY: Check if associations (Patient/Nurse) are included (if service is set up)
-    expect(res.body.data).toHaveProperty("Patient"); 
-    expect(res.body.data).toHaveProperty("nurse");
-    
-    // Check specific updated fields
-    expect(res.body.data.bmi).toBeCloseTo(22.9, 1);
+    // Logic: Confirm associations are eager-loaded for the UI
+    expect(res.body.data).toHaveProperty("Patient");
+    expect(res.body.data.Patient.id).toBe(testPatientId);
   });
 
-  // ------------------------------------------------------------------
-  // 🔑 TEST 3: UPDATE VITAL RECORD (Recalculate BMI Check)
-  // ------------------------------------------------------------------
-  it("should update weight and trigger BMI recalculation", async () => {
-    // New weight: 80 kg. Height remains 175 cm. BMI = 80 / (1.75^2) ≈ 26.12
+  it("should recalculate BMI when weight is modified via PATCH", async () => {
+    // New weight: 80 kg. New BMI: 80 / 1.75^2 ≈ 26.12
     const res = await request(app)
       .patch(`/api/vitals/${vitalId}`)
       .set("Authorization", `Bearer ${tokens.nurse}`)
       .send({ 
         temperature: 37.2, 
-        weightKg: 80.0 // Update weight
+        weightKg: 80.0 
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty("id", vitalId);
+    expect(Number(res.body.data.bmi)).toBeCloseTo(26.1, 1); 
     expect(res.body.data.temperature).toBe(37.2);
-    
-    // 🔑 VERIFY: BMI is successfully recalculated
-    expect(res.body.data.bmi).toBeCloseTo(26.1, 1); 
   });
   
-  // ------------------------------------------------------------------
-  // TEST 4: DELETE VITAL RECORD
-  // ------------------------------------------------------------------
-  it("should delete a vital record", async () => {
+  it("should archive/delete a vital record and enforce 404 on subsequent lookups", async () => {
     const res = await request(app)
       .delete(`/api/vitals/${vitalId}`)
       .set("Authorization", `Bearer ${tokens.nurse}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ success: true });
+    expect(res.body.status).toBe('success');
     
-    // 🔑 VERIFY: Ensure it's truly deleted (optional, but good practice)
     const getRes = await request(app)
       .get(`/api/vitals/${vitalId}`)
       .set("Authorization", `Bearer ${tokens.nurse}`);

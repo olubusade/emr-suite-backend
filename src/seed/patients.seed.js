@@ -1,6 +1,7 @@
 // seed/patients.js  (or wherever your seed files live)
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';   // ← prefer bcryptjs (pure JS, no native deps)
+import { reportError } from '../utils/monitoring.js';
 
 const DEMO_PASSWORD = 'P@ssword1'; // Never hardcode real passwords — this is demo-only
 const SALT_ROUNDS = 10;
@@ -116,8 +117,10 @@ export async function seedPatients(Patient, adminUser) {
     },
   ];
 
-  try {
-    // Optional: Make seeding idempotent (skip if emails already exist)
+ try {
+    process.stdout.write('⏳ Synchronizing patient registry... ');
+
+    // Idempotency check: Skip if emails already exist
     const existingEmails = await Patient.findAll({
       where: { email: patientsData.map(p => p.email) },
       attributes: ['email'],
@@ -125,23 +128,30 @@ export async function seedPatients(Patient, adminUser) {
     });
 
     const existingEmailSet = new Set(existingEmails.map(e => e.email));
-
     const newPatients = patientsData.filter(p => !existingEmailSet.has(p.email));
 
     if (newPatients.length === 0) {
-      console.log('ℹ️ All demo patients already exist — skipping creation');
-      return [];
+      process.stdout.write('ℹ️  Registry up to date.\n');
+      return await Patient.findAll({ where: { email: patientsData.map(p => p.email) } });
     }
 
     const created = await Patient.bulkCreate(newPatients, {
-      returning: true,          // PostgreSQL returns created rows
-      individualHooks: true,    // triggers beforeCreate hooks (e.g. email lowercase)
+      returning: true,
+      individualHooks: true, 
     });
 
-    console.log(`✅ Created ${created.length} demo patients`);
+    process.stdout.write(`Success (${created.length} new patients registered)\n`);
     return created;
+
   } catch (error) {
-    console.error('❌ Patient seeding failed:', error.message);
-    throw error; // Let the parent seed script handle rollback / exit
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedPatients',
+      context: 'Onboarding demo medical records' 
+    });
+
+    throw error;
   }
 }

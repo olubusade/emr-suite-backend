@@ -3,7 +3,13 @@ import * as billController from '../controllers/bill.controller.js';
 import { authRequired } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/permission.middleware.js';
 import { validate } from '../utils/validation.js';
-import { listBillSchema, createBillSchema, updateBillSchema, getBillSchema,getPendingBillsSchema } from '../validation/schemas.js';
+import {
+  listBillSchema,
+  createBillSchema,
+  updateBillSchema,
+  getBillSchema,
+  getPendingBillsSchema
+} from '../validation/schemas.js';
 import { PERMISSIONS } from '../constants/index.js';
 
 const r = express.Router();
@@ -12,26 +18,52 @@ const r = express.Router();
  * @swagger
  * tags:
  *   name: Bills
- *   description: Billing management endpoints
+ *   description: Financial and billing management for patient services
  */
 
 /**
  * @swagger
- * /api/bills:
+ * /bills:
  *   get:
- *     summary: List all bills
+ *     summary: List bills with filters and pagination
  *     tags: [Bills]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [unpaid, pending, partially_paid, paid, cancelled]
+ *       - in: query
+ *         name: paymentMethod
+ *         schema:
+ *           type: string
+ *           enum: [cash, card, insurance, transfer]
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by patient name
  *     responses:
  *       200:
- *         description: List of bills
+ *         description: Paginated list of bills
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Bill'
+ *               $ref: '#/components/schemas/PaginatedBills'
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  */
@@ -42,19 +74,52 @@ r.get(
   validate(listBillSchema),
   billController.listBills
 );
+
+/**
+ * @swagger
+ * /bills/patients:
+ *   get:
+ *     summary: Get patients with pending bills
+ *     tags: [Bills]
+ *     description: Returns patients who have outstanding or unpaid bills
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of patients with pending bills
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
 r.get(
   '/patients',
   authRequired,
-  authorize(PERMISSIONS.BILL_CREATE),
+  authorize(PERMISSIONS.BILL_READ),
   validate(getPendingBillsSchema),
   billController.getPendingBills
 );
+
 /**
  * @swagger
- * /api/bills:
+ * /bills:
  *   post:
  *     summary: Create a new bill
  *     tags: [Bills]
+ *     description: Generates a bill linked to an appointment and patient
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -62,10 +127,24 @@ r.get(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/BillCreate'
+ *             $ref: '#/components/schemas/CreateBill'
+ *           example:
+ *             patientId: "550e8400-e29b-41d4-a716-446655440000"
+ *             appointmentId: "550e8400-e29b-41d4-a716-446655440001"
+ *             amount: 15000
+ *             paymentMethod: "cash"
+ *             notes: "Consultation fee"
  *     responses:
  *       201:
  *         description: Bill created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Bill'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  */
@@ -79,9 +158,9 @@ r.post(
 
 /**
  * @swagger
- * /api/bills/{id}:
+ * /bills/{id}:
  *   get:
- *     summary: Get a single bill by ID
+ *     summary: Get a bill by ID
  *     tags: [Bills]
  *     security:
  *       - bearerAuth: []
@@ -90,8 +169,8 @@ r.post(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Bill ID
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Bill details
@@ -99,6 +178,8 @@ r.post(
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Bill'
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  *       404:
@@ -114,10 +195,11 @@ r.get(
 
 /**
  * @swagger
- * /api/bills/{id}:
- *   put:
+ * /bills/{id}:
+ *   patch:
  *     summary: Update a bill
  *     tags: [Bills]
+ *     description: Update bill status, payment method, or amount
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -125,17 +207,25 @@ r.get(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Bill ID
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/BillUpdate'
+ *             $ref: '#/components/schemas/UpdateBill'
  *     responses:
  *       200:
  *         description: Bill updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Bill'
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  *       404:
@@ -151,10 +241,11 @@ r.patch(
 
 /**
  * @swagger
- * /api/bills/{id}:
+ * /bills/{id}:
  *   delete:
  *     summary: Delete a bill
  *     tags: [Bills]
+ *     description: Permanently removes a bill record (use with caution)
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -162,11 +253,13 @@ r.patch(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Bill ID
+ *           type: string
+ *           format: uuid
  *     responses:
  *       204:
  *         description: Bill deleted successfully
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  *       404:

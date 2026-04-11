@@ -1,53 +1,67 @@
 import { User, Role, Permission, RefreshToken } from '../models/index.js';
-import { hash, compare } from '../utils/passwords.js';
+import { hashPassword, comparePassword } from '../utils/passwords.js';
 import { signAccess, signRefresh, sha256, verifyRefresh, tokenExpiry } from '../utils/jwt.js';
 import ApiError from '../utils/ApiError.js';
+import { reportError, logSecurityAlert } from '../utils/monitoring.js';
+
+/**
+ * AUTH SERVICE
+ * Handles identity verification, session management, and RBAC orchestration.
+ * Implements token rotation and strict revocation policies.
+ */
 
 /* -------------------------------------------------------------------------- */
-/*                                Helpers                                     */
+/* Internal Helpers                             */
 /* -------------------------------------------------------------------------- */
 
 async function collectPermissions(user) {
-  if (!user) return [];
+  try {
+    if (!user || !user.roles) return [];
+    // Collect role-based permissions
+    const rolePermissions = await Permission.findAll({
+      include: [{
+        association: 'roles',
+        where: { id: user.roles.map(r => r.id) },
+        attributes: [],
+        through: { attributes: [] },
+      }],
+    });
 
-  // Collect role-based permissions
-  const rolePermissions = await Permission.findAll({
-    include: [{
-      association: 'roles',
-      where: { id: user.roles.map(r => r.id) },
-      attributes: [],
-      through: { attributes: [] },
-    }],
-  });
+    // Collect user-specific permissions
+    const userPermissions = await Permission.findAll({
+      include: [{
+        association: 'users',
+        where: { id: user.id },
+        attributes: [],
+        through: { attributes: [] },
+      }],
+    });
 
-  // Collect user-specific permissions
-  const userPermissions = await Permission.findAll({
-    include: [{
-      association: 'users',
-      where: { id: user.id },
-      attributes: [],
-      through: { attributes: [] },
-    }],
-  });
+    // Return unique set of objects with key + name
+    const combined = [
+      ...rolePermissions.map(p => ({ key: p.key, name: p.name })),
+      ...userPermissions.map(p => ({ key: p.key, name: p.name })),
+    ];
 
-  // Return unique set of objects with key + name
-  const combined = [
-    ...rolePermissions.map(p => ({ key: p.key, name: p.name })),
-    ...userPermissions.map(p => ({ key: p.key, name: p.name })),
-  ];
+    // Deduplicate by key
+    const unique = [];
+    const seen = new Set();
 
-  // Deduplicate by key
-  const unique = [];
-  const seen = new Set();
-
-  for (const perm of combined) {
-    if (!seen.has(perm.key)) {
-      seen.add(perm.key);
-      unique.push(perm);
+    for (const perm of combined) {
+      if (!seen.has(perm.key)) {
+        seen.add(perm.key);
+        unique.push(perm);
+      }
     }
-  }
 
-  return unique;
+    return unique;
+  } catch (err) {
+    reportError(err, { service: 'AuthService', operation: 'collectPermissions', userId: user.id });
+    return []; // Return empty permissions rather than crashing the login
+  }
+  
+
+  
 }
 
 function formatUser(user, permissions = []) {
@@ -66,118 +80,170 @@ function formatUser(user, permissions = []) {
     updatedAt: user.updatedAt,
   };
 }
+/* -------------------------------------------------------------------------- */
+/* Auth Services                                 */
+/* -------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------- */
-/*                              Auth Services                                 */
-/* -------------------------------------------------------------------------- */
+/**
+ * Validates credentials and establishes a secure session
+ */
 
 export async function login({ email, password, userAgent, ip }) {
-  if (!email || !password) throw new ApiError(400, 'Missing credentials');
+  try {
+    if (!email || !password) throw new ApiError(400, 'Missing credentials');
+    const user = await User.findOne({
+      where: { email, active: true },
+      include: [{ model: Role, as: 'roles' }],
+    });
+    //SECURITY: Use generic error for user enumeration protection
+    if (!user) throw new ApiError(401, 'Invalid email or password');
 
-  const user = await User.findOne({
-    where: { email, active: true },
-    include: [{ model: Role, as: 'roles' }],
-  });
+    const passwordMatch = await comparePassword(password, user.passwordHash);
+    if (!passwordMatch) { 
+      logSecurityAlert('Failed login attempt', { email, ip });
+      throw new ApiError(401, 'Invalid email or password');
+    }
 
-  if (!user) throw new ApiError(401, 'Invalid credentials');
+    const permissions = await collectPermissions(user);
+    const accessToken = signAccess({
+      id: user.id,
+      email: user.email,
+      roles: user.roles.map(r => r.name),
+      permissions,
+    });
 
-  const passwordMatch = await compare(password, user.passwordHash);
-  if (!passwordMatch) throw new ApiError(401, 'Invalid credentials');
+    const refreshToken = signRefresh({ id: user.id });
+    const exp = tokenExpiry(refreshToken);
 
-  const permissions = await collectPermissions(user);
-  const accessToken = signAccess({
-    id: user.id,
-    email: user.email,
-    roles: user.roles.map(r => r.name),
-    permissions,
-  });
+    await RefreshToken.create({
+      userId: user.id,
+      token: refreshToken,
+      tokenHash: sha256(refreshToken),
+      expiresAt: exp,
+      revokedAt: null, // active
+      userAgent,
+      ipAddress: ip,
+    });
 
-  const refreshToken = signRefresh({ id: user.id });
-  const exp = tokenExpiry(refreshToken);
-
-  await RefreshToken.create({
-    userId: user.id,
-    token: refreshToken,
-    tokenHash: sha256(refreshToken),
-    expiresAt: exp,
-    revokedAt: null, // active
-    userAgent,
-    ipAddress: ip,
-  });
-
-  return { user: formatUser(user, permissions), accessToken, refreshToken };
+    // Update last login timestamp asynchronously
+    user.lastLogin = new Date();
+    user.save().catch(e => reportError(e, { userId: user.id, op: 'updateLastLogin' }));
+    return { user: formatUser(user, permissions), accessToken, refreshToken };
+  }catch (err) {
+    if (!(err instanceof ApiError)) {
+      reportError(err, { service: 'AuthService', operation: 'login', email });
+    }
+    throw err;
+  }
+ 
 }
 
+/**
+ * Rotates Refresh Tokens to prevent replay attacks
+ */
 export async function refreshToken(oldRefreshToken, userAgent, ip) {
-  if (!oldRefreshToken) throw new ApiError(400, 'Missing refresh token');
+  try {
+    if (!oldRefreshToken) throw new ApiError(400, 'Missing refresh token');
+    let payload;
+    try { 
+        payload = verifyRefresh(oldRefreshToken); 
+    } catch (e) { 
+        throw new ApiError(401, 'Session expired or invalid'); 
+    }
 
-  let payload;
-  try { payload = verifyRefresh(oldRefreshToken); } 
-  catch { throw new ApiError(401, 'Invalid refresh token'); }
+    const storedToken = await RefreshToken.findOne({
+      where: {
+        userId: payload.id,
+        tokenHash: sha256(oldRefreshToken),
+        revokedAt: null, // only active tokens
+      },
+    });
+    if (!storedToken) {
+      logSecurityAlert('Possible Refresh Token Reuse Attack', { userId: payload.id, ip });
+      throw new ApiError(401, 'Session no longer active');
+    }
+    //Token Rotation: Revoke the old one immediately
+    storedToken.revokedAt = new Date();
+    await storedToken.save();
 
-  const storedToken = await RefreshToken.findOne({
-    where: {
-      userId: payload.id,
-      tokenHash: sha256(oldRefreshToken),
-      revokedAt: null, // only active tokens
-    },
-  });
-  if (!storedToken) throw new ApiError(401, 'Invalid or revoked refresh token');
+    const user = await User.findByPk(payload.id, { include: [{ model: Role, as: 'roles' }] });
+    if (!user || !user.active) throw new ApiError(404, 'User account is inactive or not found');
 
-  storedToken.revokedAt = new Date();
-  await storedToken.save();
+    const permissions = await collectPermissions(user);
+    const accessToken = signAccess({ id: user.id, email: user.email, roles: user.roles.map(r => r.name), permissions });
+    const newRefreshToken = signRefresh({ id: user.id });
+    const exp = tokenExpiry(newRefreshToken);
 
-  const user = await User.findByPk(payload.id, { include: [{ model: Role, as: 'roles' }] });
-  if (!user) throw new ApiError(404, 'User not found');
+    await RefreshToken.create({
+      userId: user.id,
+      token: newRefreshToken,
+      tokenHash: sha256(newRefreshToken),
+      expiresAt: exp,
+      revokedAt: null,
+      userAgent,
+      ipAddress: ip,
+    });
 
-  const permissions = await collectPermissions(user);
-  const accessToken = signAccess({ id: user.id, email: user.email, roles: user.roles.map(r => r.name), permissions });
-  const newRefreshToken = signRefresh({ id: user.id });
-  const exp = tokenExpiry(newRefreshToken);
-
-  await RefreshToken.create({
-    userId: user.id,
-    token: newRefreshToken,
-    tokenHash: sha256(newRefreshToken),
-    expiresAt: exp,
-    revokedAt: null,
-    userAgent,
-    ipAddress: ip,
-  });
-
-  return { user: formatUser(user, permissions), accessToken, refreshToken: newRefreshToken };
+    return { user: formatUser(user, permissions), accessToken, refreshToken: newRefreshToken };
+  }catch (err) {
+    if (!(err instanceof ApiError)) {
+      reportError(err, { service: 'AuthService', operation: 'refreshToken' });
+    }
+    throw err;
+  }
+ 
 }
 
+/**
+ * Revokes specific session or all sessions for a user
+ */
 export async function logout(userId, refreshToken) {
-  const updates = [];
+  try {
+    const updates = [];
 
-  if (refreshToken) {
-    updates.push(RefreshToken.update(
-      { revokedAt: new Date() },
-      { where: { tokenHash: sha256(refreshToken) } }
-    ));
+    if (refreshToken) {
+      updates.push(RefreshToken.update(
+        { revokedAt: new Date() },
+        { where: { tokenHash: sha256(refreshToken) } }
+      ));
+    }
+
+    if (userId) {
+      updates.push(RefreshToken.update(
+        { revokedAt: new Date() },
+        { where: { userId, revokedAt: null } }
+      ));
+    }
+
+    await Promise.all(updates);
+  }catch (err) {
+    reportError(err, { service: 'AuthService', operation: 'logout', userId });
+    throw err;
   }
-
-  if (userId) {
-    updates.push(RefreshToken.update(
-      { revokedAt: new Date() },
-      { where: { userId, revokedAt: null } }
-    ));
-  }
-
-  await Promise.all(updates);
+  
 }
 
+/**
+ * Updates password and invalidates all existing sessions for security
+ */
 export async function changePassword(userId, oldPassword, newPassword) {
-  const user = await User.findByPk(userId);
-  if (!user) throw new ApiError(404, 'User not found');
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) throw new ApiError(404, 'User not found');
 
-  const isMatch = await compare(oldPassword, user.password_hash);
-  if (!isMatch) throw new ApiError(400, 'Old password is incorrect');
+    const isMatch = await compare(oldPassword, user.password_hash);
+    if (!isMatch) throw new ApiError(400, 'Old password is incorrect');
 
-  user.password_hash = await hash(newPassword);
-  await user.save();
+    user.password_hash = await hashPassword(newPassword);
+    await user.save();
 
-  await RefreshToken.update({ revokedAt: new Date() }, { where: { userId, revokedAt: null } });
-  return true;
+    await RefreshToken.update({ revokedAt: new Date() }, { where: { userId, revokedAt: null } });
+    return true;
+  }catch (err) {
+    if (!(err instanceof ApiError)) {
+      reportError(err, { service: 'AuthService', operation: 'changePassword', userId });
+    }
+    throw err;
+  }
+  
 }

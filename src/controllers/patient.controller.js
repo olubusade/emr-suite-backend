@@ -3,7 +3,14 @@ import { ok, created, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js'; // Assuming this middleware is correctly defined
 
 /**
- * List patients with pagination and optional search
+ * PATIENT CONTROLLER
+ * Manages the Patient Master Index (PMI).
+ * This is the primary entity linked to clinical encounters and billing.
+ */
+
+/**
+ * List patients with pagination and multi-field search
+ * GET /api/v1/patients
  */
 export async function listPatients(req, res) {
   try {
@@ -13,11 +20,11 @@ export async function listPatients(req, res) {
 
     const data = await patientService.listPatients({ page, pageSize, search });
 
-    // Map DB fields to camelCase (Service should return clean objects)
+    // DTO Mapping: Ensures consistent API output regardless of internal DB naming
     const items = data.items.map((p) => ({
       id: p.id,
-      firstName: p.firstName, // 🔑 Consistent naming
-      lastName: p.lastName,   // 🔑 Consistent naming
+      firstName: p.firstName, 
+      lastName: p.lastName,   
       email: p.email,
       phone: p.phone,
       dob: p.dob,
@@ -38,31 +45,31 @@ export async function listPatients(req, res) {
       pages: data.pages,
       total: data.total
     });
-  } catch (err) {
-    console.error('patients.list', err);
+  } catch (err) {    
     return error(res, 500, err.message || 'Server error');
   }
 }
 
 /**
- * Create a new patient
+ * Register a new patient
+ * POST /api/v1/patients
  */
 export async function createPatient(req, res) {
   try {
-    // 🔑 Inject the creator's ID for audit/tracking
+    // Inject the creator's ID for audit/tracking
     const dataWithCreator = { ...req.body, createdBy: req.user.id }; 
     
     const patient = await patientService.createPatient(dataWithCreator);
     
-    // 🔑 Audit Trail
+    // Audit Trail
     await attachAudit(req, {
-      action: 'PATIENT_CREATE',
+      action: 'PATIENT_REGISTRATION',
       entity: 'patient',
       entityId: patient.id,
-      metadata: { ...req.body, creatorId: req.user.id },
+      metadata: { name: `${patient.firstName} ${patient.lastName}`, email: patient.email },
     });
 
-    // 🔑 FIX: Return consistent camelCase fields
+    //FIX: Return consistent camelCase fields
     return created(res, {
       id: patient.id,
       firstName: patient.firstName, 
@@ -74,67 +81,60 @@ export async function createPatient(req, res) {
       updatedAt: patient.updatedAt,
     }, 'Patient created successfully');
   } catch (err) {
-    console.error('patients.create', err);
+    
     return error(res, err.statusCode || 500, err.message || 'Server error'); 
   }
 }
 
 /**
- * Update an existing patient
+ * Update patient demographics or medical basics
+ * PUT /api/v1/patients/:id
  */
 export async function updatePatient(req, res) {
   try {
     const { id } = req.params;
     const patient = await patientService.updatePatient(id, req.body);
     
-    // 🔑 Audit Trail
+    // Audit Trail
     await attachAudit(req, {
-      action: 'PATIENT_UPDATE',
+      action: 'PATIENT_RECORD_UPDATE',
       entity: 'patient',
       entityId: id,
-      metadata: { ...req.body, updaterId: req.user.id },
+      metadata: { updatedFields: Object.keys(req.body) },
     });
 
-    // 🔑 FIX: Return consistent camelCase fields
-    return ok(res, {
-      id: patient.id,
-      firstName: patient.firstName, 
-      lastName: patient.lastName,
-      email: patient.email,
-      phone: patient.phone,
-      dob: patient.dob,
-      createdAt: patient.createdAt,
-      updatedAt: patient.updatedAt,
-    }, 'Patient updated successfully');
+   return ok(res, patient, 'Patient record updated');
   } catch (err) {
-    console.error('patients.update', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
   }
 }
 
 /**
- * Delete a patient
+ * Delete a patient (Note: Service layer should handle soft-delete/anonymization)
+ * DELETE /api/v1/patients/:id
  */
 export async function deletePatient(req, res) {
   try {
     const { id } = req.params;
     await patientService.deletePatient(id);
     
-    // 🔑 Audit Trail
+    // Audit Trail
     await attachAudit(req, {
-      action: 'PATIENT_DELETE',
+      action: 'PATIENT_RECORD_DELETE',
       entity: 'patient',
       entityId: id,
-      metadata: { deleterId: req.user.id },
+      metadata: { deletedBy: req.user.id },
     });
 
-    return ok(res, { success: true }, 'Patient deleted successfully');
+    return ok(res, { success: true }, 'Patient removed successfully');
   } catch (err) {
-    console.error('patients.delete', err);
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    return error(res, err.statusCode || 500, err.message || 'Deletion failed');
   }
 }
-
+/**
+ * Retrieve full patient profile
+ * GET /api/v1/patients/:id
+ */
 export async function getPatient(req, res) {
   try {
     const { id } = req.params;
@@ -144,9 +144,8 @@ export async function getPatient(req, res) {
       return error(res, 404, 'Patient not found');
     }
 
-    return ok(res, patient, 'Patient retrieved successfully');
+    return ok(res, patient, 'Patient profile retrieved');
   } catch (err) {
-    console.error('patients.get', err);
     return error(res, err.statusCode || 500, err.message || 'Server error');
   }
 }

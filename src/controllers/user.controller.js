@@ -1,19 +1,24 @@
 import * as userService from '../services/user.service.js';
 import { ok, created, fail, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
+/**
+ * USER CONTROLLER
+ * Manages identity lifecycle for hospital staff.
+ * Distinguishes between self-service (profile) and administrative (staff management) actions.
+ */
 
 /**
- * Register a new user
+ * Register a new staff member (Admin-led or self-reg depending on flow)
  */
 export async function registerUser(req, res) {
   try {
     const user = await userService.createUser(req.body);
 
       await attachAudit(req, { 
-            action: 'CREATE_USER', 
+            action: 'USER_REGISTER', 
             entity: 'user', 
             entityId: user.id, 
-            metadata: { email: user.email } 
+            metadata: { email: user.email, role: user.roleName} 
         });
     return created(res, {
       id: user.id,
@@ -22,13 +27,12 @@ export async function registerUser(req, res) {
       role: user.roleName,
     }, 'User registered successfully');
   } catch (err) {
-    console.error('user.registerUser', err);
     return error(res, err.statusCode || 500, err.message || 'Internal server error');
   }
 }
 
 /**
- * Get profile of logged-in user
+ * Get profile of the currently authenticated user
  */
 export async function getProfile(req, res) {
   try {
@@ -40,25 +44,25 @@ export async function getProfile(req, res) {
       email: user.email,
       fullName: user.fullName,
       role: user.roleName,
+      active: user.active
     });
   } catch (err) {
-    console.error('user.getProfile', err);
     return error(res, err.statusCode || 500, err.message || 'Unable to fetch profile');
   }
 }
 
 /**
- * Update profile of logged-in user
+ * Self-service: Update own profile details
  */
 export async function updateProfile(req, res) {
   try {
     const user = await userService.updateUserProfile(req.user.id, req.body);
 
     await attachAudit(req, { 
-            action: 'UPDATE_PROFILE', 
+            action: 'PROFILE_SELF_UPDATE', 
             entity: 'user', 
             entityId: user.id, 
-            metadata: { query: req.body } 
+            metadata: { updatedFields: Object.keys(req.body) }
         });
     return ok(res, {
       id: user.id,
@@ -67,13 +71,12 @@ export async function updateProfile(req, res) {
       role: user.roleName,
     }, 'Profile updated successfully');
   } catch (err) {
-    console.error('user.updateProfile', err);
     return error(res, err.statusCode || 500, err.message || 'Unable to update profile');
   }
 }
 
 /**
- * Admin: List all users
+ * Admin: List all hospital staff with pagination
  */
 export async function listStaff(req, res) {
   try {
@@ -100,13 +103,12 @@ export async function listStaff(req, res) {
       total: data.total,
     });
   } catch (err) {
-    console.error('user.listUsers', err);
     return error(res, err.statusCode || 500, err.message || 'Unable to list users');
   }
 }
 
 /**
- * Admin: Update user
+ * Admin: Force update a user account (e.g., changing roles or deactivating)
  */
 export async function updateUser(req, res) {
   try {
@@ -114,10 +116,10 @@ export async function updateUser(req, res) {
 
     
     await attachAudit(req, { 
-            action: 'UPDATE_USER', 
+            action: 'ADMIN_USER_UPDATE', 
             entity: 'user', 
             entityId: user.id, 
-            metadata: { query: req.body } 
+            metadata: { adminId: req.user.id, changes: req.body }
         });
     return ok(res, {
       id: user.id,
@@ -126,28 +128,27 @@ export async function updateUser(req, res) {
       role: user.roleName,
     }, 'User updated successfully');
   } catch (err) {
-    console.error('user.updateUser', err);
     return error(res, err.statusCode || 500, err.message || 'Unable to update user');
   }
 }
 
 /**
- * Admin: Delete user
+ * Admin: Remove a user (Soft delete or deactivation recommended in Service)
  */
 export async function deleteUser(req, res) {
   try {
-    await userService.deleteUser(req.params.id);
+    userService.deleteUser(req.params.id);
 
   
 await attachAudit(req, { 
-            action: 'DELETE_USER', 
+            action: 'ADMIN_USER_DELETE', 
             entity: 'user', 
             entityId: req.params.id, 
-            metadata: { query: req.params } 
+            metadata: { adminId: req.user.id} 
         });
     return ok(res, { success: true }, 'User deleted successfully');
   } catch (err) {
-    console.error('user.deleteUser', err);
+    
     return error(res, err.statusCode || 500, err.message || 'Unable to delete user');
   }
 }

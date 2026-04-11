@@ -1,23 +1,66 @@
 import app from './app.js';
 import { config } from './config/config.js';
-import { sequelize } from './config/sequelize.js';
+import { logger } from './config/logger.js'; // Swapping console for Winston
 import { testDbConnection } from './config/db.js';
+import { sequelize } from './config/sequelize.js';
 
+/**
+ * APPLICATION BOOTSTRAP
+ * This is the entry point for the EMR Suite. We ensure the infrastructure (DB) 
+ * is ready before opening the port to incoming traffic.
+ */
 async function start() {
   try {
+    logger.info(`System Boot: Initializing EMR Suite in ${config.env} mode...`);
+
+    // 1. DATABASE CONNECTIVITY CHECK
+    // We fail fast here if the DB is unreachable to prevent 'Zombies' in the cluster.
     await testDbConnection();
+    logger.info('Infrastructure: Database connection verified.');
 
-    // Uncomment in dev if needed
-    /* await sequelize.sync({ alter: true }); */
-    //console.log('Models synced');
+    /**
+     * SCHEMA SYNCHRONIZATION
+     * In a production EMR, we rely on Migrations (Sequelize-CLI).
+     * Automatic syncing is disabled here to prevent accidental data loss.
+     */
+     /* await sequelize.sync({ alter: false }); */
 
+    // 2. PORT BINDING
     app.listen(config.port, () => {
-      console.log(`Busade's EMR Demo API running in ${config.env} mode at http://localhost:${config.port}`);
+      logger.info(`Service Online: Busade's EMR Demo API running at http://localhost:${config.port}`, {
+        environment: config.env,
+        port: config.port,
+        processId: process.pid
+      });
     });
+
   } catch (err) {
-    console.error('Server failed to start:', err);
-    process.exit(1);
+    // 3. CRITICAL FAILURE LOGGING
+    // We log the error to the persistent file system before killing the process.
+    logger.error('CRITICAL: Server bootstrap failed. Shutting down...', {
+      error: err.message,
+      stack: err.stack
+    });
+    
+    // Brief delay to allow Winston to flush the error to the log file
+    setTimeout(() => {
+      process.exit(1);
+    }, 500);
   }
 }
+
+/**
+ * 4. PROCESS SAFETY NETS
+ * Capturing errors that happen outside the Express context (e.g., failed Promises).
+ */
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Promise Rejection:', { reason });
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', { error: err.message, stack: err.stack });
+  // In production, an uncaught exception should lead to a graceful restart
+  process.exit(1);
+});
 
 start();

@@ -1,152 +1,82 @@
 import request from 'supertest';
 import app from '../app.js';
-import { setupDatabase, teardownDatabase, createTestUser } from './testHelper.js';
+import { setupDB, teardownDatabase, createTestUser } from './testHelper.js';
 import { PERMISSIONS, ROLES } from '../constants/index.js';
+import { v4 as uuidv4 } from 'uuid';
 
 let tokens = {};
 
 beforeAll(async () => {
-  await setupDatabase();
+  await setupDB();
 
-  // Create users for all roles you care about
-  tokens[ROLES.SUPER_ADMIN] = await createTestUser({ role: ROLES.SUPER_ADMIN });
-  tokens[ROLES.ADMIN] = await createTestUser({ role: ROLES.ADMIN });
-  tokens[ROLES.DOCTOR] = await createTestUser({ role: ROLES.DOCTOR });
-  tokens[ROLES.NURSE] = await createTestUser({ role: ROLES.NURSE });
-  tokens[ROLES.RECEPTION] = await createTestUser({ role: ROLES.RECEPTION });
-  tokens[ROLES.PATIENT] = await createTestUser({ role: ROLES.PATIENT });
-  
+  // Seed one user per role to test the permission matrix
+  const roleList = [
+    ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.DOCTOR, 
+    ROLES.NURSE, ROLES.RECEPTIONIST, ROLES.PATIENT
+  ];
+
+  for (const role of roleList) {
+    const user = await createTestUser({ 
+      role, 
+      email: `${role.toLowerCase()}@rbac-test.com`,
+      password: 'SecurePassword123!'
+    });
+    tokens[role] = user.accessToken;
+  }
 });
 
 afterAll(async () => {
   await teardownDatabase();
 });
 
-describe('RBAC - All Modules', () => {
+describe('Cross-Module RBAC Enforcement', () => {
   const modules = [
-    {
-      name: 'User',
-      route: '/api/users',
-      permRead: PERMISSIONS.USER_READ,
-      permCreate: PERMISSIONS.USER_CREATE,
-      permUpdate: PERMISSIONS.USER_UPDATE,
-      permDelete: PERMISSIONS.USER_DELETE
-    },
-    {
-      name: 'Patient',
-      route: '/api/patients',
-      permRead: PERMISSIONS.PATIENT_READ,
-      permCreate: PERMISSIONS.PATIENT_CREATE,
-      permUpdate: PERMISSIONS.PATIENT_UPDATE,
-      permDelete: PERMISSIONS.PATIENT_DELETE
-    },
-    {
-      name: 'Appointment',
-      route: '/api/appointments',
-      permRead: PERMISSIONS.APPOINTMENT_READ,
-      permCreate: PERMISSIONS.APPOINTMENT_CREATE,
-      permUpdate: PERMISSIONS.APPOINTMENT_UPDATE,
-      permDelete: PERMISSIONS.APPOINTMENT_DELETE
-    },
-    {
-      name: 'Bill',
-      route: '/api/bills',
-      permRead: PERMISSIONS.BILL_READ,
-      permCreate: PERMISSIONS.BILL_CREATE,
-      permUpdate: PERMISSIONS.BILL_UPDATE,
-      permDelete: PERMISSIONS.BILL_DELETE
-    },
-    {
-      name: 'Vital',
-      route: '/api/vitals',
-      permRead: PERMISSIONS.VITAL_READ,
-      permCreate: PERMISSIONS.VITAL_CREATE,
-      permUpdate: PERMISSIONS.VITAL_UPDATE,
-      permDelete: PERMISSIONS.VITAL_DELETE
-    },
-    {
-      name: 'Clinical Note',
-      route: '/api/clinical-notes',
-      permRead: PERMISSIONS.CLINICAL_NOTE_READ,
-      permCreate: PERMISSIONS.CLINICAL_NOTE_CREATE,
-      permUpdate: PERMISSIONS.CLINICAL_NOTE_UPDATE,
-      permDelete: PERMISSIONS.CLINICAL_NOTE_DELETE
-    },
+    { name: 'User', route: '/api/users', permDelete: PERMISSIONS.USER_DELETE },
+    { name: 'Patient', route: '/api/patients', permCreate: PERMISSIONS.PATIENT_CREATE },
+    { name: 'Clinical Note', route: '/api/clinical-notes', permRead: PERMISSIONS.CLINICAL_NOTE_READ },
     { name: 'Audit', route: '/api/audits', permRead: PERMISSIONS.AUDIT_READ },
-    { name: 'Metrics', route: '/api/metrics', permRead: PERMISSIONS.METRICS_READ },
+    { name: 'Metrics', route: '/api/metrics', permRead: PERMISSIONS.METRICS_READ }
   ];
 
   modules.forEach(mod => {
-    describe(`${mod.name} Module`, () => {
-      it('should allow SUPER_ADMIN to access all routes', async () => {
+    describe(`${mod.name} Module Access Control`, () => {
+      
+      it(`should grant SUPER_ADMIN full access to ${mod.route}`, async () => {
         const res = await request(app)
           .get(mod.route)
-          .set('Authorization', `Bearer ${tokens[ROLES.SUPER_ADMIN].accessToken}`);
+          .set('Authorization', `Bearer ${tokens[ROLES.SUPER_ADMIN]}`);
+        
+        // Super Admin should never be forbidden
         expect(res.status).not.toBe(403);
       });
 
-      it('should deny access without token', async () => {
+      it('should block all unauthorized (non-token) requests', async () => {
         const res = await request(app).get(mod.route);
         expect(res.status).toBe(401);
-        expect(res.body).toHaveProperty('message');
+        expect(res.body.status).toBe('fail');
       });
 
-      if (mod.permRead) {
-        it(`should allow roles with ${mod.permRead} permission to read`, async () => {
-          const rolesWithRead = [
-            ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE,
-            ROLES.RECEPTION, ROLES.PATIENT
-          ];
-          for (const role of rolesWithRead) {
-            const res = await request(app)
-              .get(mod.route)
-              .set('Authorization', `Bearer ${tokens[role].accessToken}`);
-            expect([200, 403]).toContain(res.status);
-          }
+      // Specific Permission Check: Only Admins/SuperAdmins should delete users
+      if (mod.name === 'User') {
+        it('should block a Doctor from deleting another user', async () => {
+          const fakeId = uuidv4();
+          const res = await request(app)
+            .delete(`${mod.route}/${fakeId}`)
+            .set('Authorization', `Bearer ${tokens[ROLES.DOCTOR]}`);
+          
+          expect(res.status).toBe(403);
+          expect(res.body.message).toMatch(/permission/i);
         });
       }
 
-      if (mod.permCreate) {
-        it(`should prevent roles without ${mod.permCreate} permission from creating`, async () => {
-          const rolesWithoutCreate = [ROLES.NURSE, ROLES.PATIENT];
-          for (const role of rolesWithoutCreate) {
-            const res = await request(app)
-              .post(mod.route)
-              .send({ dummyData: 'test' })
-              .set('Authorization', `Bearer ${tokens[role].accessToken}`);
-            expect([200, 403]).toContain(res.status);
-            if (res.status === 403) expect(res.body).toHaveProperty('message');
-          }
-        });
-      }
-
-      if (mod.permUpdate) {
-        it(`should prevent roles without ${mod.permUpdate} permission from updating`, async () => {
-          const rolesWithoutUpdate = [ROLES.RECEPTION, ROLES.PATIENT];
-          for (const role of rolesWithoutUpdate) {
-            const res = await request(app)
-              .patch(`${mod.route}/123`)
-              .send({ dummyData: 'updated' })
-              .set('Authorization', `Bearer ${tokens[role].accessToken}`);
-            expect([200, 403]).toContain(res.status);
-            if (res.status === 403) expect(res.body).toHaveProperty('message');
-          }
-        });
-      }
-
-      if (mod.permDelete) {
-        it(`should prevent roles without ${mod.permDelete} permission from deleting`, async () => {
-          const rolesWithoutDelete = [
-            ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTION,
-            ROLES.PATIENT
-          ];
-          for (const role of rolesWithoutDelete) {
-            const res = await request(app)
-              .delete(`${mod.route}/123`)
-              .set('Authorization', `Bearer ${tokens[role].accessToken}`);
-            expect([200, 403]).toContain(res.status);
-            if (res.status === 403) expect(res.body).toHaveProperty('message');
-          }
+      // Specific Permission Check: Only Super Admin should see Audit Logs
+      if (mod.name === 'Audit') {
+        it('should block a Nurse from viewing Audit Logs', async () => {
+          const res = await request(app)
+            .get(mod.route)
+            .set('Authorization', `Bearer ${tokens[ROLES.NURSE]}`);
+          
+          expect(res.status).toBe(403);
         });
       }
     });

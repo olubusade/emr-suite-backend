@@ -1,3 +1,4 @@
+import { reportError } from '../utils/monitoring.js';
 export async function seedRolePermissions(roles, permissions, RolePermission) {
   const records = [];
 
@@ -30,26 +31,45 @@ export async function seedRolePermissions(roles, permissions, RolePermission) {
     ]
   };
 
-  for (const [roleKey, role] of Object.entries(roles)) {
-    const allowedKeys = rolePermissionMap[roleKey];
+  try {
+    process.stdout.write('⏳ Mapping security roles to authority keys... ');
 
-    if (allowedKeys?.includes('*')) {
-      // Super admin gets all
-      for (const perm of Object.values(permissions)) {
-        records.push({ roleId: role.id, permissionId: perm.id });
+    for (const [roleKey, role] of Object.entries(roles)) {
+      const allowedKeys = rolePermissionMap[roleKey];
+      if (!allowedKeys) continue;
+
+      // Logic: If a role is being re-seeded, clear its existing permissions first
+      // to ensure the rolePermissionMap is the "Single Source of Truth".
+      await RolePermission.destroy({ where: { roleId: role.id } });
+
+      if (allowedKeys.includes('*')) {
+        for (const perm of Object.values(permissions)) {
+          records.push({ roleId: role.id, permissionId: perm.id });
+        }
+      } else {
+        for (const key of allowedKeys) {
+          const perm = permissions[key];
+          if (perm) {
+            records.push({ roleId: role.id, permissionId: perm.id });
+          }
+        }
       }
-      continue;
     }
 
-    // Filter based on allowed permission keys
-    for (const key of allowedKeys || []) {
-      const perm = permissions[key];
-      if (perm) {
-        records.push({ roleId: role.id, permissionId: perm.id });
-      }
+    if (records.length > 0) {
+      await RolePermission.bulkCreate(records);
     }
+
+    process.stdout.write('Success (RBAC mapping synchronized)\n');
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedRolePermissions',
+      context: 'Synchronizing Role-Permission association table'
+    });
+
+    throw error;
   }
-
-  await RolePermission.bulkCreate(records);
-  console.log('Role-Permission mapping completed with RBAC logic');
 }

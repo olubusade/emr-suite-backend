@@ -1,59 +1,73 @@
 import request from 'supertest';
 import app from '../app.js';
-import { seedTestData, teardownTestDB, loginTestUser } from './testHelper.js';
-/**
- * @description Tests for Role-Based Access Control (RBAC) edge cases
- * focusing on permission boundaries and unauthorized access attempts.
- */
+import { setupDB, teardownDatabase, createTestUser, loginAs } from './helpers.js';
 
-let adminToken, userToken;
+let adminToken, doctorToken, targetUserId;
 
 beforeAll(async () => {
-  await seedTestData();
-  adminToken = (await loginTestUser('admin@test.com', 'admin@123')).accessToken;
-  userToken = (await loginTestUser('user@test.com', 'User123!')).accessToken;
+  const setup = await setupDB();
+  
+  // 1. Create an Admin
+  const admin = await createTestUser({ 
+    role: 'admin', 
+    email: 'admin.sec@busade-emr-demo.com' 
+  });
+  const adminLogin = await loginAs(admin.email, 'password123');
+  adminToken = adminLogin.accessToken;
+
+  // 2. Create a Doctor (Limited permissions compared to Admin)
+  const doctor = await createTestUser({ 
+    role: 'doctor', 
+    email: 'dr.user@busade-emr-demo.com' 
+  });
+  const doctorLogin = await loginAs(doctor.email, 'password123');
+  doctorToken = doctorLogin.accessToken;
+  
+  targetUserId = doctor.id; // We'll try to have the Doctor edit themselves/others
 });
 
 afterAll(async () => {
-  await teardownTestDB();
+  await teardownDatabase();
 });
 
-describe('RBAC Edge Cases', () => {
-  it('should deny access if user lacks permission', async () => {
-    const res = await request(app)
-      .patch('/api/users/1')
-      .set('Authorization', `Bearer ${userToken}`)
-      .send({ fname: 'Hacker', lname: 'User' });
+describe('RBAC & Middleware Edge Cases', () => {
 
-    expect(res.statusCode).toBe(403);
-    expect(res.body).toHaveProperty('message');
+  it('should block a Doctor from updating another user (403 Forbidden)', async () => {
+    // Attempting to update a different user (e.g., the admin)
+    const res = await request(app)
+      .patch(`/api/users/${uuidv4()}`) 
+      .set('Authorization', `Bearer ${doctorToken}`)
+      .send({ fName: 'Malicious', lName: 'Update' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.status).toBe('fail');
+    expect(res.body.message).toMatch(/permission|forbidden/i);
   });
 
-  it('should allow admin to update other user', async () => {
+  it('should allow Admin to perform administrative updates (200 OK)', async () => {
     const res = await request(app)
-      .patch('/api/users/2')
+      .patch(`/api/users/${targetUserId}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ fname: 'Updated', lname: 'ByAdmin' });
+      .send({ fName: 'Verified', lName: 'ByAdmin' });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data).toHaveProperty('fname', 'Updated');
-    expect(res.body.data).toHaveProperty('lname', 'ByAdmin');
+    expect(res.status).toBe(200);
+    expect(res.body.data.fName).toBe('Verified');
+    expect(res.body.data.lName).toBe('ByAdmin');
   });
 
-  it('should deny access without token', async () => {
-    const res = await request(app)
-      .get('/api/users');
+  it('should block requests with missing Authorization headers (401 Unauthorized)', async () => {
+    const res = await request(app).get('/api/users');
 
-    expect(res.statusCode).toBe(401);
-    expect(res.body).toHaveProperty('message');
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe('fail');
   });
 
-  it('should deny invalid token', async () => {
+  it('should reject malformed or invalid JWT signatures (401 Unauthorized)', async () => {
     const res = await request(app)
       .get('/api/users')
-      .set('Authorization', 'Bearer invalidtoken');
+      .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.payload');
 
-    expect(res.statusCode).toBe(401);
-    expect(res.body).toHaveProperty('message');
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch(/token|unauthorized/i);
   });
 });

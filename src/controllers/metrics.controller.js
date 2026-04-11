@@ -29,7 +29,8 @@ export async function getMetrics(req, res) {
     response.clinical = {
       widgets: {
         todayPatients: clinical.todaysAppointments.length,
-        pendingAppointments: totals.appointments,
+        readyForDoctor: nurse.widgets.readyForDoctor,
+        completedConsultation:clinical.completedConsultation,
         todaysOperations: clinical.todaysOperations || 0,
         onlineConsultations: clinical.onlineConsultations || 0,
         growthRates: { patients: 12, appointments: 8, operations: 0, online: 0 }
@@ -58,13 +59,13 @@ export async function getMetrics(req, res) {
     response.nurse = {
       widgets: {
         todayPatients: clinical.todaysAppointments.length,
-        pendingAppointments: totals.appointments,
-        todaysVitals: nurse?.pendingVitalsCount || 0,
+        readyForDoctor: nurse.widgets.readyForDoctor,
+        pendingVitals: nurse?.pendingVitalsCount || 0,
         growthRates: { patients: 15, appointments: 10 }
       },
       // Real Doctors list from database
       doctors: (nurse?.doctors || []).map(doc => ({
-        name: `Dr. ${doc.firstName} ${doc.lastName}`,
+        name: `Dr. ${doc.fName} ${doc.lName}`,
         specialization: doc.specialization || 'General Practitioner',
         status: doc.status || 'available',
         profileImage: doc.profileImage || 'assets/images/user/user1.jpg'

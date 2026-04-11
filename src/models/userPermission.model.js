@@ -1,3 +1,9 @@
+/**
+ * USER-PERMISSION JOIN TABLE
+ * Facilitates "Direct Permission Assignment."
+ * Used to grant specific capabilities to a user that fall outside 
+ * of their standard assigned Role.
+ */
 export const UserPermissionModel = (sequelize, DataTypes) => {
   const UserPermission = sequelize.define(
     'UserPermission',
@@ -8,6 +14,9 @@ export const UserPermissionModel = (sequelize, DataTypes) => {
         primaryKey: true 
       },
 
+      /**
+       * FOREIGN KEY: USER (Staff)
+       */
       userId: { 
         type: DataTypes.UUID, 
         allowNull: false,
@@ -16,6 +25,9 @@ export const UserPermissionModel = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
       },
 
+      /**
+       * FOREIGN KEY: PERMISSION
+       */
       permissionId: { 
         type: DataTypes.UUID, 
         allowNull: false,
@@ -26,9 +38,15 @@ export const UserPermissionModel = (sequelize, DataTypes) => {
     },
     { 
       tableName: 'user_permissions', 
-      underscored: true, // maps camelCase JS -> snake_case DB
+      underscored: true, 
       timestamps: false,
-      indexes: [{ unique: true, fields: ['user_id', 'permission_id'] }],
+      indexes: [
+        { 
+          // Prevents duplicate direct assignments
+          unique: true, 
+          fields: ['user_id', 'permission_id'] 
+        }
+      ],
     }
   );
 

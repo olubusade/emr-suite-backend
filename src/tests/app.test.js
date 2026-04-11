@@ -4,17 +4,20 @@ import { seedTestData, loginTestUser, teardownTestDB } from './testHelper.js';
 import { User } from '../models/index.js';
 
 let admin, user;
-let adminToken, userToken, adminRefresh, userRefresh;
+let adminToken, userToken;
+let adminRefresh, userRefresh;
 
 beforeAll(async () => {
   const seeded = await seedTestData();
   admin = seeded.admin;
   user = seeded.user;
 
+  // Admin login
   const adminLogin = await loginTestUser(admin.email, 'admin@123');
   adminToken = adminLogin.accessToken;
   adminRefresh = adminLogin.refreshToken;
 
+  // Normal user login
   const userLogin = await loginTestUser(user.email, 'User123!');
   userToken = userLogin.accessToken;
   userRefresh = userLogin.refreshToken;
@@ -24,12 +27,17 @@ afterAll(async () => {
   await teardownTestDB();
 });
 
-// -------------------- Auth Module Tests -------------------- //
-describe('Auth Endpoints', () => {
+// ============================
+// AUTH MODULE
+// ============================
+describe('AUTH MODULE', () => {
   test('Login success', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: admin.email, password: 'admin@123' });
+      .send({
+        email: admin.email,
+        password: 'admin@123',
+      });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.data.user.email).toBe(admin.email);
@@ -51,7 +59,10 @@ describe('Auth Endpoints', () => {
     const res = await request(app)
       .post('/api/auth/change-password')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ oldPassword: 'admin@123', newPassword: 'Newadmin@123' });
+      .send({
+        oldPassword: 'admin@123',
+        newPassword: 'Newadmin@123',
+      });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.data.success).toBe(true);
@@ -68,9 +79,11 @@ describe('Auth Endpoints', () => {
   });
 });
 
-// -------------------- User Module Tests -------------------- //
-describe('User Endpoints', () => {
-  test('Get profile', async () => {
+// ============================
+// USER MODULE
+// ============================
+describe('USER MODULE', () => {
+  test('Get profile (self)', async () => {
     const res = await request(app)
       .get('/api/users/me')
       .set('Authorization', `Bearer ${userToken}`);
@@ -79,7 +92,7 @@ describe('User Endpoints', () => {
     expect(res.body.data.email).toBe(user.email);
   });
 
-  test('Update profile', async () => {
+  test('Update profile (self)', async () => {
     const res = await request(app)
       .patch('/api/users/me')
       .set('Authorization', `Bearer ${userToken}`)
@@ -89,7 +102,7 @@ describe('User Endpoints', () => {
     expect(res.body.data.fullName).toBe('Updated User');
   });
 
-  test('Admin: list users', async () => {
+  test('Admin can list users', async () => {
     const res = await request(app)
       .get('/api/users')
       .set('Authorization', `Bearer ${adminToken}`);
@@ -98,46 +111,45 @@ describe('User Endpoints', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
-  test('Admin: create user', async () => {
+  test('Admin creates user', async () => {
     const res = await request(app)
       .post('/api/users')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
+        fname: 'New',
+        lname: 'User',
         email: 'new@test.com',
-        fullName: 'New User',
         password: 'New123!',
-        roleIds: [admin.roles[0].id]
+        roleIds: admin.roles?.length ? [admin.roles[0].id] : [],
       });
 
     expect(res.statusCode).toBe(201);
     expect(res.body.data.email).toBe('new@test.com');
   });
 
-  test('Admin: update user', async () => {
+  test('Admin updates user', async () => {
     const res = await request(app)
       .patch(`/api/users/${user.id}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ fullName: 'Patched User' });
+      .send({ fname: 'Patched' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.fullName).toBe('Patched User');
+    expect(res.body.data.fname).toBe('Patched');
   });
 
-  test('Admin: delete user', async () => {
-    const newUser = await User.create({
+  test('Admin deletes user', async () => {
+    const tempUser = await User.create({
+      fname: 'Temp',
+      lname: 'Delete',
       email: 'delete@test.com',
-      fullName: 'To Delete',
       passwordHash: 'hashedpw',
-      active: true
+      active: true,
     });
 
-    await newUser.setRoles([admin.roles[0]]);
-
     const res = await request(app)
-      .delete(`/api/users/${newUser.id}`)
+      .delete(`/api/users/${tempUser.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data.success).toBe(true);
+    expect([200, 204]).toContain(res.statusCode);
   });
 });

@@ -1,8 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
-
+import { reportError } from '../utils/monitoring.js';
 export async function seedBills(Bill, appointments, staff) {
   // 1. Filter only completed appointments
   const completedApps = appointments.filter(a => a.status === 'completed');
+  if (completedApps.length === 0) {
+    process.stdout.write('⚠️  No completed appointments found; skipping Bill seeding.\n');
+    return [];
+  }
 
   const billsData = completedApps.map((appInstance) => {
     // 2. Convert to plain object to ensure all fields like 'reason' are accessible
@@ -27,13 +31,23 @@ export async function seedBills(Bill, appointments, staff) {
     };
   });
 
-  if (billsData.length === 0) {
-    console.log('⚠️ No completed appointments found to bill.');
-    return [];
-  }
+ try {
+    process.stdout.write(`⏳ Generating ${billsData.length} financial records... `);
 
-  const created = await Bill.bulkCreate(billsData, { returning: true });
-  console.log(`✅ Created ${created.length} bills linked via Appointment ID.`);
-  
-  return created.map(b => b.get({ plain: true }));
+    const created = await Bill.bulkCreate(billsData, { returning: true });
+
+    process.stdout.write('Success (Billing synced with Appointments)\n');
+    
+    return created.map(b => b.get({ plain: true }));
+  } catch (error) {
+    process.stdout.write('❌ Failed\n');
+    
+    reportError(error, { 
+      service: 'Seeder', 
+      operation: 'seedBills',
+      context: 'Generating bills from appointment demo data'
+    });
+
+    throw error;
+  }
 }

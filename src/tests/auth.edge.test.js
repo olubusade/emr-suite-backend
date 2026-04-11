@@ -1,72 +1,83 @@
 import request from 'supertest';
 import app from '../app.js';
-import { seedTestData, teardownTestDB, loginTestUser } from './testHelper.js';
+import { setupDB, teardownDatabase, loginAs, createTestUser } from './helpers.js';
 
 let userLogin;
+let testUserEmail = 'edge.case@busade-emr-demo.com';
+let testUserPassword = 'User123!';
 
 beforeAll(async () => {
-  await seedTestData();
-  userLogin = await loginTestUser('user@test.com', 'User123!');
+  await setupDB();
+  // Create a base user for these tests
+  await createTestUser({ 
+    email: testUserEmail, 
+    password: testUserPassword,
+    role: 'doctor' 
+  });
+  userLogin = await loginAs(testUserEmail, testUserPassword);
 });
 
 afterAll(async () => {
-  await teardownTestDB();
+  await teardownDatabase();
 });
 
-describe('Auth Edge Cases', () => {
-  it('should not refresh with revoked token', async () => {
-    // First refresh to revoke original token
-    await request(app)
+describe('Security: Token Revocation & Edge Cases', () => {
+  
+  it('should prevent Token Reuse (Refresh Token Rotation)', async () => {
+    // 1. Perform first refresh to get new tokens and revoke the old one
+    const firstRefresh = await request(app)
       .post('/api/auth/refresh')
       .send({ refreshToken: userLogin.refreshToken });
 
-    // Attempt using the same revoked token
+    expect(firstRefresh.status).toBe(200);
+    const newRefreshToken = firstRefresh.body.data.refreshToken;
+
+    // 2. Attempt to use the OLD (revoked) token again
     const res = await request(app)
       .post('/api/auth/refresh')
       .send({ refreshToken: userLogin.refreshToken });
 
-    expect(res.statusCode).toBe(401);
-    expect(res.body).toHaveProperty('data', null);
-    expect(res.body.message).toMatch(/invalid or revoked refresh token/i);
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe('fail');
+    expect(res.body.message).toMatch(/revoked|invalid/i);
   });
 
-  it('should logout user and revoke tokens', async () => {
-    // Login again to get fresh tokens
-    const loginRes = await loginTestUser('user@test.com', 'User123!');
+  it('should invalidate all tokens upon Logout', async () => {
+    // Get fresh credentials
+    const freshLogin = await loginAs(testUserEmail, testUserPassword);
 
+    // Perform logout
     const res = await request(app)
       .post('/api/auth/logout')
-      .set('Authorization', `Bearer ${loginRes.token}`)
-      .send({ refreshToken: loginRes.refreshToken });
+      .set('Authorization', `Bearer ${freshLogin.accessToken}`)
+      .send({ refreshToken: freshLogin.refreshToken });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('data');
-    expect(res.body.data).toHaveProperty('success', true);
+    expect(res.status).toBe(200);
+    expect(res.body.data.success).toBe(true);
 
-    // Attempt refresh after logout
+    // Verify the refresh token no longer works
     const refreshRes = await request(app)
       .post('/api/auth/refresh')
-      .send({ refreshToken: loginRes.refreshToken });
+      .send({ refreshToken: freshLogin.refreshToken });
 
-    expect(refreshRes.statusCode).toBe(401);
-    expect(refreshRes.body).toHaveProperty('data', null);
+    expect(refreshRes.status).toBe(401);
   });
 
-  it('should prevent access to protected route after logout', async () => {
-    // Logout user
-    const loginRes = await loginTestUser('user@test.com', 'User123!');
+  it('should deny access to protected resources with a logged-out Bearer token', async () => {
+    const session = await loginAs(testUserEmail, testUserPassword);
+    
+    // Explicit Logout
     await request(app)
       .post('/api/auth/logout')
-      .set('Authorization', `Bearer ${loginRes.token}`)
-      .send({ refreshToken: loginRes.refreshToken });
+      .set('Authorization', `Bearer ${session.accessToken}`)
+      .send({ refreshToken: session.refreshToken });
 
-    // Attempt to access protected route
+    // Attempt to hit /me with the blacklisted/old token
     const res = await request(app)
       .get('/api/users/me')
-      .set('Authorization', `Bearer ${loginRes.token}`);
+      .set('Authorization', `Bearer ${session.accessToken}`);
 
-    expect(res.statusCode).toBe(401);
-    expect(res.body).toHaveProperty('data', null);
+    expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/unauthorized/i);
   });
 });

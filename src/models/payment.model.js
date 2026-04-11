@@ -1,3 +1,8 @@
+/**
+ * PAYMENT MODEL
+ * Records the actual movement of funds against a specific bill.
+ * Supports partial payments and external transaction referencing.
+ */
 export const PaymentModel = (sequelize, DataTypes) => {
   const Payment = sequelize.define(
     'Payment',
@@ -16,10 +21,18 @@ export const PaymentModel = (sequelize, DataTypes) => {
           model: 'bills',
           key: 'id'
         },
+        /**
+         * DATA INTEGRITY
+         * If a bill is deleted (rare), the payment records should follow.
+         */
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
 
+      /**
+       * FINANCIAL DATA
+       * Using DECIMAL to prevent floating-point errors.
+       */
       amountPaid: { 
         type: DataTypes.DECIMAL(10, 2), 
         allowNull: false,
@@ -42,6 +55,10 @@ export const PaymentModel = (sequelize, DataTypes) => {
         defaultValue: 'completed',
       },
 
+      /**
+       * EXTERNAL TRACKING
+       * Stores transaction IDs from Paystack, Flutterwave, or Bank USSD refs.
+       */
       reference: { 
         type: DataTypes.STRING, 
         allowNull: true 
@@ -51,6 +68,10 @@ export const PaymentModel = (sequelize, DataTypes) => {
       tableName: 'payments', 
       timestamps: true,
       underscored: true,
+      indexes: [
+        { fields: ['bill_id'] },
+        { fields: ['reference'] }
+      ]
     }
   );
 

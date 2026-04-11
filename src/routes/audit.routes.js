@@ -10,9 +10,19 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   name: Audits
+ *   description: System audit logs for tracking all user activities and changes
+ */
+
+/**
+ * @swagger
  * /audits:
  *   get:
- *     summary: List all audit logs
+ *     summary: Retrieve audit logs with filters and pagination
+ *     description: |
+ *       Returns a paginated list of audit logs. 
+ *       Supports filtering by user, entity, action, and date range.
  *     tags: [Audits]
  *     security:
  *       - bearerAuth: []
@@ -21,39 +31,53 @@ const router = express.Router();
  *         name: page
  *         schema:
  *           type: integer
- *         description: Page number for pagination
+ *           example: 1
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *         description: Number of items per page
+ *           example: 20
  *       - in: query
  *         name: userId
  *         schema:
- *           type: integer
- *         description: Filter audits by specific user ID
+ *           type: string
+ *           format: uuid
+ *         description: Filter logs by user ID
+ *       - in: query
+ *         name: entity
+ *         schema:
+ *           type: string
+ *           example: appointment
+ *         description: Filter by entity type (appointment, patient, billing)
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           example: UPDATE_APPOINTMENT
+ *         description: Filter by action performed
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date for filtering logs
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date for filtering logs
  *     responses:
  *       200:
- *         description: List of audit logs
+ *         description: Paginated audit logs retrieved successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 items:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/AuditLog'
- *                 page:
- *                   type: integer
- *                 pages:
- *                   type: integer
- *                 total:
- *                   type: integer
- *       403:
- *         description: Forbidden - insufficient permissions
+ *               $ref: '#/components/schemas/PaginatedAuditLogs'
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - insufficient permissions
  */
 router.get(
   '/',
