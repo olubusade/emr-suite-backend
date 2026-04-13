@@ -1,7 +1,8 @@
 import * as authService from '../services/auth.service.js';
+import * as userService from '../services/user.service.js';
 import { ok, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
-
+import { AUDIT_ACTIONS } from '../constants/index.js';
 /**
  * AUTH CONTROLLER
  * Orchestrates the secure entry and exit points for the EMR suite.
@@ -23,7 +24,7 @@ export async function login(req, res) {
     
     // Manually trigger audit for high-security events like login
     await attachAudit(req, {
-      action: 'USER_LOGIN',
+      action: AUDIT_ACTIONS.USER_LOGIN,
       entity: 'user',
       entityId: user.id,
       details: { email: user.email }
@@ -65,9 +66,9 @@ export async function logout(req, res) {
     await authService.logout(userId, req.body.refreshToken);
 
     await attachAudit(req, {
-      action: 'USER_LOGOUT',
+      action: AUDIT_ACTIONS.USER_LOGOUT,
       entity: 'user',
-      entityId: userId,
+      entityId: userId
     });
 
     return ok(res, { success: true }, 'Logged out successfully');
@@ -83,12 +84,13 @@ export async function logout(req, res) {
 export async function changePassword(req, res) {
   try {
     const userId = req.user.id;
+    
     await authService.changePassword(userId, req.body.oldPassword, req.body.newPassword);
 
     await attachAudit(req, {
-      action: 'PASSWORD_CHANGE',
+      action: AUDIT_ACTIONS.PASSWORD_CHANGE,
       entity: 'user',
-      entityId: userId,
+      entityId: userId
     });
 
     return ok(res, { success: true }, 'Password changed successfully');

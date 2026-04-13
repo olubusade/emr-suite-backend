@@ -15,6 +15,10 @@ import {
 } from './middlewares/rateLimit.middleware.js';
 
 const app = express();
+/**
+ * When deployed (Render, Nginx, Cloudflare, etc.), req.ip may not be accurate.
+ */
+app.set('trust proxy', true);
 
 /**
  * 1. CLOUD-READY HEALTH CHECK

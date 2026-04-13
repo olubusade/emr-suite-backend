@@ -1,7 +1,7 @@
 import { ok, created, error,deleted } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 import * as appointmentService from '../services/appointment.service.js';
-
+import { AUDIT_ACTIONS } from '../constants/index.js';
 /**
  * APPOINTMENT CONTROLLER
  * Orchestrates clinical scheduling while maintaining a clean 
@@ -63,7 +63,7 @@ export async function createAppointment(req, res) {
 
     // Audit remains here as it requires 'req' context (IP, User-Agent, etc.)
     await attachAudit(req, {
-      action: 'CREATE_APPOINTMENT',
+      action: AUDIT_ACTIONS.APPOINTMENT_CREATE,
       entity: 'appointment',
       entityId: appointment.id,
       metadata: { ...req.body },
@@ -87,10 +87,9 @@ export async function updateAppointment(req, res) {
       action: 'UPDATE_APPOINTMENT',
       entity: 'appointment',
       entityId: result.appointment.id,
-      metadata: {
-        before: result.audit.before,
-        after: result.audit.after
-      }
+      before: result.audit.before,
+      after: result.audit.after
+      
     });
 
     return ok(res, appointment, 'Appointment updated successfully');
@@ -107,7 +106,7 @@ export async function cancelAppointment(req, res) {
     const appointment = await appointmentService.cancelAppointment(req.params.id);
 
     await attachAudit(req, {
-      action: 'CANCEL_APPOINTMENT',
+      action: AUDIT_ACTIONS.APPOINTMENT_CANCEL,
       entity: 'appointment',
       entityId: appointment.id,
       metadata: { previousStatus: 'scheduled', newStatus: 'cancelled' },

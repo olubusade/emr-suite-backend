@@ -2,6 +2,7 @@ import * as billService from '../services/bill.service.js';
 import { ok, created, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 import { logger } from '../config/logger.js';
+import { AUDIT_ACTIONS } from '../constants/index.js';
 /**
  * BILL CONTROLLER
  * Manages the Revenue Cycle Management (RCM) workflow.
@@ -22,7 +23,7 @@ export async function listBills(req, res) {
     });
   
     await attachAudit(req, { 
-      action: 'BILL_LIST_VIEW', 
+      action: AUDIT_ACTIONS.BILL_READ, 
       entity: 'bill', 
       entityId: req.user.id, // ID of the staff performing the action
       metadata: {
@@ -31,7 +32,7 @@ export async function listBills(req, res) {
         resultCount: result.rows.length
       } 
     });
-    console.log('BILL:::', result.rows);
+    
     // Map DB snake_case to camelCase
     const rows = result.rows.map((bill) => ({
       id: bill.id,
@@ -98,7 +99,7 @@ export async function createBill(req, res) {
     const bill = await billService.createBill(billData);
     
      await attachAudit(req, { 
-      action: 'BILL_CREATE', 
+      action: AUDIT_ACTIONS.BILL_CREATE,
       entity: 'bill', 
       entityId: bill.id, 
       metadata: { query: billData } 
@@ -132,14 +133,21 @@ export async function createBill(req, res) {
  */
 export async function updateBill(req, res) {
   try {
+    if (!req.params.id) { 
+        throw new Error("Missing billing id");
+    }
+    const billId = req.params.id;
+    const before = await billService.getBill(billId);
     // TECH LOG: Track the start of the operation
-    logger.info(`Attempting to update Bill ${id} by user ${userId}`);
-    const bill = await billService.updateBill(req.params.id, req.body,req.user.id);
+    logger.info(`Attempting to update Bill ${billId} by user ${userId}`);
+    const bill = await billService.updateBill(billId, req.body,req.user.id);
 
     await attachAudit(req, { 
-      action: 'BILL_UPDATE', 
+      action: AUDIT_ACTIONS,
       entity: 'bill', 
       entityId: bill.id, 
+      before,
+      after:bill,
       metadata: { query: req.body } 
     });
 
@@ -169,7 +177,7 @@ export async function getBill(req, res) {
     if (!bill) return error(res, 404, 'Bill not found');
 
     await attachAudit(req, { 
-      action: 'BILL_DETAIL_VIEW', 
+      action: AUDIT_ACTIONS.BILL_READ, 
       entity: 'bill', 
       entityId: billId, 
       metadata: { query: req.query } 
@@ -188,7 +196,7 @@ export async function deleteBill(req, res) {
     const billId = req.params.id;
 
      await attachAudit(req, { 
-      action: 'DELETE_BILL', 
+      action: AUDIT_ACTIONS.BILL_CANCEL, 
       entity: 'bill', 
       entityId: billId, 
       metadata: { query: req.params } 

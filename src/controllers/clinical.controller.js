@@ -1,7 +1,7 @@
 import { ok, created, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js';
 import * as clinicalService from '../services/clinical.service.js';
-
+import { AUDIT_ACTIONS } from '../constants/index.js';
 /**
  * CLINICAL CONTROLLER
  * Manages patient encounter documentation. 
@@ -80,9 +80,9 @@ export async function createClinicalNote(req, res) {
     
     const clinical = await clinicalService.createClinicalNote(clinicalData);
 
-    // 🔑 Audit Trail
+    // Audit Trail
     await attachAudit(req, {
-      action: 'CLINICAL_NOTE_CREATE',
+      action: AUDIT_ACTIONS.CLINICAL_NOTE_CREATE,
       entity: 'clinical',
       entityId: clinical.id,
       metadata: { appointmentId: clinical.appointmentId, patientId: clinical.patientId },
@@ -99,14 +99,18 @@ export async function createClinicalNote(req, res) {
  */
 export async function updateClinicalNote(req, res) {
   try {
-    const clinical = await clinicalService.updateClinicalNote(req.params.id, req.body);
+    const noteId = req.params.id;
+    const before = await clinicalService.getClinicalNotesById(noteId);
+    const clinical = await clinicalService.updateClinicalNote(noteId, req.body);
 
     //Audit Trail
     await attachAudit(req, {
-      action: 'CLINICAL_NOTE_UPDATE',
+      action: AUDIT_ACTIONS.CLINICAL_NOTE_UPDATE,
       entity: 'clinical',
       entityId: clinical.id,
       metadata: { ...req.body, updatedBy: req.user.id },
+      before,
+      after:clinical
     });
 
     return ok(res, clinical, 'Clinical note updated successfully');
@@ -121,13 +125,12 @@ export async function updateClinicalNote(req, res) {
 export async function deleteClinicalNote(req, res) {
   try {
     const clinical = await clinicalService.deleteClinicalNote(req.params.id);
-
-    // 🔑 Audit Trail
+    // Audit Trail
     await attachAudit(req, {
-      action: 'CLINICAL_NOTE_DELETE',
+      action: AUDIT_ACTIONS.CLINICAL_NOTE_DELETE,
       entity: 'clinical',
       entityId: clinical.id,
-      metadata: { deleted: true, deleteDbY: req.user.id },
+      metadata: { deleted: true, deletedBy: req.user.id },
     });
 
     return ok(res, { id: clinical.id }, 'Clinical note REMOVED');

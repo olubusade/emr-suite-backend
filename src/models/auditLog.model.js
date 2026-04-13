@@ -43,6 +43,11 @@ export const AuditLogModel = (sequelize, DataTypes) => {
         allowNull: true,
         field: 'ip_address'
       },
+      forwardedFor: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'forwarded_for'
+      },
       userAgent: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -55,17 +60,17 @@ export const AuditLogModel = (sequelize, DataTypes) => {
        */
       details: {
         type: DataTypes.JSONB,
-        allowNull: true,
-        field: 'details'
+        allowNull: true
       }
     },
     {
       tableName: "audit_logs",
       timestamps: true,
-      // Audit logs should never be modified or updated (Read/Create only)
+      // IMMUTABLE Audit logs should never be modified or updated (Read/Create only)
       updatedAt: false, 
       indexes: [
         { fields: ['action'] },
+        { fields: ['entity'] },
         { fields: ['user_id'] },
         { fields: ['entity_id'] },
         { fields: ['created_at'] }

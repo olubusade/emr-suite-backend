@@ -1,7 +1,7 @@
 import * as roleService from '../services/role.service.js';
 import { ok, created, noContent, fail, error } from '../utils/response.js'; // Added noContent
 import { attachAudit } from '../middlewares/audit.middleware.js';
-
+import { AUDIT_ACTIONS } from '../constants/index.js';
 /**
  * ROLE & PERMISSION CONTROLLER
  * Manages the global security matrix including Roles, Permissions, 
@@ -62,7 +62,7 @@ export async function updateRolePermissions(req, res) {
         await roleService.updateRolePermissions(roleId, permissionKeys);
         
         await attachAudit(req, { 
-            action: 'RBAC_ROLE_PERMISSIONS_UPDATE', 
+            action: AUDIT_ACTIONS.RBAC_ROLE_PERMISSIONS_UPDATE, 
             entity: 'role', 
             entityId: roleId, 
             metadata: { query: permissionKeys } 
@@ -84,7 +84,7 @@ export async function createRole(req, res) {
     const role = await roleService.createRole(req.body);
       
       await attachAudit(req, { 
-            action: 'RBAC_ROLE_CREATE', 
+            action: AUDIT_ACTIONS.RBAC_ROLE_CREATE,
             entity: 'role', 
             entityId: role.id, 
             metadata: { query: req.body } 
@@ -110,7 +110,7 @@ export async function deleteRole(req, res) {
         await roleService.deleteRole(roleId);
         
         await attachAudit(req, { 
-            action: 'RBAC_ROLE_DELETE', 
+            action: AUDIT_ACTIONS.RBAC_ROLE_DELETE, 
             entity: 'role', 
             entityId: roleId, 
             metadata: { query: req.params } 
@@ -134,7 +134,7 @@ export async function createPermission(req, res) {
     const permission = await roleService.createPermission(req.body);
     
   await attachAudit(req, { 
-            action: 'CREATE_PERMISSION', 
+            action: AUDIT_ACTIONS.CREATE_PERMISSION,
             entity: 'permission', 
             entityId: permission.id, 
             metadata: { query: req.body } 
@@ -194,14 +194,24 @@ export const updateUserPermissions = async (req, res) => {
     try {
         const { userId } = req.params;
         // Expects an array of permissionKeys: { permissions: ["PATIENT_READ", "USER_CREATE"] }
-        const { permissions } = req.body; 
+        const { permissions } = req.body;
 
         if (!Array.isArray(permissions)) {
             return res.status(400).json({ message: 'permissions must be an array.' });
         }
 
-        await roleService.updateUserPermissions(userId, permissions);
+        
+    const after = await roleService.updateUserPermissions(userId, permissions);
         res.status(200).json({ message: 'User direct permissions updated successfully.' });
+        await attachAudit(req, { 
+            action: AUDIT_ACTIONS.USER_PERMISSION_UPDATE, 
+            entity: 'user', 
+            entityId: userId,
+            before: permissions,
+            after,
+            metadata: { query: permissions } 
+        });
+
     } catch (error) {
         res.status(500).json({ message: 'Failed to update user direct permissions', error: error.message });
     }

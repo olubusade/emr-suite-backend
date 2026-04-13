@@ -22,9 +22,8 @@ export async function listAudits(req, res) {
       entityId
     } = req.query;
 
-    // Filter construction - Only passing defined values to the Service
     const filters = {};
-    if (userId) filters.userId = userId; 
+    if (userId) filters.userId = userId;
     if (action) filters.action = action;
     if (entity) filters.entity = entity;
     if (entityId) filters.entityId = entityId;
@@ -32,42 +31,29 @@ export async function listAudits(req, res) {
     const result = await auditService.listAuditLogs({
       page: Number(page),
       pageSize: Number(pageSize),
-      filters,
+      filters
     });
 
-    /**
-     * DTO MAPPING (Data Transfer Object)
-     * Ensuring the API response matches our frontend's expectations 
-     * and hides internal DB specifics if necessary.
-     */
-    const rows = result.rows.map((row) => ({
+    const rows = result.items.map(row => ({
       id: row.id,
-      userId: row.userId,
+      user: row.actor,
       action: row.action,
       entity: row.entity,
       entityId: row.entityId,
       ipAddress: row.ipAddress,
       userAgent: row.userAgent,
-      details: row.details, // Structured JSONB data
-      createdAt: row.createdAt,
+      details: row.details,
+      createdAt: row.createdAt
     }));
 
-    return ok(
-      res,
-      rows,
-      'Audit logs retrieved successfully',
-      {
-        total: result.count,
-        page: result.page,
-        pageSize: result.pageSize,
-        pages: Math.ceil(result.count / result.pageSize),
-      }
-    );
+    return ok(res, rows, 'Audit logs retrieved successfully', {
+      total: result.count,
+      page: result.page,
+      pageSize: result.pageSize,
+      pages: Math.ceil(result.count / result.pageSize)
+    });
+
   } catch (err) {
-    /**
-     * Centralized error handling: We pass the error to our utility 
-     * which handles the winston logging, keeping this controller lean.
-     */
     return error(res, 500, err.message || 'Failed to fetch audit logs');
   }
 }

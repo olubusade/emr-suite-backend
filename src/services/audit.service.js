@@ -11,34 +11,36 @@ import { reportError, logSecurityAlert } from '../utils/monitoring.js';
  * Low-level audit log creator
  * Designed to be "Fire and Forget" to avoid blocking the main event loop.
  */
-export async function logAudit({ userId, action, entity, entityId = null, ip, userAgent, details = {} }) {
-
+export async function logAudit({
+  userId,
+  action,
+  entity,
+  entityId = null,
+  ip,
+  forwardedFor,
+  userAgent,
+  details = {}
+}) {
   try {
-    // We do not await this in a way that blocks clinical workflows
-    // because an audit failure shouldn't stop a life-saving bill or other activities.
     await AuditLog.create({
       userId,
       action,
       entity,
       entityId,
       ipAddress: ip,
+      forwardedFor,
       userAgent,
       details
     });
   } catch (err) {
-    /**
-     * 🛡️ FAIL-SAFE:
-     * If auditing fails, we MUST NOT throw the error. 
-     * A database lock on the audit table should not stop a patient from being billed.
-     */
-    reportError(err, { 
-      service: 'AuditService', 
+    reportError(err, {
+      service: 'AuditService',
       operation: 'logAudit',
-      userId, 
-      action 
+      userId,
+      action
     });
 
-    logSecurityAlert('Audit trail persistence failed', { action, userId, entityId });
+    logSecurityAlert('Audit log failure', { action, userId });
   }
 }
 
@@ -50,7 +52,7 @@ export async function logAudit({ userId, action, entity, entityId = null, ip, us
  * @param {object} params.filters - Optional filters { userId, action, entity }
  */
 export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
-  const limit = Math.min(Number(pageSize) || 50, 100); // Guard: prevent memory exhaustion
+  const limit = Math.min(Number(pageSize) || 50, 100);
   const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
 
   const where = {};
@@ -62,26 +64,25 @@ export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
     const { count, rows } = await AuditLog.findAndCountAll({
       where,
       include: [
-        { 
-          model: User, 
-          as: 'user', // Ensure this alias matches your model definition
-          attributes: ['id', 'email', 'fullName'] 
+        {
+          model: User,
+          as: 'actor',
+          attributes: ['id', 'email', 'fullName']
         }
       ],
       order: [['createdAt', 'DESC']],
       limit,
-      offset,
+      offset
     });
 
     return {
       items: rows,
-      total: count,
-      page: Math.max(Number(page) || 1, 1),
-      pageSize: limit,
-      pages: Math.ceil(count / limit),
+      count,
+      page,
+      pageSize: limit
     };
   } catch (err) {
-    reportError(err, { service: 'AuditService', operation: 'listAuditLogs', filters });
-    throw err; // In listing, we DO throw because the user is specifically requesting this data
+    reportError(err, { service: 'AuditService', operation: 'listAuditLogs' });
+    throw err;
   }
 }

@@ -17,7 +17,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /audits:
+ * /audit:
  *   get:
  *     summary: Retrieve audit logs with filters and pagination
  *     description: |

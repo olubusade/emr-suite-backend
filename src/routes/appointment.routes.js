@@ -17,6 +17,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Appointments
+ *   \n
  *   description: Clinical scheduling and patient workflow management
  */
 

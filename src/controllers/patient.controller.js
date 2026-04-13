@@ -1,6 +1,7 @@
 import * as patientService from '../services/patient.service.js';
 import { ok, created, error } from '../utils/response.js';
 import { attachAudit } from '../middlewares/audit.middleware.js'; // Assuming this middleware is correctly defined
+import { AUDIT_ACTIONS } from '../constants/index.js';
 
 /**
  * PATIENT CONTROLLER
@@ -63,13 +64,13 @@ export async function createPatient(req, res) {
     
     // Audit Trail
     await attachAudit(req, {
-      action: 'PATIENT_REGISTRATION',
+      action: AUDIT_ACTIONS.PATIENT_REGISTRATION,
       entity: 'patient',
       entityId: patient.id,
       metadata: { name: `${patient.firstName} ${patient.lastName}`, email: patient.email },
     });
-
-    //FIX: Return consistent camelCase fields
+    
+    //Return consistent camelCase fields
     return created(res, {
       id: patient.id,
       firstName: patient.firstName, 
@@ -80,6 +81,8 @@ export async function createPatient(req, res) {
       createdAt: patient.createdAt,
       updatedAt: patient.updatedAt,
     }, 'Patient created successfully');
+
+     
   } catch (err) {
     
     return error(res, err.statusCode || 500, err.message || 'Server error'); 
@@ -93,19 +96,23 @@ export async function createPatient(req, res) {
 export async function updatePatient(req, res) {
   try {
     const { id } = req.params;
-    const patient = await patientService.updatePatient(id, req.body);
-    
-    // Audit Trail
+
+    const before = await patientService.getPatientById(id);
+
+    const updated = await patientService.updatePatient(id, req.body);
+
     await attachAudit(req, {
-      action: 'PATIENT_RECORD_UPDATE',
+      action: AUDIT_ACTIONS.PATIENT_RECORD_UPDATE,
       entity: 'patient',
       entityId: id,
-      metadata: { updatedFields: Object.keys(req.body) },
+      before,
+      after: updated
     });
 
-   return ok(res, patient, 'Patient record updated');
+    return ok(res, updated, 'Patient record updated');
+
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    return error(res, err.statusCode || 500, err.message);
   }
 }
 
@@ -120,7 +127,7 @@ export async function deletePatient(req, res) {
     
     // Audit Trail
     await attachAudit(req, {
-      action: 'PATIENT_RECORD_DELETE',
+      action: AUDIT_ACTIONS.PATIENT_RECORD_DELETE,
       entity: 'patient',
       entityId: id,
       metadata: { deletedBy: req.user.id },

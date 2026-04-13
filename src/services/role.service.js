@@ -225,10 +225,10 @@ export async function updateUserPermissions(userId, permissionKeys) {
     });
 
     // This uses the 'permissions' alias directly on the User model
-    await user.setPermissions(permissions, { transaction });
+    const updatedPermissions = await user.setPermissions(permissions, { transaction });
 
     await transaction.commit();
-    return true;
+    return updatedPermissions;
   } catch (err) {
     await transaction.rollback();
     reportError(err, { service: 'RBAC', operation: 'updateUserPermissions', userId });
