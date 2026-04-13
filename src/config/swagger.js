@@ -10,10 +10,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'EMR-Suite Backend API (Demo)',
+      title: 'Busade EMR-Suite Backend API (Demo)',
       version: '1.0.0',
       description: `
-        ### Crovix Global Technologies: EMR-Suite
         This is the backend API for the EMR-Suite demo project.
         **Note:** This is a demo of the wiCare EMR system designed to showcase 
         expertise in healthcare workflows, security (RBAC), and auditability.

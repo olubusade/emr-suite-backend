@@ -79,6 +79,7 @@ protectedResources.forEach(path => app.use(path, rateLimiter));
  */
 setupSwagger(app);
 
+
 app.get('/metrics', async (_req, res) => {
   try {
     res.set('Content-Type', register.contentType);

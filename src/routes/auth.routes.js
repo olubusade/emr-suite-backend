@@ -39,7 +39,7 @@ const router = express.Router();
  *               password:
  *                 type: string
  *                 format: password
- *                 example: password123
+ *                 example: admin@123
  *     responses:
  *       200:
  *         description: Login successful

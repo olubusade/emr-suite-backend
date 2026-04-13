@@ -31,11 +31,12 @@ export async function listBills(req, res) {
         resultCount: result.rows.length
       } 
     });
-
+    console.log('BILL:::', result.rows);
     // Map DB snake_case to camelCase
     const rows = result.rows.map((bill) => ({
       id: bill.id,
       patientId: bill.patientId,
+      details:bill.details,
       appointmentId: bill.appointmentId,
       paymentMethod: bill.paymentMethod,
       patient:bill.patient,

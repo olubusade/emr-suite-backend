@@ -1,1 +1,5 @@
-export default { testEnvironment: 'node', transform: {} };
+export default {
+  testEnvironment: 'node',
+  forceExit: true,
+  transform: {}
+};

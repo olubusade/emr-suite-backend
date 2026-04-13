@@ -384,7 +384,9 @@ export async function deleteBill(id) {
  * Standardized DTO for frontend consumption
  */
 function formatBillList(bill) {
+  
   const b = bill.get({ plain: true });
+  console.log('bill>>>>>', b);
   return {
     id: b.id,
     amount: b.amount,
@@ -394,6 +396,7 @@ function formatBillList(bill) {
       fullName: `${b.patient.firstName} ${b.patient.lastName}`,
       phone: b.patient.phone
     } : null,
+    details: {diagnosis:b.appointment.clinicalNote.diagnosis,reason:b.appointment.reason,appointmentDate:b.appointment.clinicalNote.appointmentDate, totalAmount:b.appointment.totalAmount,amountPaid:b.appointment.amountPaid, paymentStatus:b.appointment.paymentStatus},
     creator: b.creator ? `${b.creator.fName} ${b.creator.lName}` : 'System',
     visitBalance: b.appointment ? (parseFloat(b.appointment.totalAmount) - parseFloat(b.appointment.amountPaid)) : 0
   };
