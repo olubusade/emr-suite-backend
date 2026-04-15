@@ -1,14 +1,12 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { logger } from './logger.js'; // Assuming a logger exists for consistency
+import { logger } from './logger.js';
 
 const env = process.env.ENV || process.env.NODE_ENV || 'development';
 
 /**
  * ENVIRONMENT FILE MAPPING
- * Maps internal environment keys to physical .env filenames.
- * This preserves your specific naming convention for dev vs docker.
  */
 const envMapping = {
   development: '.env.local.dev',
@@ -18,7 +16,7 @@ const envMapping = {
   prod: '.env.prod',
 };
 
-// Resolve the absolute path to the configuration file
+// Resolve absolute path
 const envFile = path.resolve(
   process.cwd(),
   envMapping[env] || `.env.${env}`
@@ -26,26 +24,38 @@ const envFile = path.resolve(
 
 /**
  * BOOTSTRAP PHASE
- * Loads the mapped environment file. If it doesn't exist,
- * it falls back to a generic .env to prevent startup failure.
  */
 if (fs.existsSync(envFile)) {
   dotenv.config({ path: envFile });
-  console.log(`[Config] Loaded environment: ${env} (${envFile})`);
+
+  logger.info('[Config] Environment loaded', {
+    env,
+    file: envFile,
+  });
+
 } else {
   dotenv.config();
-  console.warn(`[Config] Mapped file not found for '${env}', using default .env`);
+
+  logger.warn('[Config] Environment file not found, using default .env', {
+    env,
+    attemptedFile: envFile,
+  });
 }
 
 /**
  * CONFIGURATION VALIDATOR
- * Enforces the "Fail-Fast" principle for critical infrastructure variables.
  */
 function requireEnv(key, fallback) {
   const value = process.env[key] || fallback;
+
   if (!value) {
-    throw new Error(`CRITICAL CONFIG ERROR: Missing required environment variable: ${key}`);
+    logger.error('Missing required environment variable', { key });
+
+    throw new Error(
+      `CRITICAL CONFIG ERROR: Missing required environment variable: ${key}`
+    );
   }
+
   return value;
 }
 
@@ -56,23 +66,28 @@ const dbConfig = {
   host: requireEnv('DB_HOST', 'localhost'),
   port: Number(requireEnv('DB_PORT', '5432')),
   dialect: 'postgres',
-  // Only log SQL queries in local development to keep production logs clean
-  logging: env === 'development' ? console.log : false,
+
+  // Only log SQL queries in development
+  logging:
+    env === 'development'
+      ? (msg) => logger.debug('[Sequelize]', { query: msg })
+      : false,
 };
 
 /**
  * GLOBAL CONFIGURATION OBJECT
- * Exported as a singleton to be consumed by services and utilities.
  */
 export const config = {
   port: Number(requireEnv('PORT', '5000')),
   env,
   corsOrigin: requireEnv('CORS_ORIGIN', '*'),
+
   jwt: {
     secret: requireEnv('JWT_SECRET'),
     refreshSecret: requireEnv('JWT_REFRESH_SECRET'),
     accessTtl: requireEnv('ACCESS_TTL', '15m'),
     refreshTtl: requireEnv('REFRESH_TTL', '7d'),
   },
+
   db: dbConfig,
 };

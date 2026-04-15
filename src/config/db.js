@@ -1,5 +1,5 @@
 import { sequelize } from './sequelize.js';
-import { User } from '../models/index.js'; // models initialized with sequelize
+import { User } from '../config/associations.js';
 import { logger } from './logger.js';
 
 /**
@@ -9,24 +9,28 @@ import { logger } from './logger.js';
  */
 export async function testDbConnection() {
   try {
-    // Authenticate performs a 'SELECT 1+1' or similar low-overhead query
+    // Authenticate performs a lightweight query (e.g., SELECT 1+1)
     await sequelize.authenticate();
-    console.log('Database connection established successfully.');
 
-/* // This section is preserved for manual data-layer verification
+    logger.info('Database connection established successfully.');
+
+    /* 
+    // Optional manual verification (keep commented for debugging)
     const user = await User.findOne({ where: { active: true } });
     if (user) {
-      console.log('Sample user row:', user.toJSON());
+      logger.info('Sample user row retrieved', { user: user.toJSON() });
     } else {
-      console.warn('No active user found.');
-    } 
-*/
+      logger.warn('No active user found.');
+    }
+    */
+
   } catch (err) {
-    // We use a specific console.error format to stand out in the logs
-    console.error('Oops! Database connection failed:', err.message);
-    
-    // We re-throw the error to trigger the 'set -e' in entrypoint.sh 
-    // and stop the container from starting in a broken state.
+    logger.error('Database connection failed', {
+      message: err.message,
+      stack: err.stack,
+    });
+
+    // Re-throw to stop app startup (important for Docker / CI)
     throw err;
   }
 }

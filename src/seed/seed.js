@@ -1,4 +1,4 @@
-import { sequelize, Role, Permission, User, Patient, Bill, Appointment, UserPermission, RolePermission, UserRole, Payment, Vital, ClinicalNote } from '../models/index.js';
+import { sequelize, Role, Permission, User, Patient, Bill, Appointment, UserPermission, RolePermission, UserRole, Payment, Vital, ClinicalNote } from '../config/associations.js';
 
 import { seedRoles } from './roles.seed.js';
 import { seedPermissions } from './permissions.seed.js';
@@ -12,12 +12,16 @@ import { seedBills } from './bills.seed.js';
 import { seedPayments } from './payments.seed.js';
 import { seedVitals } from './vitals.seed.js';
 import { seedClinicalNotes } from './clinical.seed.js';
-import { computeBillStatus } from './../utils/billCompute.js';
-import { reportError } from '../utils/monitoring.js';
+import { computeBillStatus } from '../shared/utils/billCompute.js';
+import { reportError } from '../shared/utils/monitoring.js';
 async function seed() {
   try {
     await sequelize.sync({ force: true });
-    console.log('Database synced');
+    
+    logger.info('Database synced', {
+      service: 'database',
+      operation: 'Database Alteration'
+    });
 
     const roles = await seedRoles(Role);
     const permissions = await seedPermissions(Permission);
@@ -44,13 +48,17 @@ async function seed() {
     // 6. Seed Payments
     const payments = await seedPayments(Payment, bills);
     await syncBillStatuses(Bill, bills, payments);
-    console.log('Seed completed successfully!');
+    
+    logger.info('Seed completed successfully', {
+      service: 'database',
+      operation: 'Seed'
+    });
     process.exit(0);
 
   }catch (err) {
     process.stdout.write('\n❌ CRITICAL SEED FAILURE\n');
     reportError(err, { context: 'Global Seeder Orchestrator' });
-    console.error(err);
+    logger.error('Seed failed', { error: err.message });
     process.exit(1);
   }
 }

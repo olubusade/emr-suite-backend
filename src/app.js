@@ -3,22 +3,25 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 
-import routes from './routes/index.js';
-import { prometheusMiddleware, register } from './middlewares/metrics.middleware.js';
-import { errorHandler } from './middlewares/error.middleware.js';
+import routes from './modules/index.js';
+import { prometheusMiddleware, register } from './shared/middlewares/metrics.middleware.js';
+import { errorHandler } from './shared/middlewares/error.middleware.js';
 import { setupSwagger } from './config/swagger.js';
 import { logger } from './config/logger.js';
 import {
   rateLimiter,
   createAccountLimiter,
   authLimiter
-} from './middlewares/rateLimit.middleware.js';
+} from './shared/middlewares/rateLimit.middleware.js';
 
 const app = express();
 /**
- * When deployed (Render, Nginx, Cloudflare, etc.), req.ip may not be accurate.
- */
-app.set('trust proxy', true);
+ * allow single req.ip in production
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+} else {
+  app.set('trust proxy', false);
+}
 
 /**
  * 1. CLOUD-READY HEALTH CHECK
