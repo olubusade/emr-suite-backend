@@ -17,7 +17,7 @@ export function created(res, data = null, message = 'Created') {
 }
 
 /**
- * 200 DELETED / 204 NO CONTENT
+ * 200 DELETED 
  * Use deleted() when you want to return a confirmation message.
  * Use noContent() for a silent successful deletion.
  */
@@ -28,7 +28,11 @@ export function deleted(res, message = 'Resource deleted successfully') {
         data: null 
     });
 }
-
+/**
+ * 204 NO CONTENT
+ * @param {*} res 
+ * @returns 
+ */
 export function noContent(res) {
     return res.status(204).end();
 }
@@ -57,7 +61,14 @@ export function notFound(res, message = 'Resource not found', details = null) {
         details 
     });
 }
-
+/**
+ * Fail - 400
+ * @param {*} res 
+ * @param {*} statusCode 
+ * @param {*} message 
+ * @param {*} details 
+ * @returns 
+ */
 export function fail(res, statusCode = 400, message = 'Bad Request', details = null) {
     logger.warn(`API Fail Response [${statusCode}]: ${message}`, { details });
     return res.status(statusCode).json({ status: STATUS.FAIL, message, details });
@@ -71,4 +82,32 @@ export function error(res, statusCode = 500, message = 'Internal Server Error', 
         details: details?.message || details 
     });
     return res.status(statusCode).json({ status: STATUS.ERROR, message, details });
+}
+/**
+ * 409 CONFLICT
+ * Used when a request conflicts with current server state
+ * (e.g. duplicate email, duplicate patient, scheduling conflict)
+ */
+export function conflict(res,statusCode = 409, message = 'Conflict', details = null) {
+    logger.warn(`API Conflict Response [409]: ${message}`, { details });
+
+    return res.status(statusCode).json({
+        status: STATUS.FAIL,
+        message,
+        details
+    });
+}
+/**
+ * SERVER ERROR 500+
+ * @param {*} res 
+ * @param {*} message 
+ * @param {*} details 
+ * @returns 
+ */
+export function serverError(res, message = 'Internal Server Error', details = null) {
+    return res.status(500).json({
+        status: STATUS.ERROR,
+        message,
+        details
+    });
 }

@@ -21,11 +21,23 @@ export const PatientModel = (sequelize, DataTypes) => {
       firstName: { type: DataTypes.STRING(100), allowNull: false, field: 'first_name' },
       lastName: { type: DataTypes.STRING(100), allowNull: false, field: 'last_name' },
       middleName: { type: DataTypes.STRING(100), allowNull: true, field: 'middle_name' },
+      /**
+       * VIRTUAL FIELD (NOT STORED IN DB)
+       */
+      fullName: {
+        type: DataTypes.VIRTUAL(DataTypes.STRING, ['firstName', 'lastName']),
+        get() {
+          const first = this.getDataValue('firstName') || '';
+          const last = this.getDataValue('lastName') || '';
+          return `${first} ${last}`.trim();
+        }
+      },
 
       /**
        * SECURITY & AUTHENTICATION
-       * Allows patients to log into the Crovix Patient Portal.
+       * Allows patients to log into the Busade Patient Portal.
        */
+      
       password: { type: DataTypes.STRING(255), allowNull: false, comment: 'Hashed password for portal access' },
       role: { type: DataTypes.STRING(50), allowNull: false, defaultValue: 'patient' }, 
       mustChangePassword: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'must_change_password' },
@@ -114,6 +126,7 @@ export const PatientModel = (sequelize, DataTypes) => {
        * HOOKS
        * Sanitizes data at the ORM level before it reaches the persistence layer.
        */
+      
       hooks: {
         beforeCreate: (patient) => {
           if (patient.email) patient.email = patient.email.toLowerCase();

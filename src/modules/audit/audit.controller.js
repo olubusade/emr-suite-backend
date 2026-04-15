@@ -11,7 +11,7 @@ import { ok, error } from '../../shared/utils/response.js';
  * List audit logs with multi-dimensional filtering
  * GET /api/v1/audits
  */
-export async function listAudits(req, res) {
+export async function listAudits(req, res, next) {
     
   try {
     const {
@@ -55,6 +55,6 @@ export async function listAudits(req, res) {
     });
 
   } catch (err) {
-    return error(res, 500, err.message || 'Failed to fetch audit logs');
+     next(err);
   }
 }

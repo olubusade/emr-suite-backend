@@ -24,26 +24,46 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   name: Clinical
+ *   description: Clinical notes management (SOAP-based documentation)
+ */
+
+/**
+ * @swagger
  * /clinical:
  *   get:
  *     summary: List all clinical notes
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: query
  *         name: patientId
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *       - in: query
  *         name: staffId
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     responses:
  *       200:
- *         description: List of clinical notes
+ *         description: Clinical notes retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedClinicalNotes'
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.get(
   '/',
@@ -58,10 +78,10 @@ router.get(
  * /clinical/patient/{patientId}:
  *   get:
  *     summary: Get clinical history for a patient
- *     description: Retrieves all SOAP notes associated with a patient (supports pagination)
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: patientId
@@ -69,21 +89,33 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *           example: 1
+ *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           example: 10
+ *
  *     responses:
  *       200:
  *         description: Patient clinical history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedClinicalNotes'
+ *
  *       404:
- *         description: Patient not found or no records available
+ *         $ref: '#/components/responses/NotFound'
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.get(
   '/patient/:patientId',
@@ -98,10 +130,10 @@ router.get(
  * /clinical/appointment/{appointmentId}:
  *   get:
  *     summary: Get clinical note by appointment
- *     description: Retrieves the clinical note tied to a specific appointment
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: appointmentId
@@ -109,11 +141,23 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     responses:
  *       200:
  *         description: Clinical note retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ClinicalNote'
+ *
  *       404:
- *         description: No clinical note found for this appointment
+ *         $ref: '#/components/responses/NotFound'
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.get(
   '/appointment/:appointmentId',
@@ -131,15 +175,30 @@ router.get(
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateClinicalNote'
+ *
  *     responses:
  *       201:
  *         description: Clinical note created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ClinicalNote'
+ *
+ *       400:
+ *         description: Validation error
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.post(
   '/',
@@ -157,6 +216,7 @@ router.post(
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -164,11 +224,23 @@ router.post(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     responses:
  *       200:
  *         description: Clinical note retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ClinicalNote'
+ *
  *       404:
- *         description: Clinical note not found
+ *         $ref: '#/components/responses/NotFound'
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.get(
   '/:id',
@@ -186,6 +258,7 @@ router.get(
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -193,15 +266,30 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateClinicalNote'
+ *
  *     responses:
  *       200:
  *         description: Clinical note updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ClinicalNote'
+ *
+ *       400:
+ *         description: Validation error
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.put(
   '/:id',
@@ -210,7 +298,6 @@ router.put(
   validate(updateClinicalNoteSchema),
   clinicalController.updateClinicalNote
 );
-
 /**
  * @swagger
  * /clinical/{id}:
@@ -219,6 +306,7 @@ router.put(
  *     tags: [Clinical]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -226,9 +314,16 @@ router.put(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     responses:
  *       204:
  *         description: Clinical note deleted successfully
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.delete(
   '/:id',

@@ -10,7 +10,7 @@ import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 /**
  * Register a new staff member (Admin-led or self-reg depending on flow)
  */
-export async function registerUser(req, res) {
+export async function registerUser(req, res, next) {
   try {
     const user = await userService.createUser(req.body);
 
@@ -27,14 +27,14 @@ export async function registerUser(req, res) {
       role: user.roleName,
     }, 'User registered successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Internal server error');
+    next(err);
   }
 }
 
 /**
  * Get profile of the currently authenticated user
  */
-export async function getProfile(req, res) {
+export async function getProfile(req, res, next) {
   try {
     const user = await userService.getUserProfile(req.user.id);
     if (!user) return fail(res, 'User not found', 404);
@@ -47,17 +47,17 @@ export async function getProfile(req, res) {
       active: user.active
     });
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Unable to fetch profile');
+    next(err);
   }
 }
 
 /**
  * Self-service: Update own profile details
  */
-export async function updateProfile(req, res) {
+export async function updateProfile(req, res, next) {
   try {
     const user = await userService.updateUserProfile(req.user.id, req.body);
-
+    
     await attachAudit(req, { 
             action: 'PROFILE_SELF_UPDATE', 
             entity: 'user', 
@@ -71,14 +71,14 @@ export async function updateProfile(req, res) {
       role: user.roleName,
     }, 'Profile updated successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Unable to update profile');
+    next(err);
   }
 }
 
 /**
  * Admin: List all hospital staff with pagination
  */
-export async function listStaff(req, res) {
+export async function listStaff(req, res, next) {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = parseInt(req.query.pageSize, 10) || 20;
@@ -103,14 +103,14 @@ export async function listStaff(req, res) {
       total: data.total,
     });
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Unable to list users');
+    next(err);
   }
 }
 
 /**
  * Admin: Force update a user account (e.g., changing roles or deactivating)
  */
-export async function updateUser(req, res) {
+export async function updateUser(req, res, next) {
   try {
     const user = await userService.updateUser(req.params.id, req.body);
 
@@ -128,27 +128,25 @@ export async function updateUser(req, res) {
       role: user.roleName,
     }, 'User updated successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Unable to update user');
+    next(err);
   }
 }
 
 /**
  * Admin: Remove a user (Soft delete or deactivation recommended in Service)
  */
-export async function deleteUser(req, res) {
+export async function deleteUser(req, res, next) {
   try {
     userService.deleteUser(req.params.id);
-
-  
-await attachAudit(req, { 
-            action: 'ADMIN_USER_DELETE', 
-            entity: 'user', 
-            entityId: req.params.id, 
-            metadata: { adminId: req.user.id} 
-        });
+    await attachAudit(req, { 
+      action: 'ADMIN_USER_DELETE', 
+      entity: 'user', 
+      entityId: req.params.id, 
+      metadata: { adminId: req.user.id} 
+    });
     return ok(res, { success: true }, 'User deleted successfully');
   } catch (err) {
     
-    return error(res, err.statusCode || 500, err.message || 'Unable to delete user');
+    next(err);
   }
 }

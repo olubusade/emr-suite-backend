@@ -7,216 +7,98 @@ import { PERMISSIONS } from '../../constants/index.js';
 const router = express.Router();
 
 /**
- * @swagger
- * tags:
- *   name: Users
- *   description: API endpoints for user management
+ * =========================
+ * AUTHENTICATED USER ROUTES
+ * =========================
  */
 
-/**
- * @swagger
- * /users/register:
- *   post:
- *     summary: Register a new user
- *     description: Public endpoint to create a new user account.
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserRegister'
- *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         $ref: '#/components/responses/BadRequest'
- */
-
-/**
- * @swagger
- * /users/login:
- *   post:
- *     summary: User login
- *     description: Public endpoint to login a user and retrieve access & refresh tokens.
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserLogin'
- *     responses:
- *       200:
- *         description: Login successful
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- */
-
-/**
- * @swagger
- * /users/refresh:
- *   post:
- *     summary: Refresh access token
- *     description: Public endpoint to refresh JWT token.
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               refreshToken:
- *                 type: string
- *     responses:
- *       200:
- *         description: Tokens refreshed successfully
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- */
+router.use(authRequired);
 
 /**
  * @swagger
  * /users/me:
  *   get:
  *     summary: Get current user profile
- *     description: Returns the authenticated user's profile information.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User profile retrieved
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
+ *         $ref: '#/components/schemas/ApiResponse'
  */
+router.get('/me', userController.getProfile);
 
 /**
  * @swagger
  * /users/me:
  *   patch:
  *     summary: Update current user profile
- *     description: Updates authenticated user's profile details.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserUpdate'
- *     responses:
- *       200:
- *         description: Profile updated successfully
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
  */
+router.patch('/me', userController.updateProfile);
 
 /**
- * @swagger
- * /users/logout:
- *   post:
- *     summary: Logout current user
- *     description: Revokes current user's refresh tokens.
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Logout successful
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
+ * =========================
+ * ADMIN / STAFF MANAGEMENT
+ * =========================
  */
 
 /**
  * @swagger
  * /users:
  *   get:
- *     summary: List all users
- *     description: Admin-only endpoint to list all users. Requires USER_READ permission.
+ *     summary: List all staff users
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Users retrieved successfully
- *       403:
- *         $ref: '#/components/responses/Forbidden'
+ */
+router.get(
+  '/',
+  authorize(PERMISSIONS.USER_READ),
+  userController.listStaff
+);
+
+/**
+ * @swagger
+ * /users:
  *   post:
  *     summary: Create a new user
- *     description: Admin-only endpoint to create a user. Requires USER_CREATE permission.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserCreate'
- *     responses:
- *       201:
- *         description: User created successfully
- *       403:
- *         $ref: '#/components/responses/Forbidden'
  */
+router.post(
+  '/',
+  authorize(PERMISSIONS.USER_CREATE),
+  userController.registerUser
+);
 
 /**
  * @swagger
  * /users/{id}:
  *   patch:
- *     summary: Update any user
- *     description: Admin-only endpoint to update a user by ID. Requires USER_UPDATE permission.
+ *     summary: Update a user
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserUpdate'
- *     responses:
- *       200:
- *         description: User updated successfully
- *       403:
- *         $ref: '#/components/responses/Forbidden'
- *   delete:
- *     summary: Delete any user
- *     description: Admin-only endpoint to delete a user by ID. Requires USER_DELETE permission.
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       204:
- *         description: User deleted successfully
- *       403:
- *         $ref: '#/components/responses/Forbidden'
  */
+router.patch(
+  '/:id',
+  authorize(PERMISSIONS.USER_UPDATE),
+  userController.updateUser
+);
 
-router.use(authRequired);
-router.get('/get_profile', userController.getProfile);
-router.patch('/update_profile', userController.updateProfile);
-
-router.get('/list_staff', authorize(PERMISSIONS.USER_READ), userController.listStaff);
-router.post('/register', authorize(PERMISSIONS.USER_CREATE), userController.registerUser);
-router.patch('/:id', authorize(PERMISSIONS.USER_UPDATE), userController.updateUser);
-router.delete('/:id', authorize(PERMISSIONS.USER_DELETE), userController.deleteUser);
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Delete a user
+ *     tags: [Users]
+ */
+router.delete(
+  '/:id',
+  authorize(PERMISSIONS.USER_DELETE),
+  userController.deleteUser
+);
 
 export default router;

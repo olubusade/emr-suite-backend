@@ -29,43 +29,58 @@ const r = express.Router();
  *     tags: [Bills]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           example: 1
+ *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           example: 20
+ *
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
  *           enum: [unpaid, pending, partially_paid, paid, cancelled]
+ *
  *       - in: query
  *         name: paymentMethod
  *         schema:
  *           type: string
  *           enum: [cash, card, insurance, transfer]
+ *
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
  *         description: Search by patient name
+ *
  *     responses:
  *       200:
  *         description: Paginated list of bills
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PaginatedBills'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Bill'
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.get(
   '/',
@@ -84,26 +99,43 @@ r.get(
  *     description: Returns patients who have outstanding or unpaid bills
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
+ *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
+ *
  *     responses:
  *       200:
- *         description: List of patients with pending bills
+ *         description: Patients with pending bills
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Patient'
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.get(
   '/patients',
@@ -122,31 +154,35 @@ r.get(
  *     description: Generates a bill linked to an appointment and patient
  *     security:
  *       - bearerAuth: []
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateBill'
- *           example:
- *             patientId: "550e8400-e29b-41d4-a716-446655440000"
- *             appointmentId: "550e8400-e29b-41d4-a716-446655440001"
- *             amount: 15000
- *             paymentMethod: "cash"
- *             notes: "Consultation fee"
+ *
  *     responses:
  *       201:
  *         description: Bill created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Bill'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Bill'
+ *
  *       400:
  *         description: Validation error
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.post(
   '/',
@@ -164,6 +200,7 @@ r.post(
  *     tags: [Bills]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -171,19 +208,28 @@ r.post(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     responses:
  *       200:
  *         description: Bill details
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Bill'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Bill'
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
+ *
  *       404:
- *         description: Bill not found
+ *         $ref: '#/components/responses/NotFound'
  */
 r.get(
   '/:id',
@@ -199,9 +245,9 @@ r.get(
  *   patch:
  *     summary: Update a bill
  *     tags: [Bills]
- *     description: Update bill status, payment method, or amount
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -209,27 +255,38 @@ r.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateBill'
+ *
  *     responses:
  *       200:
  *         description: Bill updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Bill'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Bill'
+ *
  *       400:
  *         description: Invalid request
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
+ *
  *       404:
- *         description: Bill not found
+ *         $ref: '#/components/responses/NotFound'
  */
 r.patch(
   '/:id',
@@ -245,9 +302,9 @@ r.patch(
  *   delete:
  *     summary: Delete a bill
  *     tags: [Bills]
- *     description: Permanently removes a bill record (use with caution)
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -255,15 +312,19 @@ r.patch(
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     responses:
  *       204:
  *         description: Bill deleted successfully
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
+ *
  *       404:
- *         description: Bill not found
+ *         $ref: '#/components/responses/NotFound'
  */
 r.delete(
   '/:id',

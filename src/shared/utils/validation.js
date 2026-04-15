@@ -1,5 +1,6 @@
 import { ZodError } from 'zod';
 import { logger } from '../../config/logger.js';
+import { STATUS } from '../../constants/index.js';
 
 /**
  * REQUEST VALIDATION MIDDLEWARE
@@ -65,7 +66,7 @@ export const validate = (schema) => (req, res, next) => {
       // 4. STANDARDIZED ERROR RESPONSE
       // We return a 400 Bad Request with a clear message for the UI to display.
       return res.status(400).json({ 
-        success: false, 
+        status: STATUS.FAIL, 
         message: details[0].message, // Return the first error as a primary message
         details 
       });

@@ -1,4 +1,4 @@
-import { User, Role, Permission, RefreshToken } from '../../config/associations.js';
+import { User, Role, Permission, RefreshToken, sequelize } from '../../config/associations.js';
 import { hashPassword, comparePassword } from '../../shared/utils/passwords.js';
 import { signAccess, signRefresh, sha256, verifyRefresh, tokenExpiry } from '../../shared/utils/jwt.js';
 import ApiError from '../../shared/utils/ApiError.js';
@@ -90,17 +90,32 @@ function formatUser(user, permissions = []) {
 
 export async function login({ email, password, userAgent, ip }) {
   try {
+    
     if (!email || !password) throw new ApiError(400, 'Missing credentials');
+    //normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+
     const user = await User.findOne({
-      where: { email, active: true },
+      where: { email:normalizedEmail, active: true },
       include: [{ model: Role, as: 'roles' }],
     });
     //SECURITY: Use generic error for user enumeration protection
-    if (!user) throw new ApiError(401, 'Invalid email or password');
+    const dummyHash = '$2b$10$CwTycUXWue0Thq9StjUM0uJ8j6Y5l9x2G3v7Z2b5Jp7rJc9l8u8eK'; // bcrypt dummy
 
-    const passwordMatch = await comparePassword(password, user.passwordHash);
-    if (!passwordMatch) { 
-      logSecurityAlert('Failed login attempt', { email, ip });
+    const passwordMatch = await comparePassword(
+      password,
+      user?.passwordHash || dummyHash
+    );
+
+    const isInvalidLogin = !user || !passwordMatch;
+
+    if (isInvalidLogin) {
+      logSecurityAlert('Failed login attempt', {
+        email: normalizedEmail,
+        ip,
+        userAgent,
+        reason: !user ? 'USER_NOT_FOUND' : 'INVALID_PASSWORD'
+      });
       throw new ApiError(401, 'Invalid email or password');
     }
 
@@ -111,24 +126,31 @@ export async function login({ email, password, userAgent, ip }) {
       roles: user.roles.map(r => r.name),
       permissions,
     });
+    //I used sequelize transaction here to avoid the scenario if token creation fails → user is logged in but no refresh token stored
+    return await sequelize.transaction(async (t) => {
+      const refreshToken = signRefresh({ id: user.id });
+      const exp = tokenExpiry(refreshToken);
 
-    const refreshToken = signRefresh({ id: user.id });
-    const exp = tokenExpiry(refreshToken);
+      await RefreshToken.create({
+        userId: user.id,
+        token: refreshToken,
+        tokenHash: sha256(refreshToken),
+        expiresAt: exp,
+        revokedAt: null,
+        userAgent,
+        ipAddress: ip,
+      }, { transaction: t });
 
-    await RefreshToken.create({
-      userId: user.id,
-      token: refreshToken,
-      tokenHash: sha256(refreshToken),
-      expiresAt: exp,
-      revokedAt: null, // active
-      userAgent,
-      ipAddress: ip,
+      user.lastLogin = new Date();
+      await user.save({ transaction: t });
+
+      return {
+        user: formatUser(user, permissions),
+        accessToken,
+        refreshToken
+      };
     });
 
-    // Update last login timestamp asynchronously
-    user.lastLogin = new Date();
-    user.save().catch(e => reportError(e, { userId: user.id, op: 'updateLastLogin' }));
-    return { user: formatUser(user, permissions), accessToken, refreshToken };
   }catch (err) {
     if (!(err instanceof ApiError)) {
       reportError(err, { service: 'AuthService', operation: 'login', email });
@@ -231,10 +253,10 @@ export async function changePassword(userId, oldPassword, newPassword) {
     const user = await User.findByPk(userId);
     if (!user) throw new ApiError(404, 'User not found');
 
-    const isMatch = await compare(oldPassword, user.password_hash);
+    const isMatch = await comparePassword(oldPassword, user.passwordHash);
     if (!isMatch) throw new ApiError(400, 'Old password is incorrect');
 
-    user.password_hash = await hashPassword(newPassword);
+    user.passwordHash = await hashPassword(newPassword);
     await user.save();
 
     await RefreshToken.update({ revokedAt: new Date() }, { where: { userId, revokedAt: null } });

@@ -7,6 +7,9 @@ import { PERMISSIONS } from '../../constants/index.js';
 const r = express.Router();
 
 /**
+ * =========================
+ * ROLE & PERMISSION MODULE
+ * =========================
  * @swagger
  * tags:
  *   - name: Roles
@@ -16,7 +19,7 @@ const r = express.Router();
  *   - name: User Roles
  *     description: Assigning roles to users
  *   - name: User Permissions
- *     description: Direct permission assignment to users (PBAC override)
+ *     description: Direct permission assignment (PBAC override)
  */
 
 // ======================================================================
@@ -27,20 +30,23 @@ const r = express.Router();
  * @swagger
  * /roles:
  *   get:
- *     summary: Get all roles
+ *     summary: Retrieve all roles
  *     tags: [Roles]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of roles
+ *         description: Roles retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
-r.get(
-  '/',
-  authRequired,
-  authorize(PERMISSIONS.ROLE_READ),
-  roleController.getAllRoles
-);
+r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getAllRoles);
 
 /**
  * @swagger
@@ -50,13 +56,32 @@ r.get(
  *     tags: [Roles]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: doctor
+ *     responses:
+ *       201:
+ *         description: Role created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
-r.post(
-  '/',
-  authRequired,
-  authorize(PERMISSIONS.ROLE_CREATE),
-  roleController.createRole
-);
+r.post('/', authRequired, authorize(PERMISSIONS.ROLE_CREATE), roleController.createRole);
 
 /**
  * @swagger
@@ -64,164 +89,173 @@ r.post(
  *   delete:
  *     summary: Delete a role
  *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Role deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
-r.delete(
-  '/:roleId',
-  authRequired,
-  authorize(PERMISSIONS.ROLE_DELETE),
-  roleController.deleteRole
-);
+r.delete('/:roleId', authRequired, authorize(PERMISSIONS.ROLE_DELETE), roleController.deleteRole);
 
 // ======================================================================
-// ROLE PERMISSIONS (MATRIX)
+// ROLE PERMISSIONS
 // ======================================================================
 
 /**
  * @swagger
  * /roles/permissions/master:
  *   get:
- *     summary: Get all permissions (master list)
+ *     summary: Retrieve all permissions
  *     tags: [Role Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Permissions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
  */
-r.get(
-  '/permissions/master',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_READ),
-  roleController.getAllPermissions
-);
+r.get('/permissions/master', authRequired, authorize(PERMISSIONS.PERMISSION_READ), roleController.getAllPermissions);
 
 /**
  * @swagger
  * /roles/{roleId}/permissions:
  *   get:
- *     summary: Get permissions for a role
+ *     summary: Retrieve permissions for a role
  *     tags: [Role Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Role permissions retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
  */
-r.get(
-  '/:roleId/permissions',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_READ),
-  roleController.getRolePermissions
-);
+r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), roleController.getRolePermissions);
 
 /**
  * @swagger
  * /roles/{roleId}/permissions:
  *   put:
- *     summary: Update role permissions (matrix sync)
+ *     summary: Update role permissions
  *     tags: [Role Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               permissions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   example: PATIENT_READ
+ *     responses:
+ *       200:
+ *         description: Role permissions updated
  */
-r.put(
-  '/:roleId/permissions',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_UPDATE),
-  roleController.updateRolePermissions
-);
-
-/**
- * @swagger
- * /roles/permission:
- *   post:
- *     summary: Create a new permission
- *     tags: [Role Permissions]
- */
-r.post(
-  '/permission',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_CREATE),
-  roleController.createPermission
-);
+r.put('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), roleController.updateRolePermissions);
 
 // ======================================================================
-// USER ROLE MANAGEMENT
+// USER ROLES
 // ======================================================================
 
 /**
  * @swagger
  * /users/{userId}/roles:
  *   get:
- *     summary: Get roles assigned to a user
+ *     summary: Retrieve user roles
  *     tags: [User Roles]
  */
-r.get(
-  '/users/:userId/roles',
-  authRequired,
-  authorize(PERMISSIONS.ROLE_READ),
-  roleController.getUserRoles
-);
+r.get('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getUserRoles);
 
 /**
  * @swagger
  * /users/{userId}/roles:
  *   put:
- *     summary: Replace all roles for a user
+ *     summary: Replace user roles
  *     tags: [User Roles]
  */
-r.put(
-  '/users/:userId/roles',
-  authRequired,
-  authorize(PERMISSIONS.ROLE_UPDATE),
-  roleController.updateUserRoles
-);
+r.put('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_UPDATE), roleController.updateUserRoles);
 
 /**
  * @swagger
  * /users/{userId}/roles:
  *   post:
- *     summary: Attach a role to a user
+ *     summary: Attach role to user
  *     tags: [User Roles]
  */
-r.post(
-  '/users/:userId/roles',
-  authRequired,
-  authorize(PERMISSIONS.ROLE_CREATE),
-  roleController.attachRoleToUser
-);
+r.post('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_CREATE), roleController.attachRoleToUser);
 
 // ======================================================================
-// USER PERMISSIONS (DIRECT / PBAC OVERRIDE)
+// USER PERMISSIONS
 // ======================================================================
 
 /**
  * @swagger
  * /users/{userId}/permissions:
  *   get:
- *     summary: Get direct permissions of a user
+ *     summary: Retrieve user direct permissions
  *     tags: [User Permissions]
  */
-r.get(
-  '/users/:userId/permissions',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_READ),
-  roleController.getUserPermissions
-);
+r.get('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), roleController.getUserPermissions);
 
 /**
  * @swagger
  * /users/{userId}/permissions:
  *   put:
- *     summary: Replace user direct permissions
+ *     summary: Replace user permissions
  *     tags: [User Permissions]
  */
-r.put(
-  '/users/:userId/permissions',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_UPDATE),
-  roleController.updateUserPermissions
-);
+r.put('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), roleController.updateUserPermissions);
 
 /**
  * @swagger
  * /users/{userId}/permissions:
  *   post:
- *     summary: Attach a permission to a user
+ *     summary: Attach permission to user
  *     tags: [User Permissions]
  */
-r.post(
-  '/users/:userId/permissions',
-  authRequired,
-  authorize(PERMISSIONS.PERMISSION_CREATE),
-  roleController.attachPermissionToUser
-);
+r.post('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_CREATE), roleController.attachPermissionToUser);
 
 export default r;

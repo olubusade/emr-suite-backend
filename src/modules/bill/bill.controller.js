@@ -12,7 +12,7 @@ import { AUDIT_ACTIONS } from '../../constants/index.js';
 /**
  * List all bills with pagination and search
  */
-export async function listBills(req, res) {
+export async function listBills(req, res, next) {
   try {
     const { page, limit, search } = req.query;
     
@@ -57,13 +57,13 @@ export async function listBills(req, res) {
       pages: Math.ceil(result.total / result.pageSize),
     });
   } catch (err) {
-    return error(res, 500, err.message || 'Server error');
+     next(err);
   }
 }
 /**
  * Retrieve patient records specifically with wrt 'unpaid' or 'pending' bills
  */
-export async function getPendingBills(req, res) {
+export async function getPendingBills(req, res, next) {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
 
@@ -81,13 +81,13 @@ export async function getPendingBills(req, res) {
       pages: Math.ceil(result.total / result.pageSize),
     });
   } catch (err) {    
-    return error(res, 500, 'Unable to retrieve pending bills at this time');
+     next(err);
   }
 }
 /**
  * Create a new bill
  */
-export async function createBill(req, res) {
+export async function createBill(req, res, next) {
   try {
     const billData = {
       ...req.body,
@@ -124,17 +124,17 @@ export async function createBill(req, res) {
       stack: err.stack, 
       path: req.originalUrl 
     });
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+     next(err);
   }
 }
 
 /**
  * Update bill status or details (e.g. paid status update)
  */
-export async function updateBill(req, res) {
+export async function updateBill(req, res, next) {
   try {
     if (!req.params.id) { 
-        throw new Error("Missing billing id");
+       return next(new Error('Missing billing id'));
     }
     const billId = req.params.id;
     const before = await billService.getBill(billId);
@@ -163,13 +163,13 @@ export async function updateBill(req, res) {
       updatedAt: bill.updatedAt,
     }, 'Bill updated successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    next(err);
   }
 }
 /**
  * GET single bill by ID
  */
-export async function getBill(req, res) {
+export async function getBill(req, res, next) {
   try {
     const billId = req.params.id;
     const bill = await billService.getBill(billId);
@@ -185,13 +185,13 @@ export async function getBill(req, res) {
 
     return ok(res, bill, 'Bill retrieved successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    next(err)
   }
 }
 /**
  * Delete a bill
  */
-export async function deleteBill(req, res) {
+export async function deleteBill(req, res, next) {
   try {
     const billId = req.params.id;
 
@@ -205,7 +205,7 @@ export async function deleteBill(req, res) {
 
     return ok(res, { success: true }, 'Bill deleted successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    next(err);
   }
 }
 

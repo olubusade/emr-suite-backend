@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import * as myLibrary from '../../shared/utils/myLibrary.js';
 import { reportError } from '../../shared/utils/monitoring.js';
 import ApiError from '../../shared/utils/ApiError.js';
+import { conflict } from '../../shared/utils/response.js';
 /**
  * PATIENT SERVICE
  * Manages the lifecycle of patient identities and demographic data.
@@ -34,7 +35,7 @@ export async function listPatients({ page = 1, pageSize = 10, search }) {
         where,
         limit: limitInt,
         offset,
-        order: [['created_at', 'DESC']],
+        order: [['createdAt', 'DESC']],
         attributes: { exclude: ['password', 'role', 'national_id'] } 
       });
 
@@ -62,7 +63,7 @@ export async function createPatient(data) {
       email:data.email
       }
     });
-    if (exist) throw new ApiError(404, 'Email exists already');
+    if (exist) throw new ApiError(409, 'Email already exists');
     
     //Auto generate Password and hashing
     const tempPassword = myLibrary.generateTempPassword(10);
@@ -105,12 +106,14 @@ export async function updatePatient(id, data) {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    Object.keys(data).forEach(key => {
-      //IMMUTABILITY CHECk
-      if (immutableFields.includes(key) || immutableFields.includes(patient.rawAttributes[key]?.field || key)) return; 
-      
-      if (key in patient) patient[key] = data[key];
-    });
+    patient.set(
+      Object.keys(data).reduce((acc, key) => {
+        if (!immutableFields.includes(key)) {
+          acc[key] = data[key];
+        }
+        return acc;
+      }, {})
+    );
 
     await patient.save();
     

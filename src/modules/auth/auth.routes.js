@@ -16,41 +16,44 @@ const router = express.Router();
  */
 
 // -------------------- Public Routes -------------------- //
-
 /**
  * @swagger
  * /auth/login:
  *   post:
- *     summary: Authenticate user and generate access/refresh tokens
+ *     summary: Authenticate user and generate tokens
  *     tags: [Auth]
- *     description: Logs in a staff user and returns JWT tokens for API access
+ *     description: |
+ *       Logs in a staff user and returns JWT access + refresh tokens.
+ *       Also creates audit logs and session tracking.
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [email, password]
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: admin@busade-emr-demo.com
- *               password:
- *                 type: string
- *                 format: password
- *                 example: admin@123
+ *             $ref: '#/components/schemas/LoginRequest'
+ *           example:
+ *             email: admin@busade-emr-demo.com
+ *             password: admin@123
+ *
  *     responses:
  *       200:
  *         description: Login successful
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
- *       401:
- *         description: Invalid credentials
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/AuthData'
+ *
  *       400:
  *         description: Validation error
+ *
+ *       401:
+ *         description: Invalid credentials
  */
 router.post('/login', validate(loginSchema), authController.login);
 

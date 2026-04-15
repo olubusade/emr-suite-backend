@@ -11,7 +11,7 @@ import { AUDIT_ACTIONS } from '../../constants/index.js';
 /**
  * List appointments with pagination and filters
  */
-export async function listAppointments(req, res) {
+export async function listAppointments(req, res, next) {
   try {
     const query = req.query || {}; 
     const page = parseInt(query.page, 10) || 1;
@@ -32,28 +32,27 @@ export async function listAppointments(req, res) {
       total: appointments.total,
     });
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Unable to list appointments');
+    next(err);
   }
 }
 
 /**
  * Get a single appointment by ID
  */
-export async function getAppointment(req, res) {
+export async function getAppointment(req, res, next) {
   try {
     const appointment = await appointmentService.getAppointmentById(req.params.id);
-    if (!appointment) return error(res, 404, 'Appointment not found');
     
     return ok(res, appointment);
   } catch (err) {
-    return error(res, 500, 'Server error while fetching appointment', err.message);
+    next(err);
   }
 }
 
 /**
  * Create a new appointment
  */
-export async function createAppointment(req, res) {
+export async function createAppointment(req, res, next) {
   try {
     const payload = {
       ...req.body,
@@ -71,14 +70,14 @@ export async function createAppointment(req, res) {
 
     return created(res, appointment, 'Appointment scheduled successfully');
   } catch (err) {
-    return error(res, 400, 'Error creating appointment', err.message);
+    next(err);
   }
 }
 
 /**
  * Update appointment details
  */
-export async function updateAppointment(req, res) {
+export async function updateAppointment(req, res, next) {
   try {
     req.body.updatedBy = req.user.id;
     const result = await appointmentService.updateAppointment(req.params.id, req.body);
@@ -94,14 +93,14 @@ export async function updateAppointment(req, res) {
 
     return ok(res, result, 'Appointment updated successfully');
   } catch (err) {
-    return error(res, 400, 'Error updating appointment', err.message);
+    next(err);
   }
 }
 
 /**
  * Mark an appointment as cancelled
  */
-export async function cancelAppointment(req, res) {
+export async function cancelAppointment(req, res, next) {
   try {
     const appointment = await appointmentService.cancelAppointment(req.params.id);
 
@@ -114,6 +113,6 @@ export async function cancelAppointment(req, res) {
 
     return deleted(res, { id: appointment.id, status: appointment.status }, 'Appointment cancelled');
   } catch (err) {
-    return error(res, 400, 'Error cancelling appointment', err.message);
+     next(err);
   }
 }

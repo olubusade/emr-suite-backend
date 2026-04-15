@@ -7,24 +7,41 @@ import { PERMISSIONS } from '../../constants/index.js';
 const r = express.Router();
 
 /**
+ * =========================
+ * PATIENT MODULE
+ * =========================
  * @swagger
  * tags:
  *   name: Patients
- *   description: Patient management endpoints
+ *   description: Patient management endpoints (EMR Core Module)
  */
 
 /**
+ * =========================
+ * LIST PATIENTS
+ * =========================
  * @swagger
  * /patients:
  *   get:
- *     summary: List all patients
- *     description: Retrieves a list of patients. Requires PATIENT_READ permission.
+ *     summary: Get all patients
+ *     description: Retrieves paginated list of patients (requires PATIENT_READ permission)
  *     tags: [Patients]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Patients retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Patient'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
@@ -38,11 +55,17 @@ r.get(
 );
 
 /**
+ * =========================
+ * CREATE PATIENT
+ * =========================
  * @swagger
  * /patients:
  *   post:
  *     summary: Create a new patient
- *     description: Adds a new patient record. Requires PATIENT_CREATE permission.
+ *     description: |
+ *       Registers a new patient in the EMR system.
+ *       Requires PATIENT_CREATE permission.
+ *       Automatically generates credentials and audit logs.
  *     tags: [Patients]
  *     security:
  *       - bearerAuth: []
@@ -55,10 +78,25 @@ r.get(
  *     responses:
  *       201:
  *         description: Patient created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Patient'
+ *       400:
+ *         description: Validation error
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
  *         $ref: '#/components/responses/Forbidden'
+ *       409:
+ *         description: Conflict - Email or phone already exists
+ *       500:
+ *         description: Internal server error
  */
 r.post(
   '/',
@@ -68,11 +106,14 @@ r.post(
 );
 
 /**
+ * =========================
+ * GET PATIENT BY ID
+ * =========================
  * @swagger
  * /patients/{id}:
  *   get:
  *     summary: Get patient by ID
- *     description: Retrieve a single patient record by UUID
+ *     description: Retrieve a single patient record
  *     tags: [Patients]
  *     security:
  *       - bearerAuth: []
@@ -86,8 +127,21 @@ r.post(
  *     responses:
  *       200:
  *         description: Patient retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Patient'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: Patient not found
+ *         $ref: '#/components/responses/NotFound'
  */
 r.get(
   '/:id',
@@ -97,11 +151,14 @@ r.get(
 );
 
 /**
+ * =========================
+ * UPDATE PATIENT
+ * =========================
  * @swagger
  * /patients/{id}:
  *   put:
- *     summary: Update a patient
- *     description: Updates an existing patient record. Requires PATIENT_UPDATE permission.
+ *     summary: Update patient
+ *     description: Updates patient record (requires PATIENT_UPDATE permission)
  *     tags: [Patients]
  *     security:
  *       - bearerAuth: []
@@ -121,8 +178,21 @@ r.get(
  *     responses:
  *       200:
  *         description: Patient updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Patient'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: Patient not found
+ *         $ref: '#/components/responses/NotFound'
  */
 r.put(
   '/:id',
@@ -132,11 +202,14 @@ r.put(
 );
 
 /**
+ * =========================
+ * DELETE PATIENT
+ * =========================
  * @swagger
  * /patients/{id}:
  *   delete:
- *     summary: Delete a patient
- *     description: Deletes a patient record. Requires PATIENT_DELETE permission.
+ *     summary: Delete patient
+ *     description: Deletes a patient record (requires PATIENT_DELETE permission)
  *     tags: [Patients]
  *     security:
  *       - bearerAuth: []
@@ -148,10 +221,18 @@ r.put(
  *           type: string
  *           format: uuid
  *     responses:
- *       204:
+ *       200:
  *         description: Patient deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: Patient not found
+ *         $ref: '#/components/responses/NotFound'
  */
 r.delete(
   '/:id',

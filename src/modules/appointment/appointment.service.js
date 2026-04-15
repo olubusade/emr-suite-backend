@@ -117,7 +117,7 @@ export async function getAppointmentById(id) {
       ]
     });
 
-    if (!appt) return null;
+    if (!appt) throw new Error('Appointment not found');;
     
 
     return {

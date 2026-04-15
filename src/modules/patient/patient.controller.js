@@ -13,7 +13,7 @@ import { AUDIT_ACTIONS } from '../../constants/index.js';
  * List patients with pagination and multi-field search
  * GET /api/v1/patients
  */
-export async function listPatients(req, res) {
+export async function listPatients(req, res, next) {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = parseInt(req.query.limit, 10) || 20;
@@ -55,7 +55,7 @@ export async function listPatients(req, res) {
  * Register a new patient
  * POST /api/v1/patients
  */
-export async function createPatient(req, res) {
+export async function createPatient(req, res, next) {
   try {
     // Inject the creator's ID for audit/tracking
     const dataWithCreator = { ...req.body, createdBy: req.user.id }; 
@@ -85,7 +85,7 @@ export async function createPatient(req, res) {
      
   } catch (err) {
     
-    return error(res, err.statusCode || 500, err.message || 'Server error'); 
+    next(err);
   }
 }
 
@@ -93,9 +93,12 @@ export async function createPatient(req, res) {
  * Update patient demographics or medical basics
  * PUT /api/v1/patients/:id
  */
-export async function updatePatient(req, res) {
+export async function updatePatient(req, res, next) {
   try {
     const { id } = req.params;
+    if (!id) { 
+      return next(new Error('Patient ID is required'));
+    }
 
     const before = await patientService.getPatientById(id);
 
@@ -112,7 +115,7 @@ export async function updatePatient(req, res) {
     return ok(res, updated, 'Patient record updated');
 
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message);
+    next(err);
   }
 }
 
@@ -120,9 +123,12 @@ export async function updatePatient(req, res) {
  * Delete a patient (Note: Service layer should handle soft-delete/anonymization)
  * DELETE /api/v1/patients/:id
  */
-export async function deletePatient(req, res) {
+export async function deletePatient(req, res, next) {
   try {
     const { id } = req.params;
+    if (!id) { 
+      return next(new Error('Patient ID is required'));
+    }
     await patientService.deletePatient(id);
     
     // Audit Trail
@@ -135,24 +141,27 @@ export async function deletePatient(req, res) {
 
     return ok(res, { success: true }, 'Patient removed successfully');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Deletion failed');
+    next(err);
   }
 }
 /**
  * Retrieve full patient profile
  * GET /api/v1/patients/:id
  */
-export async function getPatient(req, res) {
+export async function getPatient(req, res, next) {
   try {
     const { id } = req.params;
+    if (!id) { 
+      return next(new Error('Patient ID is required'));
+    }
     const patient = await patientService.getPatientById(id);
 
     if (!patient) {
-      return error(res, 404, 'Patient not found');
+      return error(res, 409, 'Patient not found');
     }
 
     return ok(res, patient, 'Patient profile retrieved');
   } catch (err) {
-    return error(res, err.statusCode || 500, err.message || 'Server error');
+    next(err);
   }
 }

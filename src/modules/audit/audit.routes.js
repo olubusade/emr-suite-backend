@@ -10,74 +10,77 @@ const router = express.Router();
 
 /**
  * @swagger
- * tags:
- *   name: Audits
- *   description: System audit logs for tracking all user activities and changes
- */
-
-/**
- * @swagger
  * /audit:
  *   get:
  *     summary: Retrieve audit logs with filters and pagination
  *     description: |
- *       Returns a paginated list of audit logs. 
+ *       Returns a paginated list of audit logs.
  *       Supports filtering by user, entity, action, and date range.
+ *
  *     tags: [Audits]
+ *
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           example: 1
+ *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           example: 20
+ *
  *       - in: query
  *         name: userId
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Filter logs by user ID
+ *
  *       - in: query
  *         name: entity
  *         schema:
  *           type: string
- *           example: appointment
- *         description: Filter by entity type (appointment, patient, billing)
+ *           example: patient
+ *
  *       - in: query
  *         name: action
  *         schema:
  *           type: string
- *           example: UPDATE_APPOINTMENT
- *         description: Filter by action performed
+ *           example: USER_LOGIN
+ *
  *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
  *           format: date-time
- *         description: Start date for filtering logs
+ *
  *       - in: query
  *         name: endDate
  *         schema:
  *           type: string
  *           format: date-time
- *         description: End date for filtering logs
+ *
  *     responses:
  *       200:
- *         description: Paginated audit logs retrieved successfully
+ *         description: Audit logs retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PaginatedAuditLogs'
+ *
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
+ *
  *       403:
- *         description: Forbidden - insufficient permissions
+ *         $ref: '#/components/responses/Forbidden'
+ *
+ *       500:
+ *         description: Internal server error
  */
 router.get(
   '/',

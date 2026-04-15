@@ -11,67 +11,73 @@ import * as vitalsService from './vitals.service.js';
 /**
  * List all vitals (System-wide view for reporting)
  */
-export async function listVitals(req, res) {
+export async function listVitals(req, res, next) {
   try {
     const vitals = await vitalsService.listVitals(req.query);
     return ok(res, vitals,'Vitals list retrieved');
   } catch (err) {
     
-    return error(res, 500, 'Failed to fetch vitals records', err.message);
+    next(err);
   }
 }
 /**
  * Get a specific vital entry by ID
  */
-export async function getVital(req, res) {
+export async function getVital(req, res, next) {
   try {
     const vital = await vitalsService.getVitalById(req.params.id);
-    if (!vital) return notFound(res, 'Vitals record not found');
+    if (!vital) {
+      return next(new Error('Vitals record not found'));
+    }
     
     return ok(res, vital);
   } catch (err) {
-    return error(res, 500, 'Server error fetching vital record');
+    next(err);
   }
 }
 
-export async function getVitalsByPatient(req, res) {
+export async function getVitalsByPatient(req, res, next) {
   try {
     const { patientId } = req.params;
-    if (!patientId) return error(res, 400, 'Patient ID is required');
+    if (!patientId) { 
+       return next(new Error('Patient ID is required'));
+    } 
 
     const history = await vitalsService.getVitalsByPatientId(patientId);
     return ok(res, history, 'Patient vitals history retrieved');
   } catch (err) {
-    return error(res, 500, 'Error retrieving patient vital history');
+    next(err);
   }
 }
 /**
  * Get vitals specifically captured during a specific visit
  */
-export async function getVitalsByAppointment(req, res) {
+export async function getVitalsByAppointment(req, res, next) {
   try {
     const { appointmentId } = req.params;
     const { patientId } = req.query;
     
     if (!appointmentId || !patientId) {
-      return error(res, 400, 'Appointment ID and Patient ID are required');
+       return next(new Error('Patient ID and Appointment ID are required'));
     }
 
     const data = { appointmentId, patientId };
     const history = await vitalsService.getVitalsByAppointment(data);
     
-    if (!history) return notFound(res, 'No vitals found for this specific visit');
+    if (!history) { 
+         return next(new Error('No vitals found for this specific visit'));
+    }
 
     return ok(res, history);
   } catch (err) {
-    return error(res, 500, 'Error retrieving appointment vitals');
+    next(err);
   }
 }
 
 /**
  * Record new vitals (Triaging)
  */
-export async function createVital(req, res) {
+export async function createVital(req, res, next) {
   try {
     // 🔑 Inject nurseId from the authenticated user
     const vitalData = { 
@@ -92,13 +98,13 @@ export async function createVital(req, res) {
 
     return created(res, vital, 'Vitals recorded');
   } catch (err) {
-    return error(res, err.statusCode || 400, 'Error recording vitals', err.message);
+    next(err);
   }
 }
 /**
  * Update a vital entry (Correcting a typo)
  */
-export async function updateVital(req, res) {
+export async function updateVital(req, res, next) {
   try {
     const vital = await vitalsService.updateVital(req.params.id, req.body);
 
@@ -112,16 +118,19 @@ export async function updateVital(req, res) {
 
     return ok(res, vital, 'Vitals updated successfully');
   } catch (err) {
-    return error(res, err.statusCode || 400, 'Error updating vitals', err.message);
+    next(err);
   }
 }
 
 /**
  * Delete a vital entry
  */
-export async function deleteVital(req, res) {
+export async function deleteVital(req, res, next) {
   try {
     const vitalId = req.params.id;
+    if (!vitalId) { 
+       return next(new Error('Vital Id is required'));
+    }
     await vitalsService.deleteVital(vitalId);
 
     // Audit Trail
@@ -134,6 +143,6 @@ export async function deleteVital(req, res) {
 
     return ok(res, { id: vitalId }, 'Vitals record removed');
   } catch (err) {
-    return error(res, err.statusCode || 400, 'Error deleting vitals', err.message);
+    next(err);
   }
 }

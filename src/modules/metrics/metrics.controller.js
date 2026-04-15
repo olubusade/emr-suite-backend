@@ -6,7 +6,7 @@ import { logger } from '../../config/logger.js';
  * Get metrics data
  * GET /api/metrics
  */
-export async function getMetrics(req, res) {
+export async function getMetrics(req, res, next) {
   try {
     const months = parseInt(req.query.months, 10) || 12;
     const data = await metricsService.getMetricsData({ months });
@@ -73,11 +73,10 @@ export async function getMetrics(req, res) {
       todaysAppointments: mapAppointments(clinical.todaysAppointments),
       patientGroups: clinical.patientGroups
     };
-
-    return ok(res, response);
+    return ok(res, response, 'Metrics retrieved successfully');
   } catch (err) {
     logger.error('metrics.getMetrics Error', { error: err.message });
-    return error(res, 500, err.message || 'Internal server error');
+    next(err);
   }
 }
 

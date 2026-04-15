@@ -10,26 +10,26 @@ import { logger } from '../../config/logger.js';
  */
 
 // --- GLOBAL LOOKUPS ---
-export async function getAllRoles(req, res) {
+export async function getAllRoles(req, res, next) {
   try {
     const roles = await roleService.getAllRoles();
     // Assuming roleService.getAllRoles returns an array of { id, name, key }
     return ok(res, roles, 'All roles retrieved successfully');
   } catch (err) {
-    return error(res, 500, err.message || 'Unable to fetch roles');
+      next(err);
   }
 }
 
 /**
  * Get all master permissions (simple list)
  */
-export async function getAllPermissions(req, res) {
+export async function getAllPermissions(req, res, next) {
     try {
         const permissions = await roleService.getAllPermissions();
         // Assuming roleService.getAllPermissions returns an array of { id, key, name }
         return ok(res, permissions, 'Master permissions retrieved successfully');
     } catch (err) {
-        return error(res, 500, err.message || 'Unable to fetch master permissions');
+        next(err);
     }
 }
 
@@ -39,7 +39,7 @@ export async function getAllPermissions(req, res) {
 /**
  * Get permissions assigned to a specific role
  */
-export async function getRolePermissions(req, res) {
+export async function getRolePermissions(req, res, next) {
     try {
         const { roleId } = req.params;
         const permissions = await roleService.getRolePermissions(roleId);
@@ -48,14 +48,14 @@ export async function getRolePermissions(req, res) {
         return ok(res, permissions, `Permissions for role ${roleId} retrieved successfully`);
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
-        return error(res, 500, err.message || 'Unable to fetch role permissions');
+        next(err);
     }
 }
 
 /**
  * Update permissions for a specific role (The Matrix Save button)
  */
-export async function updateRolePermissions(req, res) {
+export async function updateRolePermissions(req, res, next) {
     try {
         const { roleId } = req.params;
         const { permissionKeys } = req.body; // Array of keys, e.g., ['PATIENT_READ', 'USER_CREATE']
@@ -71,7 +71,7 @@ export async function updateRolePermissions(req, res) {
         return ok(res, null, `Permissions for role ${roleId} updated successfully`);
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
-        return error(res, 500, err.message || 'Unable to update role permissions');
+        next(err);
     }
 }
 
@@ -80,7 +80,7 @@ export async function updateRolePermissions(req, res) {
 /**
  * Create a new role (Updated endpoint to use base path)
  */
-export async function createRole(req, res) {
+export async function createRole(req, res, next) {
   try {
     const role = await roleService.createRole(req.body);
       
@@ -98,16 +98,19 @@ export async function createRole(req, res) {
     }, 'Role created successfully');
   } catch (err) {
     if (err.statusCode === 409) return fail(res, err.message, 409);
-    return error(res, 500, err.message || 'Unable to create role');
+      next(err);
   }
 }
 
 /**
  * Delete a role
  */
-export async function deleteRole(req, res) {
+export async function deleteRole(req, res, next) {
     try {
         const { roleId } = req.params;
+        if (!roleId) { 
+            return next(new Error('Role ID is required'));
+        }
         await roleService.deleteRole(roleId);
         
         await attachAudit(req, { 
@@ -120,7 +123,7 @@ export async function deleteRole(req, res) {
         return noContent(res); // 204 No Content for successful deletion
     } catch (err) {
         if (err.statusCode === 404) return fail(res, err.message, 404);
-        return error(res, 500, err.message || 'Unable to delete role');
+        next(err);
     }
 }
 
@@ -130,7 +133,7 @@ export async function deleteRole(req, res) {
 /**
  * Create a new permission
  */
-export async function createPermission(req, res) {
+export async function createPermission(req, res, next) {
   try {
     const permission = await roleService.createPermission(req.body);
     
@@ -149,23 +152,29 @@ export async function createPermission(req, res) {
     if (err.statusCode === 409) return fail(res, err.message, 409);
       logger.error('roles.createPermission', { error: err.message });
       
-    return error(res, 500, err.message || 'Unable to create permission');
+      next(err);
   }
 }
 // --- ROLE & PERMISSION CRUD ---
-export const getUserRoles = async (req, res) => {
+export const getUserRoles = async (req, res, next) => {
     try {
         const { userId } = req.params;
+        if (!userId) { 
+            return next(new Error('User ID is required'));
+        }
         const roles = await roleService.getUserRoles(userId);
         res.status(200).json(roles);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to retrieve user roles', error: error.message });
+        next(err);
     }
 };
 
-export const updateUserRoles = async (req, res) => {
+export const updateUserRoles = async (req, res, next) => {
     try {
         const { userId } = req.params;
+        if (!userId) { 
+            return next(new Error('User ID is required'));
+        }
         // Expects an array of roleKeys: { roleKeys: ["ADMIN", "NURSE"] }
         const { roleKeys } = req.body;
 
@@ -176,25 +185,31 @@ export const updateUserRoles = async (req, res) => {
         await roleService.updateUserRoles(userId, roleKeys);
         res.status(200).json({ message: 'User roles updated successfully.' });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to update user roles', error: error.message });
+        next(err);
     }
 };
 
 // --- NEW: User Direct Permission Assignment Controllers ---
 
-export const getUserPermissions = async (req, res) => {
+export const getUserPermissions = async (req, res, next) => {
     try {
         const { userId } = req.params;
+        if (!userId) {
+            return next(new Error('User ID is required'));
+        }
         const permissions = await roleService.getUserPermissions(userId);
         res.status(200).json(permissions);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to retrieve user direct permissions', error: error.message });
+        next(err);
     }
 };
 
-export const updateUserPermissions = async (req, res) => {
+export const updateUserPermissions = async (req, res, next) => {
     try {
         const { userId } = req.params;
+        if (!userId) {
+            return next(new Error('User ID is required'));
+         }
         // Expects an array of permissionKeys: { permissions: ["PATIENT_READ", "USER_CREATE"] }
         const { permissions } = req.body;
 
@@ -215,11 +230,11 @@ export const updateUserPermissions = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: 'Failed to update user direct permissions', error: error.message });
+        next(err);
     }
 };
 
-export const attachPermissionToUser = async (req, res) => {
+export const attachPermissionToUser = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const { permissionKey } = req.body;
@@ -231,12 +246,15 @@ export const attachPermissionToUser = async (req, res) => {
         await roleService.attachPermissionToUser(userId, permissionKey);
         res.status(201).json({ message: 'Permission attached successfully.' });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to attach permission', error: error.message });
+        next(err);
     }
 };
-export const attachRoleToUser = async (req, res) => {
+export const attachRoleToUser = async (req, res, next) => {
     try {
         const { userId } = req.params;
+        if (!userId) {
+            return next(new Error('User ID is required'));
+        }
         // Assuming the request body is { roleKey: "DOCTOR" }
         const { roleKey } = req.body; 
 
@@ -247,6 +265,6 @@ export const attachRoleToUser = async (req, res) => {
         await roleService.attachRoleToUser(userId, roleKey);
         res.status(201).json({ message: `Role ${roleKey} attached to user ${userId} successfully.` });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to attach role', error: error.message });
+        next(err);
     }
 }
