@@ -148,16 +148,24 @@ Vital.belongsTo(Appointment, { foreignKey: 'appointmentId' });
 Appointment.hasOne(Vital, { foreignKey: 'appointmentId' });
 
 // Patient ↔ Clinical Notes
-Patient.hasMany(ClinicalNote, { foreignKey: 'patient_id', as: 'clinicalNotes' });
+Patient.hasMany(ClinicalNote, { foreignKey: 'patient_id', as: 'clinicalNote' });
 ClinicalNote.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
 // Doctor (User) ↔ Clinical Notes
 User.hasMany(ClinicalNote, { foreignKey: 'staffId', as: 'doctorNotes' });
 ClinicalNote.belongsTo(User, { foreignKey: 'staffId', as: 'doctor' });
 
-// Patient ClinicalNote ↔ Appointment
-ClinicalNote.belongsTo(Appointment, { foreignKey: 'appointmentId' });
-Appointment.hasOne(ClinicalNote, { as: 'clinicalNote', foreignKey: 'appointmentId' });
+// ClinicalNote → Appointment
+ClinicalNote.belongsTo(Appointment, {
+  foreignKey: 'appointmentId',
+  as: 'appointment'
+});
+
+// Appointment → ClinicalNote
+Appointment.hasOne(ClinicalNote, {
+  foreignKey: 'appointmentId',
+  as: 'clinicalNote'
+});
 
 // ----------------- Exports -----------------
 export {

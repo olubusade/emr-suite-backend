@@ -92,7 +92,7 @@ export async function updateAppointment(req, res) {
       
     });
 
-    return ok(res, appointment, 'Appointment updated successfully');
+    return ok(res, result, 'Appointment updated successfully');
   } catch (err) {
     return error(res, 400, 'Error updating appointment', err.message);
   }

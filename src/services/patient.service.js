@@ -13,10 +13,10 @@ import ApiError from '../utils/ApiError.js';
 /**
  * List patients with pagination and multi-field search
  */
-export async function listPatients({ page = 1, pageSize = 20, search }) {
+export async function listPatients({ page = 1, pageSize = 10, search }) {
   try {
       const pageInt = Number(page) || 1;
-      const limitInt = Number(pageSize) || 20;
+      const limitInt = Number(pageSize) || 10;
       const offset = (pageInt - 1) * limitInt;
 
       
@@ -57,6 +57,13 @@ export async function listPatients({ page = 1, pageSize = 20, search }) {
 export async function createPatient(data) {
   
   try {
+    const exist = await Patient.findOne({
+      where: {
+      email:data.email
+      }
+    });
+    if (exist) throw new ApiError(404, 'Email exists already');
+    
     //Auto generate Password and hashing
     const tempPassword = myLibrary.generateTempPassword(10);
 

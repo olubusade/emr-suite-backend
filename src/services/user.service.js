@@ -1,4 +1,4 @@
-import { User, Role, RefreshToken } from '../models/index.js';
+import { User, Role, RefreshToken, sequelize } from '../models/index.js';
 import { hashPassword } from '../utils/passwords.js';
 
 import ApiError from '../utils/ApiError.js';

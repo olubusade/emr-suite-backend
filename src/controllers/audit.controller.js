@@ -12,10 +12,11 @@ import { ok, error } from '../utils/response.js';
  * GET /api/v1/audits
  */
 export async function listAudits(req, res) {
+    
   try {
     const {
-      page = 1,
-      pageSize = 50,
+      page,
+      pageSize,
       userId,
       action,
       entity,
@@ -27,7 +28,7 @@ export async function listAudits(req, res) {
     if (action) filters.action = action;
     if (entity) filters.entity = entity;
     if (entityId) filters.entityId = entityId;
-
+    
     const result = await auditService.listAuditLogs({
       page: Number(page),
       pageSize: Number(pageSize),

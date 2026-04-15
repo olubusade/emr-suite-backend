@@ -1,4 +1,4 @@
-import { AuditLog, User } from '../models/index.js';
+import { AuditLog, User,Role} from '../models/index.js';
 import { reportError, logSecurityAlert } from '../utils/monitoring.js';
 
 /**
@@ -51,7 +51,8 @@ export async function logAudit({
  * @param {number} params.pageSize - Items per page
  * @param {object} params.filters - Optional filters { userId, action, entity }
  */
-export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
+export async function listAuditLogs({ page, pageSize, filters = {} }) {
+  
   const limit = Math.min(Number(pageSize) || 50, 100);
   const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
 
@@ -67,7 +68,14 @@ export async function listAuditLogs({ page = 1, pageSize = 50, filters = {} }) {
         {
           model: User,
           as: 'actor',
-          attributes: ['id', 'email', 'fullName']
+          attributes: ['id', 'email', 'fullName'],
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+              attributes: ['name']
+            }
+          ]
         }
       ],
       order: [['createdAt', 'DESC']],

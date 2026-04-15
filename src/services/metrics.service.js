@@ -91,7 +91,7 @@ export async function getMetricsData({ months = 12 }) {
         limit: 5
       }),
       // Fetch appointments that need vitals taken (example status)
-      Appointment.count({ where: { status: 'awaiting_vitals' } }),
+      Appointment.count({ where: { status: 'scheduled',... todayAppointmentFilter  } }),
       //Ready for Doctor: Vitals are done, now waiting for the doctor
       Appointment.count({ where: { status: 'vitals_taken', ... appointmentWhere } }),
       Appointment.count({ where: { status: 'vitals_taken' } }),
@@ -102,7 +102,7 @@ export async function getMetricsData({ months = 12 }) {
       `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS month, COUNT(*)::int AS visits FROM patients GROUP BY 1 ORDER BY 1 LIMIT $1`,
       { bind: [monthsInt], type: QueryTypes.SELECT }
     );
-
+    
     return {
       totals: {
         patients: Number(patientsCount) || 0,
@@ -123,7 +123,7 @@ export async function getMetricsData({ months = 12 }) {
       nurse: {
         widgets: {
           todayPatients: appointmentsCount,
-          pendingVitals: pendingVitals,
+          pendingVitals,
           vitalsTakenToday,
           readyForDoctor: readyForConsultationCount,
           activeDoctors: availableDoctors.filter(d => d.status === 'available').length

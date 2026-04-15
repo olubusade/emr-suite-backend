@@ -421,10 +421,17 @@ export const createPermissionSchema = z.object({
 /* -------------------- Audits -------------------- */
 export const listAuditSchema = z.object({
   query: z.object({
-    limit: z.preprocess((v) => (v ? Number(v) : undefined), z.number().int().positive().max(1000).optional())
-  })
+    page: z.preprocess((v) => Number(v) || 1, z.number()),
+    pageSize: z.preprocess((v) => Number(v) || 10, z.number()),
+    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
+    // Keep the actual database status separate
+    search: z.string().optional(),
+    entity: z.string().optional(),
+  }).passthrough() 
+  
 });
 
+ 
 /* -------------------- Metrics -------------------- */
 export const metricsSchema = z.object({
   query: z.object({

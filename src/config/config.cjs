@@ -31,6 +31,9 @@ const dbConfig = {
   host: requireEnv('DB_HOST', 'localhost'),
   port: Number(requireEnv('DB_PORT', '5432')),
   dialect: 'postgres',
+  dialectOptions: {
+    ssl: { require: true, rejectUnauthorized: false }
+  },
   logging: false, // Set to console.log in dev if debugging raw SQL queries
   define: {
     timestamps: true, // Standardizes the inclusion of createdAt/updatedAt

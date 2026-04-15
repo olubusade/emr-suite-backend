@@ -1,4 +1,4 @@
-import { ClinicalNote, Patient, User, Appointment } from '../models/index.js';
+import { ClinicalNote, Patient, User, Appointment, sequelize } from '../models/index.js';
 import { reportError } from '../utils/monitoring.js';
 import ApiError from '../utils/ApiError.js';
 
@@ -63,6 +63,7 @@ export async function getClinicalNotesByPatientId(patientId) {
         },
         { 
           model: Appointment, 
+          as:'appointment',
           attributes: ['id', 'appointmentDate', 'status'] 
         }
       ],
@@ -88,6 +89,7 @@ export async function getClinicalNotesByAppointmentId(data) {
           },
           { 
             model: Appointment, 
+            as:'appointment',
             attributes: ['id', 'appointmentDate', 'status'] 
           }
         ],

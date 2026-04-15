@@ -60,7 +60,7 @@ export async function getMetrics(req, res) {
       widgets: {
         todayPatients: clinical.todaysAppointments.length,
         readyForDoctor: nurse.widgets.readyForDoctor,
-        pendingVitals: nurse?.pendingVitalsCount || 0,
+        pendingVitals: nurse?.widgets.pendingVitals || 0,
         growthRates: { patients: 15, appointments: 10 }
       },
       // Real Doctors list from database

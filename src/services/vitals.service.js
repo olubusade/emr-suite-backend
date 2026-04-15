@@ -1,4 +1,4 @@
-import { Vital, Patient, User, Appointment } from '../models/index.js'; // 🔑 Added Appointment
+import { Vital, Patient, User, Appointment, sequelize} from '../models/index.js'; // 🔑 Added Appointment
 import ApiError from '../utils/ApiError.js';
 import { reportError } from '../utils/monitoring.js';
 
@@ -112,7 +112,7 @@ export async function createVital(data) {
 
   try {
     // 1. Calculate clinical derived values
-    const { bmi, category } = getBMIData(weightKg, heightCm);
+    const { bmi, category } = calculateBMI(weightKg, heightCm);
     const vitalData = { ...data, bmi, notes: data.notes || category };
 
     // 2. Upsert: One triage record per visit
@@ -152,13 +152,12 @@ export async function updateVital(id, updates) {
     if (!vital) throw new ApiError(404, 'Vital record not found');
 
     if (updates.weightKg || updates.heightCm) {
-      const { bmi } = getBMIData(
-        updates.weightKg ?? vital.weightKg,
-        updates.heightCm ?? vital.heightCm
-      );
+      const { bmi, category } = calculateBMI(updates.weightKg, updates.heightCm);
       updates.bmi = bmi;
+      updates.notes = updates.notes || category;
     }
 
+    
     // Protection: Prevent shifting the record to a different patient/visit
     delete updates.patientId;
     delete updates.appointmentId;
