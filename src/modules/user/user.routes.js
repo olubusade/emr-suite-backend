@@ -3,6 +3,8 @@ import * as userController from './user.controller.js';
 import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+
 
 const router = express.Router();
 
@@ -26,7 +28,7 @@ router.use(authRequired);
  *       200:
  *         $ref: '#/components/schemas/ApiResponse'
  */
-router.get('/me', userController.getProfile);
+router.get('/me', asyncHandler(userController.getProfile));
 
 /**
  * @swagger
@@ -37,7 +39,7 @@ router.get('/me', userController.getProfile);
  *     security:
  *       - bearerAuth: []
  */
-router.patch('/me', userController.updateProfile);
+router.patch('/me', asyncHandler(userController.updateProfile));
 
 /**
  * =========================
@@ -57,7 +59,7 @@ router.patch('/me', userController.updateProfile);
 router.get(
   '/',
   authorize(PERMISSIONS.USER_READ),
-  userController.listStaff
+  asyncHandler(userController.listStaff)
 );
 
 /**
@@ -72,7 +74,7 @@ router.get(
 router.post(
   '/',
   authorize(PERMISSIONS.USER_CREATE),
-  userController.registerUser
+  asyncHandler(userController.registerUser)
 );
 
 /**
@@ -85,7 +87,7 @@ router.post(
 router.patch(
   '/:id',
   authorize(PERMISSIONS.USER_UPDATE),
-  userController.updateUser
+  asyncHandler(userController.updateUser)
 );
 
 /**
@@ -98,7 +100,7 @@ router.patch(
 router.delete(
   '/:id',
   authorize(PERMISSIONS.USER_DELETE),
-  userController.deleteUser
+  asyncHandler(userController.deleteUser)
 );
 
 export default router;

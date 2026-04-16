@@ -6,8 +6,7 @@ import { logger } from '../../config/logger.js';
  * Get metrics data
  * GET /api/metrics
  */
-export async function getMetrics(req, res, next) {
-  try {
+export async function getMetrics(req, res) {
     const months = parseInt(req.query.months, 10) || 12;
     const data = await metricsService.getMetricsData({ months });
     const prometheusMetrics = await register.metrics();
@@ -74,10 +73,6 @@ export async function getMetrics(req, res, next) {
       patientGroups: clinical.patientGroups
     };
     return ok(res, response, 'Metrics retrieved successfully');
-  } catch (err) {
-    logger.error('metrics.getMetrics Error', { error: err.message });
-    next(err);
-  }
 }
 
 /**

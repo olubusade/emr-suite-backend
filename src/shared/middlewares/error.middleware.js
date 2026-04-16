@@ -7,27 +7,38 @@ import { logger } from './../../config/logger.js';
  * Standardizes all API error responses across the EMR system.
  */
 export function errorHandler(err, req, res, _next) {
-  const isKnown = err instanceof ApiError;
-  const statusCode = isKnown ? err.statusCode : 500;
+  const isApiError = err instanceof ApiError;
+  const statusCode = isApiError ? err.statusCode : 500;
+  const isClientError = statusCode >= 400 && statusCode < 500;
 
-  // =====================================================
-  // 1. LOG EVERYTHING (ALWAYS EXECUTES FIRST)
-  // =====================================================
-  logger.error({
-    message: err.message,
-    statusCode,
-    path: req.originalUrl,
-    method: req.method,
-    ip: req.ip,
-    userId: req.user?.id || 'anonymous',
-    stack: err.stack,
-    details: err.details || null
-  });
+  // ==============================
+  // LOGGING STRATEGY
+  // ==============================
+  if (!isClientError || !isApiError) {
+    logger.error({
+      message: err.message || 'Unexpected error',
+      statusCode,
+      path: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+      userId: req.user?.id || 'anonymous',
+      stack: err.stack,
+      details: err.details || null
+    });
+  } else {
+    logger.warn({
+      message: err.message,
+      path: req.originalUrl,
+      method: req.method,
+      userId: req.user?.id || 'anonymous',
+      details: err.details || null
+    });
+  }
 
-  // =====================================================
-  // 2. HANDLE CLIENT / EXPECTED ERRORS (400–499)
-  // =====================================================
-   if (statusCode >= 400 && statusCode < 500) {
+  // ==============================
+  // CLIENT ERRORS
+  // ==============================
+  if (isClientError) {
     return res.status(statusCode).json({
       status: STATUS.FAIL,
       message: err.message,
@@ -35,10 +46,9 @@ export function errorHandler(err, req, res, _next) {
     });
   }
 
-  // =====================================================
-  // 3. HANDLE SERVER / UNEXPECTED ERRORS (500+)
-  // =====================================================
-  // SERVER ERRORS (500+)
+  // ==============================
+  // SERVER ERRORS
+  // ==============================
   return res.status(500).json({
     status: STATUS.ERROR,
     message: 'Internal Server Error',

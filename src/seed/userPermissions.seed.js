@@ -1,4 +1,4 @@
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 
 /**
  * SEED USER-PERMISSIONS

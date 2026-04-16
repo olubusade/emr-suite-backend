@@ -5,8 +5,7 @@ export const createAppointmentSchema = z.object({
   body: z.object({
     patientId: uuid(),
     staffId: uuid(),
-    appointmentDate: isoDateString(),
-    //Add validation for the time string
+      appointmentDate: isoDateString(),    
     appointmentTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
     reason: z.string().max(255).optional(),
     notes: z.string().optional()

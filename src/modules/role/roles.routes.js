@@ -3,6 +3,7 @@ import * as roleController from './role.controller.js';
 import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const r = express.Router();
 
@@ -34,7 +35,8 @@ r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getAll
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */
-r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getAllRoles);
+r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ),
+ asyncHandler(roleController.getAllRoles));
 
 /**
  * @swagger
@@ -69,7 +71,7 @@ r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getAll
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */
-r.post('/', authRequired, authorize(PERMISSIONS.ROLE_CREATE), roleController.createRole);
+r.post('/', authRequired, authorize(PERMISSIONS.ROLE_CREATE), asyncHandler(roleController.createRole));
 
 /**
  * @swagger
@@ -100,7 +102,7 @@ r.post('/', authRequired, authorize(PERMISSIONS.ROLE_CREATE), roleController.cre
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */
-r.delete('/:roleId', authRequired, authorize(PERMISSIONS.ROLE_DELETE), roleController.deleteRole);
+r.delete('/:roleId', authRequired, authorize(PERMISSIONS.ROLE_DELETE), asyncHandler(roleController.deleteRole));
 
 // ======================================================================
 // ROLE PERMISSIONS
@@ -124,7 +126,7 @@ r.delete('/:roleId', authRequired, authorize(PERMISSIONS.ROLE_DELETE), roleContr
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-r.get('/permissions/master', authRequired, authorize(PERMISSIONS.PERMISSION_READ), roleController.getAllPermissions);
+r.get('/permissions/master', authRequired, authorize(PERMISSIONS.PERMISSION_READ), asyncHandler(roleController.getAllPermissions));
 
 /**
  * @swagger
@@ -149,7 +151,7 @@ r.get('/permissions/master', authRequired, authorize(PERMISSIONS.PERMISSION_READ
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), roleController.getRolePermissions);
+r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), asyncHandler(roleController.getRolePermissions));
 
 /**
  * @swagger
@@ -182,7 +184,7 @@ r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_REA
  *       200:
  *         description: Role permissions updated
  */
-r.put('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), roleController.updateRolePermissions);
+r.put('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), asyncHandler(roleController.updateRolePermissions));
 
 // ======================================================================
 // USER ROLES
@@ -195,7 +197,7 @@ r.put('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPD
  *     summary: Retrieve user roles
  *     tags: [User Roles]
  */
-r.get('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getUserRoles);
+r.get('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_READ), asyncHandler(roleController.getUserRoles));
 
 /**
  * @swagger
@@ -204,7 +206,7 @@ r.get('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_READ), ro
  *     summary: Replace user roles
  *     tags: [User Roles]
  */
-r.put('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_UPDATE), roleController.updateUserRoles);
+r.put('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_UPDATE), asyncHandler(roleController.updateUserRoles));
 
 /**
  * @swagger
@@ -213,7 +215,7 @@ r.put('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_UPDATE), 
  *     summary: Attach role to user
  *     tags: [User Roles]
  */
-r.post('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_CREATE), roleController.attachRoleToUser);
+r.post('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_CREATE), asyncHandler(roleController.attachRoleToUser));
 
 // ======================================================================
 // USER PERMISSIONS
@@ -226,7 +228,7 @@ r.post('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_CREATE),
  *     summary: Retrieve user direct permissions
  *     tags: [User Permissions]
  */
-r.get('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), roleController.getUserPermissions);
+r.get('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), asyncHandler(roleController.getUserPermissions));
 
 /**
  * @swagger
@@ -235,7 +237,7 @@ r.get('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSI
  *     summary: Replace user permissions
  *     tags: [User Permissions]
  */
-r.put('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), roleController.updateUserPermissions);
+r.put('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), asyncHandler(roleController.updateUserPermissions));
 
 /**
  * @swagger
@@ -244,6 +246,6 @@ r.put('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSI
  *     summary: Attach permission to user
  *     tags: [User Permissions]
  */
-r.post('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_CREATE), roleController.attachPermissionToUser);
+r.post('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_CREATE), asyncHandler(roleController.attachPermissionToUser));
 
 export default r;

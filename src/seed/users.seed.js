@@ -1,4 +1,4 @@
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 

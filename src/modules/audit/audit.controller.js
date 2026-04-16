@@ -11,9 +11,7 @@ import { ok, error } from '../../shared/utils/response.js';
  * List audit logs with multi-dimensional filtering
  * GET /api/v1/audits
  */
-export async function listAudits(req, res, next) {
-    
-  try {
+export async function listAudits(req, res) {
     const {
       page,
       pageSize,
@@ -53,8 +51,4 @@ export async function listAudits(req, res, next) {
       pageSize: result.pageSize,
       pages: Math.ceil(result.count / result.pageSize)
     });
-
-  } catch (err) {
-     next(err);
-  }
 }

@@ -10,6 +10,7 @@ import {
   listAppointmentsSchema
 } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const router = express.Router();
 
@@ -77,9 +78,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_READ),
   validate(listAppointmentsSchema),
-  async (req, res) => {
-    await appt.listAppointments(req, res);
-  }
+  asyncHandler(appt.listAppointments)
 );
 
 /**
@@ -121,9 +120,7 @@ router.post(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_CREATE),
   validate(createAppointmentSchema),
-  async (req, res) => {
-    await appt.createAppointment(req, res);
-  }
+  asyncHandler(appt.createAppointment)
 );
 
 /**
@@ -160,9 +157,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_READ),
   validate(getAppointmentSchema),
-  async (req, res) => {
-    await appt.getAppointment(req, res);
-  }
+  asyncHandler(appt.listAppointments)
 );
 
 /**
@@ -205,9 +200,7 @@ router.put(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_UPDATE),
   validate(updateAppointmentSchema),
-  async (req, res) => {
-    await appt.updateAppointment(req, res);
-  }
+  asyncHandler(appt.updateAppointment)
 );
 
 /**
@@ -238,9 +231,7 @@ router.delete(
   authRequired,
   authorize(PERMISSIONS.APPOINTMENT_DELETE),
   validate(getAppointmentSchema),
-  async (req, res) => {
-    await appt.cancelAppointment(req, res);
-  }
+  asyncHandler(appt.cancelAppointment)
 );
 
 export default router;

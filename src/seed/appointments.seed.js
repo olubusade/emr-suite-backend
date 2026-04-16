@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 
 export async function seedAppointments(Appointment, patients, staff) {
   const now = new Date();
@@ -15,6 +15,7 @@ export async function seedAppointments(Appointment, patients, staff) {
       appointmentTime: "09:00",
       reason: 'Hypertension Review',
       notes: "Follow-up consultation",
+      type: "consultation",
       status: 'completed',
       paymentStatus: 'fully_paid',
       totalAmount: 15000.00,
@@ -31,6 +32,7 @@ export async function seedAppointments(Appointment, patients, staff) {
       appointmentTime: "11:00",
       reason: 'Routine Checkup',
       notes: "General check",
+      type: "procedure",
       status: 'completed',
       paymentStatus: 'unpaid',
       totalAmount: 17500.00,
@@ -46,6 +48,7 @@ export async function seedAppointments(Appointment, patients, staff) {
       appointmentDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
       appointmentTime: "10:00",
       reason: 'Malaria Treatment',
+      type: "follow_up",
       status: 'completed',
       paymentStatus: 'partially_paid',
       totalAmount: 20000.00,
@@ -60,6 +63,7 @@ export async function seedAppointments(Appointment, patients, staff) {
       createdBy: staff.id,
       appointmentDate: now,
       appointmentTime: "13:00",
+      type: "consultation",
       reason: 'Consultation',
       status: 'scheduled',
       paymentStatus: 'unpaid',

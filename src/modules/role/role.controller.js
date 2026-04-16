@@ -10,27 +10,21 @@ import { logger } from '../../config/logger.js';
  */
 
 // --- GLOBAL LOOKUPS ---
-export async function getAllRoles(req, res, next) {
-  try {
+export async function getAllRoles(req, res) {
+  
     const roles = await roleService.getAllRoles();
     // Assuming roleService.getAllRoles returns an array of { id, name, key }
     return ok(res, roles, 'All roles retrieved successfully');
-  } catch (err) {
-      next(err);
-  }
 }
 
 /**
  * Get all master permissions (simple list)
  */
-export async function getAllPermissions(req, res, next) {
-    try {
-        const permissions = await roleService.getAllPermissions();
-        // Assuming roleService.getAllPermissions returns an array of { id, key, name }
-        return ok(res, permissions, 'Master permissions retrieved successfully');
-    } catch (err) {
-        next(err);
-    }
+export async function getAllPermissions(req, res) {
+    
+    const permissions = await roleService.getAllPermissions();
+    // Assuming roleService.getAllPermissions returns an array of { id, key, name }
+    return ok(res, permissions, 'Master permissions retrieved successfully');
 }
 
 
@@ -39,40 +33,31 @@ export async function getAllPermissions(req, res, next) {
 /**
  * Get permissions assigned to a specific role
  */
-export async function getRolePermissions(req, res, next) {
-    try {
-        const { roleId } = req.params;
-        const permissions = await roleService.getRolePermissions(roleId);
+export async function getRolePermissions(req, res) {
+    
+    const { roleId } = req.params;
+    const permissions = await roleService.getRolePermissions(roleId);
 
-        // Assuming roleService.getRolePermissions returns an array of { id, key, name }
-        return ok(res, permissions, `Permissions for role ${roleId} retrieved successfully`);
-    } catch (err) {
-        if (err.statusCode === 404) return fail(res, err.message, 404);
-        next(err);
-    }
+    // Assuming roleService.getRolePermissions returns an array of { id, key, name }
+    return ok(res, permissions, `Permissions for role ${roleId} retrieved successfully`);
 }
 
 /**
  * Update permissions for a specific role (The Matrix Save button)
  */
-export async function updateRolePermissions(req, res, next) {
-    try {
-        const { roleId } = req.params;
-        const { permissionKeys } = req.body; // Array of keys, e.g., ['PATIENT_READ', 'USER_CREATE']
+export async function updateRolePermissions(req, res) {
+    const { roleId } = req.params;
+    const { permissionKeys } = req.body; // Array of keys, e.g., ['PATIENT_READ', 'USER_CREATE']
 
-        await roleService.updateRolePermissions(roleId, permissionKeys);
-        
-        await attachAudit(req, { 
-            action: AUDIT_ACTIONS.RBAC_ROLE_PERMISSIONS_UPDATE, 
-            entity: 'role', 
-            entityId: roleId, 
-            metadata: { query: permissionKeys } 
-        });
-        return ok(res, null, `Permissions for role ${roleId} updated successfully`);
-    } catch (err) {
-        if (err.statusCode === 404) return fail(res, err.message, 404);
-        next(err);
-    }
+    await roleService.updateRolePermissions(roleId, permissionKeys);
+    
+    await attachAudit(req, { 
+        action: AUDIT_ACTIONS.RBAC_ROLE_PERMISSIONS_UPDATE, 
+        entity: 'role', 
+        entityId: roleId, 
+        metadata: { query: permissionKeys } 
+    });
+    return ok(res, null, `Permissions for role ${roleId} updated successfully`);
 }
 
 // --- ROLE & PERMISSION CRUD ---
@@ -80,11 +65,11 @@ export async function updateRolePermissions(req, res, next) {
 /**
  * Create a new role (Updated endpoint to use base path)
  */
-export async function createRole(req, res, next) {
-  try {
+export async function createRole(req, res) {
+  
     const role = await roleService.createRole(req.body);
-      
-      await attachAudit(req, { 
+        
+        await attachAudit(req, { 
             action: AUDIT_ACTIONS.RBAC_ROLE_CREATE,
             entity: 'role', 
             entityId: role.id, 
@@ -92,39 +77,31 @@ export async function createRole(req, res, next) {
         });
 
     return created(res, {
-      id: role.id,
-      name: role.name,
-      key: role.key, // Ensure key is returned
+        id: role.id,
+        name: role.name,
+        key: role.key, // Ensure key is returned
     }, 'Role created successfully');
-  } catch (err) {
-    if (err.statusCode === 409) return fail(res, err.message, 409);
-      next(err);
-  }
 }
 
 /**
  * Delete a role
  */
-export async function deleteRole(req, res, next) {
-    try {
-        const { roleId } = req.params;
-        if (!roleId) { 
-            return next(new Error('Role ID is required'));
-        }
-        await roleService.deleteRole(roleId);
-        
-        await attachAudit(req, { 
-            action: AUDIT_ACTIONS.RBAC_ROLE_DELETE, 
-            entity: 'role', 
-            entityId: roleId, 
-            metadata: { query: req.params } 
-        });
-
-        return noContent(res); // 204 No Content for successful deletion
-    } catch (err) {
-        if (err.statusCode === 404) return fail(res, err.message, 404);
-        next(err);
+export async function deleteRole(req, res) {
+    
+    const { roleId } = req.params;
+    if (!roleId) { 
+        return next(new Error('Role ID is required'));
     }
+    await roleService.deleteRole(roleId);
+    
+    await attachAudit(req, { 
+        action: AUDIT_ACTIONS.RBAC_ROLE_DELETE, 
+        entity: 'role', 
+        entityId: roleId, 
+        metadata: { query: req.params } 
+    });
+
+    return noContent(res); // 204 No Content for successful deletion
 }
 
 
@@ -133,9 +110,9 @@ export async function deleteRole(req, res, next) {
 /**
  * Create a new permission
  */
-export async function createPermission(req, res, next) {
-  try {
-    const permission = await roleService.createPermission(req.body);
+export async function createPermission(req, res) {
+  
+  const permission = await roleService.createPermission(req.body);
     
   await attachAudit(req, { 
             action: AUDIT_ACTIONS.CREATE_PERMISSION,
@@ -148,123 +125,99 @@ export async function createPermission(req, res, next) {
       key: permission.key,
       name: permission.name,
     }, 'Permission created successfully');
-  } catch (err) {
-    if (err.statusCode === 409) return fail(res, err.message, 409);
-      logger.error('roles.createPermission', { error: err.message });
-      
-      next(err);
-  }
 }
 // --- ROLE & PERMISSION CRUD ---
-export const getUserRoles = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        if (!userId) { 
-            return next(new Error('User ID is required'));
-        }
-        const roles = await roleService.getUserRoles(userId);
-        res.status(200).json(roles);
-    } catch (error) {
-        next(err);
+export const getUserRoles = async (req, res) => {
+    const { userId } = req.params;
+    if (!userId) { 
+        return next(new Error('User ID is required'));
     }
+    const roles = await roleService.getUserRoles(userId);
+    res.status(200).json(roles);
+    
 };
 
-export const updateUserRoles = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        if (!userId) { 
-            return next(new Error('User ID is required'));
-        }
-        // Expects an array of roleKeys: { roleKeys: ["ADMIN", "NURSE"] }
-        const { roleKeys } = req.body;
-
-        if (!Array.isArray(roleKeys)) {
-            return res.status(400).json({ message: 'roleKeys must be an array.' });
-        }
-
-        await roleService.updateUserRoles(userId, roleKeys);
-        res.status(200).json({ message: 'User roles updated successfully.' });
-    } catch (error) {
-        next(err);
+export const updateUserRoles = async (req, res) => {
+    
+    const { userId } = req.params;
+    if (!userId) { 
+        return next(new Error('User ID is required'));
     }
+    // Expects an array of roleKeys: { roleKeys: ["ADMIN", "NURSE"] }
+    const { roleKeys } = req.body;
+
+    if (!Array.isArray(roleKeys)) {
+        return res.status(400).json({ message: 'roleKeys must be an array.' });
+    }
+
+    await roleService.updateUserRoles(userId, roleKeys);
+    res.status(200).json({ message: 'User roles updated successfully.' });
+    
 };
 
 // --- NEW: User Direct Permission Assignment Controllers ---
 
-export const getUserPermissions = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        if (!userId) {
-            return next(new Error('User ID is required'));
-        }
-        const permissions = await roleService.getUserPermissions(userId);
-        res.status(200).json(permissions);
-    } catch (error) {
-        next(err);
+export const getUserPermissions = async (req, res) => {
+    
+    const { userId } = req.params;
+    if (!userId) {
+        return next(new Error('User ID is required'));
     }
+    const permissions = await roleService.getUserPermissions(userId);
+    res.status(200).json(permissions);
 };
 
-export const updateUserPermissions = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        if (!userId) {
-            return next(new Error('User ID is required'));
-         }
-        // Expects an array of permissionKeys: { permissions: ["PATIENT_READ", "USER_CREATE"] }
-        const { permissions } = req.body;
-
-        if (!Array.isArray(permissions)) {
-            return res.status(400).json({ message: 'permissions must be an array.' });
+export const updateUserPermissions = async (req, res) => {
+    
+    const { userId } = req.params;
+    if (!userId) {
+        return next(new Error('User ID is required'));
         }
+    // Expects an array of permissionKeys: { permissions: ["PATIENT_READ", "USER_CREATE"] }
+    const { permissions } = req.body;
+
+    if (!Array.isArray(permissions)) {
+        return res.status(400).json({ message: 'permissions must be an array.' });
+    }
 
         
     const after = await roleService.updateUserPermissions(userId, permissions);
-        res.status(200).json({ message: 'User direct permissions updated successfully.' });
-        await attachAudit(req, { 
-            action: AUDIT_ACTIONS.USER_PERMISSION_UPDATE, 
-            entity: 'user', 
-            entityId: userId,
-            before: permissions,
-            after,
-            metadata: { query: permissions } 
-        });
-
-    } catch (error) {
-        next(err);
-    }
+    res.status(200).json({ message: 'User direct permissions updated successfully.' });
+    await attachAudit(req, { 
+        action: AUDIT_ACTIONS.USER_PERMISSION_UPDATE, 
+        entity: 'user', 
+        entityId: userId,
+        before: permissions,
+        after,
+        metadata: { query: permissions } 
+    });
 };
 
-export const attachPermissionToUser = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        const { permissionKey } = req.body;
+export const attachPermissionToUser = async (req, res) => {
+    
+    const { userId } = req.params;
+    const { permissionKey } = req.body;
 
-        if (!permissionKey) {
-            return res.status(400).json({ message: 'permissionKey is required.' });
-        }
-        
-        await roleService.attachPermissionToUser(userId, permissionKey);
-        res.status(201).json({ message: 'Permission attached successfully.' });
-    } catch (error) {
-        next(err);
+    if (!permissionKey) {
+        return res.status(400).json({ message: 'permissionKey is required.' });
     }
+    
+    await roleService.attachPermissionToUser(userId, permissionKey);
+    res.status(201).json({ message: 'Permission attached successfully.' });
 };
-export const attachRoleToUser = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        if (!userId) {
-            return next(new Error('User ID is required'));
-        }
-        // Assuming the request body is { roleKey: "DOCTOR" }
-        const { roleKey } = req.body; 
-
-        if (!roleKey) {
-            return res.status(400).json({ message: 'roleKey is required.' });
-        }
-
-        await roleService.attachRoleToUser(userId, roleKey);
-        res.status(201).json({ message: `Role ${roleKey} attached to user ${userId} successfully.` });
-    } catch (error) {
-        next(err);
+export const attachRoleToUser = async (req, res) => {
+    
+    const { userId } = req.params;
+    if (!userId) {
+        return next(new Error('User ID is required'));
     }
+    // Assuming the request body is { roleKey: "DOCTOR" }
+    const { roleKey } = req.body; 
+
+    if (!roleKey) {
+        return res.status(400).json({ message: 'roleKey is required.' });
+    }
+
+    await roleService.attachRoleToUser(userId, roleKey);
+    res.status(201).json({ message: `Role ${roleKey} attached to user ${userId} successfully.` });
 }

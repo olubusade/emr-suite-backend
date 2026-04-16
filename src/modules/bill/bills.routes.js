@@ -11,6 +11,7 @@ import {
   getPendingBillsSchema
 } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const r = express.Router();
 
@@ -87,7 +88,7 @@ r.get(
   authRequired,
   authorize(PERMISSIONS.BILL_READ),
   validate(listBillSchema),
-  billController.listBills
+  asyncHandler(billController.listBills)
 );
 
 /**
@@ -142,7 +143,7 @@ r.get(
   authRequired,
   authorize(PERMISSIONS.BILL_READ),
   validate(getPendingBillsSchema),
-  billController.getPendingBills
+  asyncHandler(billController.getPendingBills)
 );
 
 /**
@@ -189,7 +190,7 @@ r.post(
   authRequired,
   authorize(PERMISSIONS.BILL_CREATE),
   validate(createBillSchema),
-  billController.createBill
+  asyncHandler(billController.createBill)
 );
 
 /**
@@ -236,7 +237,7 @@ r.get(
   authRequired,
   authorize(PERMISSIONS.BILL_READ),
   validate(getBillSchema),
-  billController.getBill
+  asyncHandler(billController.getBill)
 );
 
 /**
@@ -293,7 +294,7 @@ r.patch(
   authRequired,
   authorize(PERMISSIONS.BILL_UPDATE),
   validate(updateBillSchema),
-  billController.updateBill
+  asyncHandler(billController.updateBill)
 );
 
 /**
@@ -331,7 +332,7 @@ r.delete(
   authRequired,
   authorize(PERMISSIONS.BILL_DELETE),
   validate(getBillSchema),
-  billController.deleteBill
+  asyncHandler(billController.deleteBill)
 );
 
 export default r;

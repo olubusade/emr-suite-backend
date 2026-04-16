@@ -1,4 +1,4 @@
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 export async function seedRoles(Role) {
   try {
       const roleNames = [

@@ -5,6 +5,7 @@ import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { validate } from '../../shared/utils/validation.js';
 import { loginSchema, refreshSchema, changePasswordSchema } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const router = express.Router();
 
@@ -55,7 +56,8 @@ const router = express.Router();
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', validate(loginSchema), authController.login);
+router.post('/login', validate(loginSchema),
+  asyncHandler(authController.login))
 
 /**
  * @swagger
@@ -85,7 +87,7 @@ router.post('/login', validate(loginSchema), authController.login);
  *       401:
  *         description: Invalid or expired refresh token
  */
-router.post('/refresh', validate(refreshSchema), authController.refresh);
+router.post('/refresh', validate(refreshSchema), asyncHandler(authController.refresh));
 
 // -------------------- Protected Routes -------------------- //
 router.use(authRequired);
@@ -109,7 +111,7 @@ router.use(authRequired);
  *       401:
  *         description: Unauthorized
  */
-router.post('/logout', authController.logout);
+router.post('/logout', asyncHandler(authController.logout));
 
 /**
  * @swagger
@@ -154,7 +156,7 @@ router.post(
   '/change-password',
   authorize(PERMISSIONS.USER_UPDATE),
   validate(changePasswordSchema),
-  authController.changePassword
+  asyncHandler(authController.changePassword)
 );
 
 export default router;

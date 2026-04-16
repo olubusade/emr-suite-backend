@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 export async function seedPayments(Payment, bills) {
   const paymentsData = [];
 

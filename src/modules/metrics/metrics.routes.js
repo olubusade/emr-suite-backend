@@ -3,6 +3,7 @@ import * as metricsController from './metrics.controller.js';
 import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const router = express.Router();
 
@@ -59,7 +60,7 @@ router.get(
   '/',
   authRequired,
   authorize(PERMISSIONS.METRICS_READ),
-  metricsController.getMetrics
+  asyncHandler(metricsController.getMetrics)
 );
 
 export default router;

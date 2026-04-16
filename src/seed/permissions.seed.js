@@ -1,4 +1,4 @@
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 export async function seedPermissions(Permission) {
   const permissionKeys = [
     // User Management

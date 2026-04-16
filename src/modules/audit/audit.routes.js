@@ -5,7 +5,7 @@ import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { validate } from '../../shared/utils/validation.js';
 import { listAuditSchema } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
-
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 const router = express.Router();
 
 /**
@@ -87,7 +87,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.AUDIT_READ),
   validate(listAuditSchema),
-  listAudits
+  asyncHandler(listAudits)
 );
 
 export default router;

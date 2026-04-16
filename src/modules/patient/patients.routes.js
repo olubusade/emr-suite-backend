@@ -3,6 +3,7 @@ import * as patientController from './patient.controller.js';
 import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const r = express.Router();
 
@@ -51,7 +52,7 @@ r.get(
   '/',
   authRequired,
   authorize(PERMISSIONS.PATIENT_READ),
-  patientController.listPatients
+  asyncHandler(patientController.listPatients)
 );
 
 /**
@@ -102,7 +103,7 @@ r.post(
   '/',
   authRequired,
   authorize(PERMISSIONS.PATIENT_CREATE),
-  patientController.createPatient
+  asyncHandler(patientController.createPatient)
 );
 
 /**
@@ -147,7 +148,7 @@ r.get(
   '/:id',
   authRequired,
   authorize(PERMISSIONS.PATIENT_READ),
-  patientController.getPatient
+  asyncHandler(patientController.getPatient)
 );
 
 /**
@@ -198,7 +199,7 @@ r.put(
   '/:id',
   authRequired,
   authorize(PERMISSIONS.PATIENT_UPDATE),
-  patientController.updatePatient
+  asyncHandler(patientController.updatePatient)
 );
 
 /**
@@ -238,7 +239,7 @@ r.delete(
   '/:id',
   authRequired,
   authorize(PERMISSIONS.PATIENT_DELETE),
-  patientController.deletePatient
+  asyncHandler(patientController.deletePatient)
 );
 
 export default r;

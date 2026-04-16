@@ -12,6 +12,7 @@ import {
   getClinicalNotesByAppointmentSchema
 } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
+import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const router = express.Router();
 
@@ -70,7 +71,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(listClinicalNotesSchema),
-  clinicalController.listClinicalNotes
+  asyncHandler(clinicalController.listClinicalNotes)
 );
 
 /**
@@ -122,7 +123,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(getClinicalNotesByPatientSchema),
-  clinicalController.getClinicalNotesByPatientId
+  asyncHandler(clinicalController.getClinicalNotesByPatientId)
 );
 
 /**
@@ -164,7 +165,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(getClinicalNotesByAppointmentSchema),
-  clinicalController.getClinicalNotesByAppointment
+  asyncHandler(clinicalController.getClinicalNotesByAppointment)
 );
 
 /**
@@ -205,7 +206,7 @@ router.post(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_CREATE),
   validate(createClinicalNoteSchema),
-  clinicalController.createClinicalNote
+  asyncHandler(clinicalController.createClinicalNote)
 );
 
 /**
@@ -247,7 +248,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(getClinicalNotesSchema),
-  clinicalController.getClinicalNotes
+  asyncHandler(clinicalController.getClinicalNotes)
 );
 
 /**
@@ -296,7 +297,7 @@ router.put(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_UPDATE),
   validate(updateClinicalNoteSchema),
-  clinicalController.updateClinicalNote
+  asyncHandler(clinicalController.updateClinicalNote)
 );
 /**
  * @swagger
@@ -330,7 +331,7 @@ router.delete(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_DELETE),
   validate(getClinicalNotesSchema),
-  clinicalController.deleteClinicalNote
+  asyncHandler(clinicalController.deleteClinicalNote)
 );
 
 export default router;

@@ -14,6 +14,7 @@ import { seedVitals } from './vitals.seed.js';
 import { seedClinicalNotes } from './clinical.seed.js';
 import { computeBillStatus } from '../shared/utils/billCompute.js';
 import { reportError } from '../shared/utils/monitoring.js';
+import { logger } from '../config/logger.js';
 async function seed() {
   try {
     await sequelize.sync({ force: true });

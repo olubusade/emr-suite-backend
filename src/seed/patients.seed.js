@@ -1,7 +1,7 @@
 // seed/patients.js  (or wherever your seed files live)
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';   // ← prefer bcryptjs (pure JS, no native deps)
-import { reportError } from '../utils/monitoring.js';
+import { reportError } from '../shared/utils/monitoring.js';
 
 const DEMO_PASSWORD = 'P@ssword1'; // Never hardcode real passwords — this is demo-only
 const SALT_ROUNDS = 10;

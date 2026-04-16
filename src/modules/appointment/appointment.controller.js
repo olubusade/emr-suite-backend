@@ -11,8 +11,7 @@ import { AUDIT_ACTIONS } from '../../constants/index.js';
 /**
  * List appointments with pagination and filters
  */
-export async function listAppointments(req, res, next) {
-  try {
+export async function listAppointments(req, res) {
     const query = req.query || {}; 
     const page = parseInt(query.page, 10) || 1;
     const pageSize = parseInt(query.limit, 10) || 20;
@@ -31,15 +30,12 @@ export async function listAppointments(req, res, next) {
       pages: appointments.pages,
       total: appointments.total,
     });
-  } catch (err) {
-    next(err);
-  }
 }
 
 /**
  * Get a single appointment by ID
  */
-export async function getAppointment(req, res, next) {
+export async function getAppointment(req, res) {
   try {
     const appointment = await appointmentService.getAppointmentById(req.params.id);
     
@@ -52,7 +48,7 @@ export async function getAppointment(req, res, next) {
 /**
  * Create a new appointment
  */
-export async function createAppointment(req, res, next) {
+export async function createAppointment(req, res) {
   try {
     const payload = {
       ...req.body,
@@ -77,7 +73,7 @@ export async function createAppointment(req, res, next) {
 /**
  * Update appointment details
  */
-export async function updateAppointment(req, res, next) {
+export async function updateAppointment(req, res) {
   try {
     req.body.updatedBy = req.user.id;
     const result = await appointmentService.updateAppointment(req.params.id, req.body);
@@ -100,7 +96,7 @@ export async function updateAppointment(req, res, next) {
 /**
  * Mark an appointment as cancelled
  */
-export async function cancelAppointment(req, res, next) {
+export async function cancelAppointment(req, res) {
   try {
     const appointment = await appointmentService.cancelAppointment(req.params.id);
 

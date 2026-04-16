@@ -12,8 +12,8 @@ import { AUDIT_ACTIONS } from '../../constants/index.js';
 /**
  * List all bills with pagination and search
  */
-export async function listBills(req, res, next) {
-  try {
+export async function listBills(req, res) {
+  
     const { page, limit, search } = req.query;
     
     const result = await billService.listBills({
@@ -56,15 +56,13 @@ export async function listBills(req, res, next) {
       pageSize: result.pageSize,
       pages: Math.ceil(result.total / result.pageSize),
     });
-  } catch (err) {
-     next(err);
-  }
+  
 }
 /**
  * Retrieve patient records specifically with wrt 'unpaid' or 'pending' bills
  */
-export async function getPendingBills(req, res, next) {
-  try {
+export async function getPendingBills(req, res) {
+  
     const { page = 1, limit = 10, search = '' } = req.query;
 
     const result = await billService.getPendingBills({
@@ -80,33 +78,33 @@ export async function getPendingBills(req, res, next) {
       pageSize: result.pageSize,
       pages: Math.ceil(result.total / result.pageSize),
     });
-  } catch (err) {    
-     next(err);
-  }
+
 }
 /**
  * Create a new bill
  */
-export async function createBill(req, res, next) {
-  try {
-    const billData = {
-      ...req.body,
-      createdBy: req.user.id // 🛡️ Secure: comes from JWT
-    };
+export async function createBill(req, res) {
+  const billData = {
+    ...req.body,
+    createdBy: req.user.id,
+  };
 
-    //LOGGER info
-    logger.info(`REST Request: User ${req.user.id} is creating a bill for Appointment ${billData.appointmentId}`);
-    const bill = await billService.createBill(billData);
-    
-     await attachAudit(req, { 
-      action: AUDIT_ACTIONS.BILL_CREATE,
-      entity: 'bill', 
-      entityId: bill.id, 
-      metadata: { query: billData } 
-      
-    });
+  logger.info(
+    `User ${req.user.id} creating bill for appointment ${billData.appointmentId}`
+  );
 
-    return created(res, {
+  const bill = await billService.createBill(billData);
+
+  await attachAudit(req, {
+    action: AUDIT_ACTIONS.BILL_CREATE,
+    entity: 'bill',
+    entityId: bill.id,
+    metadata: { query: billData },
+  });
+
+  return created(
+    res,
+    {
       id: bill.id,
       customerId: bill.customerId,
       amount: bill.amount,
@@ -117,22 +115,16 @@ export async function createBill(req, res, next) {
       createdAt: bill.createdAt,
       createdBy: bill.createdBy,
       updatedAt: bill.updatedAt,
-    }, 'Bill created successfully');
-  } catch (err) {
-    //LOGGER (Error)
-    logger.error(`REST Error: Failed to create bill - ${err.message}`, { 
-      stack: err.stack, 
-      path: req.originalUrl 
-    });
-     next(err);
-  }
+    },
+    'Bill created successfully'
+  );
 }
 
 /**
  * Update bill status or details (e.g. paid status update)
  */
-export async function updateBill(req, res, next) {
-  try {
+export async function updateBill(req, res) {
+  
     if (!req.params.id) { 
        return next(new Error('Missing billing id'));
     }
@@ -162,15 +154,12 @@ export async function updateBill(req, res, next) {
       createdAt: bill.createdAt,
       updatedAt: bill.updatedAt,
     }, 'Bill updated successfully');
-  } catch (err) {
-    next(err);
-  }
 }
 /**
  * GET single bill by ID
  */
-export async function getBill(req, res, next) {
-  try {
+export async function getBill(req, res) {
+  
     const billId = req.params.id;
     const bill = await billService.getBill(billId);
 
@@ -184,15 +173,12 @@ export async function getBill(req, res, next) {
     });
 
     return ok(res, bill, 'Bill retrieved successfully');
-  } catch (err) {
-    next(err)
-  }
 }
 /**
  * Delete a bill
  */
-export async function deleteBill(req, res, next) {
-  try {
+export async function deleteBill(req, res) {
+  
     const billId = req.params.id;
 
      await attachAudit(req, { 
@@ -204,9 +190,7 @@ export async function deleteBill(req, res, next) {
 
 
     return ok(res, { success: true }, 'Bill deleted successfully');
-  } catch (err) {
-    next(err);
-  }
+
 }
 
 
