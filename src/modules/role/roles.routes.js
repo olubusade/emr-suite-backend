@@ -10,22 +10,10 @@ const r = express.Router();
  * =========================
  * ROLE & PERMISSION MODULE
  * =========================
- * @swagger
- * tags:
- *   - name: Roles
- *     description: Role management (RBAC core)
- *   - name: Role Permissions
- *     description: Role-permission matrix operations
- *   - name: User Roles
- *     description: Assigning roles to users
- *   - name: User Permissions
- *     description: Direct permission assignment (PBAC override)
- */
-
-// ======================================================================
+ ======================================================================
 // ROLES
 // ======================================================================
-
+r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ), roleController.getAllRoles);
 /**
  * @swagger
  * /roles:

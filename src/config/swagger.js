@@ -23,7 +23,24 @@ const options = {
       - Audit logging
             `,
     },
-
+    tags: [
+      {
+        name: 'Roles',
+        description: 'Role management (RBAC core)',
+      },
+      {
+        name: 'Role Permissions',
+        description: 'Role-permission matrix operations',
+      },
+      {
+        name: 'User Roles',
+        description: 'Assigning roles to users',
+      },
+      {
+        name: 'User Permissions',
+        description: 'Direct permission assignment (PBAC override)',
+      }
+    ],
     servers: [
       {
         url: process.env.API_BASE_URL || 'http://localhost:5000/api',
@@ -67,6 +84,21 @@ const options = {
               example: 'admin@123'
             }
           }
+        },
+        MaritalStatus: {
+          type: 'string',
+          enum: ['single', 'married', 'divorced', 'widowed']
+        },
+        bloodGroup: {
+          type: 'string',
+          enum: ['A+','A-','B+','B-','AB+','AB-','O+','O-'],
+          example: 'O+'
+        },
+
+        genotype: {
+          type: 'string',
+          enum: ['AA','AS','SS','AC','SC'],
+          example: 'AA'
         },
         /**
          * =========================
@@ -193,8 +225,12 @@ const options = {
               enum: ['male', 'female', 'other', 'unknown']
             },
 
-            middleName: { type: 'string', nullable: true },
-            maritalStatus: { type: 'string', nullable: true },
+            maritalStatus: {
+              allOf: [{ $ref: '#/components/schemas/MaritalStatus' }],
+              nullable: true,
+              example: 'single',
+              description: 'Allowed values: single, married, divorced, widowed, separated'
+            },
             phone: { type: 'string', nullable: true },
             address: { type: 'string', nullable: true },
             nationality: { type: 'string', nullable: true },
@@ -202,15 +238,15 @@ const options = {
             occupation: { type: 'string', nullable: true },
 
             bloodGroup: {
-              type: 'string',
-              enum: ['A+','A-','B+','B-','AB+','AB-','O+','O-'],
-              nullable: true
+              allOf: [{ $ref: '#/components/schemas/bloodGroup' }],
+              nullable: true,
+              example: 'single'              
             },
 
             genotype: {
-              type: 'string',
-              enum: ['AA','AS','SS','AC','SC'],
-              nullable: true
+              allOf: [{ $ref: '#/components/schemas/genoType' }],
+              nullable: true,
+              example: 'single'
             },
 
             emergencyContactName: { type: 'string', nullable: true },
@@ -259,12 +295,26 @@ const options = {
               type: 'string',
               enum: ['male', 'female', 'other', 'unknown']
             },
-            maritalStatus: { type: 'string' },
+            maritalStatus: {
+              allOf: [{ $ref: '#/components/schemas/MaritalStatus' }],
+              nullable: true,
+              example: 'single',
+              description: 'Allowed values: single, married, divorced, widowed, separated'
+            },
             nationality: { type: 'string' },
             stateOfOrigin: { type: 'string' },
             occupation: { type: 'string' },
-            bloodGroup: { type: 'string' },
-            genotype: { type: 'string' }
+            bloodGroup: {
+              allOf: [{ $ref: '#/components/schemas/bloodGroup' }],
+              nullable: true,
+              example: 'single'              
+            },
+
+            genotype: {
+              allOf: [{ $ref: '#/components/schemas/genoType' }],
+              nullable: true,
+              example: 'single'
+            }
           }
         },
         /**
@@ -302,8 +352,54 @@ const options = {
                 'canceled',
                 'no_show'
               ]
+            },
+            type: {
+              type: 'string',
+              enum: [
+                'consultation',
+                'follow_up',
+                'emergency',
+                'admission',
+                'procedure'
+              ]
             }
           },
+        },
+        PaginatedAppointments: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              example: 'SUCCESS'
+            },
+            message: {
+              type: 'string',
+              example: 'Appointments retrieved successfully'
+            },
+            data: {
+              type: 'object',
+              properties: {
+                rows: {
+                  type: 'array',
+                  items: {
+                    $ref: '#/components/schemas/Appointment'
+                  }
+                },
+                page: {
+                  type: 'integer',
+                  example: 1
+                },
+                pages: {
+                  type: 'integer',
+                  example: 5
+                },
+                total: {
+                  type: 'integer',
+                  example: 100
+                }
+              }
+            }
+          }
         },
 
         /**
@@ -581,12 +677,13 @@ export function setupSwagger(app) {
     swaggerUi.setup(specs, {
       swaggerOptions: {
         persistAuthorization: true,
+        tagsSorter: 'alpha'
       },
     })
   );
 }
 /* 
-👉 http://localhost:5000/api/docs
+ http://localhost:5000/api/docs
 
 To validate specific route
 

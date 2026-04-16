@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import * as myLibrary from '../../shared/utils/myLibrary.js';
 import { reportError } from '../../shared/utils/monitoring.js';
 import ApiError from '../../shared/utils/ApiError.js';
-import { conflict } from '../../shared/utils/response.js';
+import { validatePatientEnums } from '../../shared/validators/patient.validator.js';
 /**
  * PATIENT SERVICE
  * Manages the lifecycle of patient identities and demographic data.
@@ -56,6 +56,7 @@ export async function listPatients({ page = 1, pageSize = 10, search }) {
  * Register a new patient with auto-generated credentials
  */
 export async function createPatient(data) {
+  validatePatientEnums(data);
   
   try {
     const exist = await Patient.findOne({
@@ -95,6 +96,7 @@ export async function createPatient(data) {
 export async function updatePatient(id, data) {
   
   try {
+    validatePatientEnums(data);
     const patient = await Patient.findByPk(id);
     if (!patient) throw new ApiError(404, 'Patient not found');
     

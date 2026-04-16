@@ -3,7 +3,7 @@ import { listAudits } from './audit.controller.js';
 import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { validate } from '../../shared/utils/validation.js';
-import { listAuditSchema } from '../../shared/validation/schemas.js';
+import { listAuditSchema } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
 
 const router = express.Router();

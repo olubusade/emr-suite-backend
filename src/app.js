@@ -16,7 +16,8 @@ import {
 
 const app = express();
 /**
- * allow single req.ip in production
+ * Allows single req.ip in production
+ * */
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 } else {

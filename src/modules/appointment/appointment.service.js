@@ -148,6 +148,7 @@ export async function createAppointment({
   createdBy, 
   appointmentDate, 
   appointmentTime,
+  type,
   reason, 
   notes 
 }) {
@@ -185,7 +186,8 @@ export async function createAppointment({
       staffId,
       createdBy,
       appointmentDate: when,
-      appointmentTime, 
+      appointmentTime,
+      type,
       reason: reason || null,
       notes: notes || null,
       status: 'scheduled'

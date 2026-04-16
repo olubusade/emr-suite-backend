@@ -8,7 +8,7 @@ import {
   updateAppointmentSchema,
   getAppointmentSchema,
   listAppointmentsSchema
-} from '../../shared/validation/schemas.js';
+} from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
 
 const router = express.Router();
@@ -50,6 +50,11 @@ const router = express.Router();
  *         schema:
  *           type: string
  *           enum: [PAST, UPCOMING, TODAY, ALL]
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [consultation, follow_up, emergency, admission,procedure]
  *       - in: query
  *         name: search
  *         schema:

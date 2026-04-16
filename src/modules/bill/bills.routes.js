@@ -9,7 +9,7 @@ import {
   updateBillSchema,
   getBillSchema,
   getPendingBillsSchema
-} from '../../shared/validation/schemas.js';
+} from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
 
 const r = express.Router();

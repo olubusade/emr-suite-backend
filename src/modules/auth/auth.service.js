@@ -252,13 +252,13 @@ export async function changePassword(userId, oldPassword, newPassword) {
   try {
     const user = await User.findByPk(userId);
     if (!user) throw new ApiError(404, 'User not found');
-
+    
     const isMatch = await comparePassword(oldPassword, user.passwordHash);
     if (!isMatch) throw new ApiError(400, 'Old password is incorrect');
 
     user.passwordHash = await hashPassword(newPassword);
     await user.save();
-
+    
     await RefreshToken.update({ revokedAt: new Date() }, { where: { userId, revokedAt: null } });
     return true;
   }catch (err) {

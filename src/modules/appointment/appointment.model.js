@@ -61,6 +61,16 @@ export const AppointmentModel = (sequelize, DataTypes) => {
         ),
         defaultValue: "scheduled",
       },
+      type: {
+        type: DataTypes.ENUM(
+          'consultation',
+          'follow_up',
+          'emergency',
+          'admission',
+          'procedure'
+        ),
+        defaultValue: "consultation",
+      },
       // FINANCIAL TRACKING
       paymentStatus: {
         type: DataTypes.ENUM(

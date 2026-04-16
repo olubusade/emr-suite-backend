@@ -3,7 +3,7 @@ import * as authController from './auth.controller.js';
 import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { validate } from '../../shared/utils/validation.js';
-import { loginSchema, refreshSchema, changePasswordSchema } from '../../shared/validation/schemas.js';
+import { loginSchema, refreshSchema, changePasswordSchema } from '../../shared/validation/index.js';
 import { PERMISSIONS } from '../../constants/index.js';
 
 const router = express.Router();

@@ -24,11 +24,9 @@ export const validate = (schema) => (req, res, next) => {
      */
     const parsed = schema.parse(toValidate);
 
-    if (parsed) {
-      if (parsed.body) req.body = parsed.body;
-      if (parsed.params) req.params = parsed.params;
-      if (parsed.query) req.query = parsed.query;
-    }
+    req.body = parsed.body;
+    req.params = parsed.params;
+    req.query = parsed.query;
 
     return next();
   } catch (err) {
