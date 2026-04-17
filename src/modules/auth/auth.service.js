@@ -72,6 +72,7 @@ function formatUser(user, permissions = []) {
     email: user.email,
     fullName:user.fullName,
     phone: user.phone,
+    designation:user.designation,
     roles: user.roles.map(r => r.name),
     permissions,
     isActive: user.active,

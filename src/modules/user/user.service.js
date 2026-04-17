@@ -60,7 +60,68 @@ export async function createUser({ email, password, fullName,fName,lName, roleId
   }
   
 }
+/**
+ * Fetch Self Profile
+ */
+export async function getUserProfile(userId) {
+  
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) throw new ApiError(404, 'User not found');    
+    return user;
+  } catch (err) {
+    reportError(err, { service: 'UserService', operation: 'fetchUser', userId });
+    throw err;
+  }
+    
+}
+/**
+ * Update authenticated user's profile (self-service)
+ */
+export async function updateUserProfile(userId, payload) {
+  // 1. Fetch user
+  const user = await User.findByPk(userId);
 
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  // 2. Whitelist allowed fields ONLY (security guard)
+  const allowedFields = [
+    'fName',
+    'lName',
+    'designation'
+  ];
+
+  const updates = {};
+
+  for (const key of allowedFields) {
+    if (payload[key] !== undefined) {
+      updates[key] = payload[key];
+    }
+  }
+
+  // Optional: allow email update but controlled
+  if (payload.email) {
+    updates.email = payload.email;
+  }
+
+  // Optional: if you ever allow activation toggle (usually admin-only)
+  if (typeof payload.active === 'boolean') {
+    updates.active = payload.active;
+  }
+
+  // 3. Prevent empty update
+  if (Object.keys(updates).length === 0) {
+    throw new ApiError(400, 'No valid fields provided for update');
+  }
+
+  // 4. Apply update
+  await user.update(updates);
+
+  // 5. Return fresh instance
+  return user;
+}
 /**
  * List users with pagination and optional search
  */

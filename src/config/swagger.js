@@ -150,6 +150,20 @@ const options = {
         },
         /**
          * =========================
+         * USER
+         * =========================
+         */
+        UserUpdateProfile: {
+          type: 'object',
+          properties: {
+            fName: { type: 'string', example: 'John' },
+            lName: { type: 'string', example: 'Doe' },
+            designation: { type: 'string', example: 'Senior Nurse' },
+            email: { type: 'string', example: 'john@hospital.com' }
+          }
+        },
+        /**
+         * =========================
          * AUDIT LOG
          * =========================
          */
@@ -244,7 +258,7 @@ const options = {
             },
 
             genotype: {
-              allOf: [{ $ref: '#/components/schemas/genoType' }],
+              allOf: [{ $ref: '#/components/schemas/genotype' }],
               nullable: true,
               example: 'single'
             },
@@ -311,7 +325,7 @@ const options = {
             },
 
             genotype: {
-              allOf: [{ $ref: '#/components/schemas/genoType' }],
+              allOf: [{ $ref: '#/components/schemas/genotype' }],
               nullable: true,
               example: 'single'
             }

@@ -1,368 +1,430 @@
+---
 
-# 🏥 EMR-Suite Backend
+# 🏥 EMR-Suite Backend (Flagship Healthcare System)
 
-**Production-Grade Electronic Medical Records (EMR) Backend (Demo)**
-\dd
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square)
 ![Sequelize](https://img.shields.io/badge/ORM-Sequelize-lightblue?style=flat-square)
-![Jest](https://img.shields.io/badge/Testing-Jest-orange?style=flat-square)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square)
+![Winston](https://img.shields.io/badge/Logging-Winston-orange?style=flat-square)
+![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus-red?style=flat-square)
+![Architecture](https://img.shields.io/badge/Architecture-DDD%20Modular-purple?style=flat-square)
+![Security](https://img.shields.io/badge/Security-RBAC-red?style=flat-square)
+![Testing](https://img.shields.io/badge/Testing-Jest-orange?style=flat-square)
+![Docker](https://img.shields.io/badge/Deployment-Docker-blue?style=flat-square)
 ![RBAC](https://img.shields.io/badge/Security-RBAC-red?style=flat-square)
+
+---
+
+## 🌍 Live Demo Links
+
+> These links give you an access to the project demo.
+
+* **Backend API (Production):** [https://your-backend.onrender.com/api](https://your-backend.onrender.com/api)
+* **Swagger UI (Live Testing & API Docs):** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+* 🌐**Frontend (Angular):** [https://your-frontend.vercel.app](https://your-frontend.vercel.app)
+
+---
+
+## 📸 System Screenshots
+
+> Here are key views from the system
+
+### 1. Swagger API Documentation & Testing Interface
+
+![Swagger](./docs/screenshots/swagger.png)
+
+### 2. Authentication & JWT Flow (Login)
+
+![Auth](./docs/screenshots/auth-flow.png)
+
+### 3. Appointment Management (Doctor/Nurse View)
+
+![Appointments](./docs/screenshots/appointments.png)
+
+### 4. Patient Registration & Profile
+
+![Patients](./docs/screenshots/patients.png)
+
+### 5. Clinical Notes - Create, Read, Update (Doctor-only)
+
+![Clinical Notes](./docs/screenshots/clinical-notes.png)
+
+### 6. Billing & Payments Module (Receptionist & Admin only)
+
+![Billing](./docs/screenshots/billing.png)
+
+### 7. Metrics & Observability Dashboard (Prometheus-backed)
+
+![Metrics](./docs/screenshots/metrics.png)
 
 ---
 
 ## 📌 Overview
 
-**EMR-Suite Backend** is a **production-grade Node.js backend** designed to power a modern **Electronic Medical Records (EMR)** platform.
+**EMR-Suite Backend** is a **production-grade**, domain-driven Electronic Medical Records (EMR) system designed using **DDD (Domain Driven Design)** principles.
 
-> ⚠️ **Recruiter / Reviewer Note**
-> This repository is a **backend demo extracted from a real EMR system** (wiCare EMR).
-> It intentionally focuses on **architecture, security, scalability, and healthcare workflows**, not UI polish.
-> The frontend (Angular + Ionic) lives in a separate repository.
+It implements real hospital workflows including:
 
-This project demonstrates how I design **secure, auditable, role-aware APIs** suitable for **regulated healthcare environments**.
+* Patient management
+* Appointment lifecycle
+* Clinical documentation
+* Vitals tracking (Triage)
+* Billing
+* Audit & compliance tracking
+* Metrics & observability
 
+> ⚠️ **This is not a CRUD API demo**
+> It is a **system-level backend architecture** built to reflect real healthcare production systems and with **enterprise-level security and compliance in mind**.
 ---
 
-## 🎯 What This Project Demonstrates
+## 🧠 Architecture Philosophy (DDD-Based Design)
 
-✔ Clean backend architecture
-✔ Secure authentication & authorization
-✔ Real-world healthcare workflows
-✔ Auditability & compliance thinking
-✔ Production readiness (Docker, CI, tests, monitoring)
+This system is structured around **business domains, not technical layers**.
 
-This is **not** a CRUD demo — it is a **system-level backend**.
-
----
-
-## 🧠 Core Architectural Principles
-
-* **Security-first design** (JWT, RBAC, rate limits)
-* **Explicit role & permission modeling**
-* **Auditability for healthcare compliance**
-* **Separation of concerns** (controllers, services, middleware)
-* **Observable & testable** by default
-* **Container-ready** for modern deployments
-
----
-
-## 🛠️ The "Senior Engineer" Stack
-* **Runtime:** Node.js 20.x (LTS)
-* **Data:** PostgreSQL 15 + Sequelize ORM
-* **Validation:** Zod (Schema-first request validation)
-* **Security:** JWT (Access/Refresh), Argon2/Bcrypt, Helmet, Rate-Limiting
-* **DevOps:** Docker (Multi-stage), GitHub Actions CI/CD, Prometheus
-* **Testing:** Jest + Supertest (Integration & RBAC Audit Testing)
-
----
-
-## 🧾 Healthcare Compliance & Auditing
-In a real EMR, "Who changed what" is a legal requirement. 
-* **Immutable Logs:** The system implements an Audit Service that captures the `before` and `after` state of sensitive records.
-* **Actor Tracking:** Every mutation is tied to a specific User ID and Timestamp, providing a 100% transparent history for Clinical Notes and Billing records.
-
----
-## 📊 Observability (Prometheus & Winston)
-Built for the "Day 2" of production.
-* **Metrics:** Custom Prometheus counters track API latency and 4xx/5xx error rates.
-* **Structured Logging:** Winston is configured with transport layers to ensure logs are searchable and follow a standard JSON format for ELK/Loki integration.
-
----
-
-## 🔐 Authentication & Security
-
-### Authentication
-
-* JWT **access & refresh tokens**
-* Token expiration & revocation
-* Secure password hashing
-* Password change enforcement
-
-### Security Hardening
-
-* Rate limiting (global + route-level)
-* Helmet security headers
-* CORS configuration
-* Centralized request logging
-
----
-
-## 🔐 Advanced RBAC & Security Logic
-Most demos stop at "User vs Admin." This system implements a **Many-to-Many Permission Matrix**:
-* **Authorize Middleware:** A custom-built higher-order function that validates specific permissions (e.g., `CLINICAL_NOTE_EDIT`) rather than just checking a role name.
-* **Zod Integration:** Every request is validated against a strict schema before hitting the controller, preventing injection and malformed data at the edge.
-
----
-
-## 🧩 Role-Based Access Control (RBAC)
-
-RBAC is **first-class**, not an afterthought.
-
-### Roles
-
-* `super_admin`
-* `admin`
-* `doctor`
-* `nurse`
-* `receptionist`
-* `patient`
-
-### Permission Model
-
-* Fine-grained permissions (e.g. `appointment.create`, `vital.update`)
-* Many-to-many relationships:
-
-  * `Users ↔ Roles`
-  * `Roles ↔ Permissions`
-* Centralized `authorize()` middleware
-
-```ts
-router.post(
-  '/',
-  authRequired,
-  authorize(PERMISSIONS.CLINICALNOTE_CREATE),
-  clinicalController.create
-);
+```
+src/
+├── modules/        → Business domains (Appointment, Patient, Billing…)
+├── shared/         → Cross-cutting concerns (auth, utils, validators)
+├── config/         → Infrastructure setup (DB, JWT, Swagger)
+├── constants/      → Roles, permissions, enums
+├── seed/           → System bootstrap data
+├── docker/         → Containerization
+├── tests/
 ```
 
-✔ Easily extensible
-✔ Prevents role leakage
-✔ Matches enterprise RBAC standards
+### Why this matters:
+
+* Each module is **self-contained**
+* Clear Separation of Concern - **(SoC)** i.e. Controllers, services, models are co-located
+* Easy scaling per domain
+* Mirrors enterprise backend architecture patterns
 
 ---
 
-## 🏥 Domain Modules
-
-Each module mirrors **real hospital workflows**:
-
-### 🧍 Patients
-
-* Registration & demographic management
-* Medical identifiers
-* Emergency contacts
-
-### 📅 Appointments
-
-* Reception-driven scheduling
-* Status lifecycle (today / past / upcoming)
-* Role-aware visibility
-
-### 🩺 Clinical Notes
-
-* Doctor-only creation
-* Immutable historical records
-* Full audit trail
-
-### 💉 Vitals
-
-* Nurse-driven vitals capture
-* Time-series friendly design
-
-### 💳 Billing
-
-* Paid vs pending bills
-* Financial audit readiness
-
----
-
-## 🧾 Audit Logging
-
-Every sensitive action is recorded.
-
-**Audit captures:**
-
-* Actor (who performed the action)
-* Entity affected
-* Action type
-* Before & after state
-* Timestamp
-
-This is critical for:
-
-* Healthcare compliance
-* Internal investigations
-* Debugging production incidents
-
----
-
-## 📊 Monitoring & Observability
-
-* **Prometheus metrics** exposed at `/metrics`
-* Tracks:
-
-  * Request count
-  * Latency
-  * Error rates
-  * Route-level performance
-
-Ready for **Grafana integration**.
-
----
-
-## 📐 System Architecture
+## 🏗️ System Architecture Flow
 
 ```mermaid
 flowchart TD
-    A[Client / Frontend] --> B[Express Middleware]
-    B -->|JWT Auth| C[Controllers]
-    B -->|RBAC Check| C
-    B -->|Audit Logging| C
-    C --> D[Service Layer]
-    D --> E[Sequelize ORM]
-    E --> F[(PostgreSQL)]
-    B --> G[Prometheus Metrics]
+Client --> ExpressApp
+ExpressApp --> AuthMiddleware
+ExpressApp --> RBACMiddleware
+ExpressApp --> ValidationLayer
+ValidationLayer --> Controller
+AuthMiddleware --> Controller
+RBACMiddleware --> Controller
+Controller --> ServiceLayer
+ServiceLayer --> SequelizeORM
+SequelizeORM --> PostgreSQL
 
-    style A fill:#f9f
-    style B fill:#bbf
-    style C fill:#bfb
-    style D fill:#ffb
-    style E fill:#fbf
-    style F fill:#fbb
-    style G fill:#ccc
-```
-
----
-🚀 Deployment
-Zero-Cost Demo (Render)
-For demo purposes, this backend is configured for Render.
-
-Connect this GitHub repo to Render.
-
-Add DATABASE_URL and JWT_SECRET to environment variables.
-
-The render.yaml (Blueprint) will automatically provision the Web Service and Database.
-
-## 📁 Project Structure
-
-```bash
-emr-suite-backend/
-├── src/
-│   ├── config/          # env, db, jwt, swagger
-│   ├── constants/       # roles, permissions, enums
-│   ├── controllers/    # HTTP layer
-│   ├── middlewares/    # auth, RBAC, audit, rateLimit
-│   ├── models/         # Sequelize models
-│   ├── routes/         # API definitions
-│   ├── seed/           # roles, users, permissions
-│   ├── services/       # SQL logic
-│   ├── utils/          # logger, validators
-│   ├── app.js
-│   └── server.js
-├── tests/              # Jest + Supertest
-├── docker/             # Docker & compose configs
-├── .env.*              # Environment configs
-└── README.md
+ExpressApp --> AuditSystem
+ExpressApp --> MetricsSystem
+ExpressApp --> Logger
 ```
 
 ---
 
-## 📚 API Documentation
+## 🧠 Key Engineering Highlights & Tools Used
 
-* **Swagger UI:**
-  👉 `http://localhost:5000/api-docs`
+### 1. Production Docker Setup with Database Readiness (Top-Notch DevOps)
+* Uses multi-stage Docker + intelligent entrypoint with pg_isready.
+```From docker/entrypoint.sh:```
+```js 
+sh#!/bin/sh
+set -e
 
-Includes:
+# DATABASE READINESS CHECK (prevents crash during Postgres init)
+if [ -n "$DB_HOST" ] && [ "$DB_HOST" != "localhost" ]; then
+  echo "[entrypoint] Waiting for database..."
+  until pg_isready -h "$$   DB_HOST" -p "   $${DB_PORT:-5432}" -U "${DB_USER:-postgres}" >/dev/null 2>&1; do
+    echo "[entrypoint] Database not ready, retrying..."
+    sleep 2
+  done
+fi
 
-* Request/response schemas
-* Auth requirements
-* RBAC notes per endpoint
+# Auto-run migrations and seeders
+npm run migrate
+npm run seed
+
+exec npm run start
+```
+---
+Dockerfiles:**Dockerfile** (multi-stage with deps/runtime separation) and **Dockerfile.dev** (hot-reload with nodemon).
+
+---
+### 🔐 2. Advanced RBAC & Permission System (Role & Permission-Based Access Control)
+
+* Fine-grained permission system
+* Not role-based only — **permission-driven authorization**
+* Used across routes for secure, role-aware access.
+* Example:
+
+```js
+const authorize = (requiredPermission) => {
+  return (req, res, next) => {
+    if (!req.user.permissions?.includes(requiredPermission)) {
+      return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+    }
+    next();
+  };
+}
+```
+---
+### 3. Edge Validation & Enum Safety (Zod-style patterns)
+* Prevents invalid data early (fixed issues like MARITAL_ENUM.includes is not a function seen in logs).
+* From **shared/validators/patient.validator.js**
+```js 
+JavaScriptconst validatePatientEnums = (data) => {
+  if (data.maritalStatus && !MARITAL_ENUM.includes(data.maritalStatus)) {
+    throw new Error('Invalid marital status value');
+  }
+  // Additional strict enum & schema checks
+};
+```
+---
+### 4. Structured Audit Logging System with Winston (Healthcare-grade)
+
+* Every sensitive mutation is tracked:
+* Production-grade JSON logging with context.
+
+* Actor ID
+* Before/After state
+* Entity affected
+* Timestamp
+* Action type
+
+* Structured log from (logs/error.log & combined.log)
+```js
+{
+  "level": "error",
+  "message": "column Appointment.type does not exist",
+  "timestamp": "2026-04-16T10:58:11.957Z",
+  "userId": "1b325fee-937a-4423-b0e3-bb525657a636",
+  "path": "/api/metrics",
+  "method": "GET"
+}
+```
+> This mirrors real-world **clinical compliance requirements (HIPAA-like auditability)**
+
+---
+
+### 5. Schema-first Validation (Zod)
+
+All requests are validated at the edge:
+
+```js
+export const updateAppointmentSchema = z.object({
+  body: z.object({
+    appointmentDate: isoDateString().optional(),
+    status: APPOINTMENT_STATUS_ENUM.optional()
+  })
+});
+```
+---
+
+### 📊 6. Observability Layer with Prometheus
+
+* Prometheus metrics (`/metrics`)
+* Winston structured logging
+* Request latency tracking
+* Error rate monitoring
+* Uses **prom-client** for custom counters (request latency, error rates, route performance).
+* Exposed at **/metrics**.
+
+---
+
+### 🔁 7. Async Safety Layer
+
+* Centralized async handler
+* Prevent unhandled promise rejections
+* From **shared/utils/asyncHandler.js**:
+
+```js
+export const asyncHandler = (fn) => (req, res, next) =>{
+  Promise.resolve(fn(req, res, next)).catch(next);
+}
+```
+
+---
+
+## 🧩 Domain Modules (DDD CORE)
+
+### 🧍 Patient Module
+
+* Registration
+* Demographics
+* Medical identity
+
+### 📅 Appointment Module
+
+* Scheduling
+* Status Lifecycle 
+* Role-aware views - Doctor/Nurse scheduling flow
+
+### 🩺 Clinical Notes Module
+
+* Doctor-only access
+* Immutable clinical history with full audit trail
+
+### 💉 Vitals Module
+
+* Nurse-driven inputs
+* Structured medical measurements
+
+### 💳 Billing Module
+
+* Invoice generation
+* Payment tracking
+* Revenue audit readiness
+
+### 📊 Metrics Module
+
+* Aggregated hospital KPIs using Sequelize complex queries
+* Patient trends
+* Operational insights
+
+### 👤 User Module
+
+* Staff management
+* Role assignment
+* Profile lifecycle
+
+### Audit Module
+* Compliance logging
+
+---
+
+## 🧪 Swagger API Testing (LIVE SYSTEM FEATURE)
+
+This project is fully testable via Swagger:
+Swagger UI - Live Testing
+👉 **Swagger UI (Live Testing & API Docs) direclty in the browser:** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+
+### Includes:
+
+* Live request execution
+* JWT authentication testing
+* RBAC enforcement validation
+* Schema-based request validation
+* Real database interaction
 
 ---
 
 ## 🧪 Testing Strategy
 
-* **Jest + Supertest**
-* Covers:
-
-  * Appointments
-  * Clinical Notes
-  * Vitals
-  * RBAC enforcement
-* Includes negative cases (permission denied, invalid input)
+* Jest + Supertest suite ready in **/tests**
+* Integration tests across modules will run agains real PostgreSQL
+* RBAC negative testing
+* Authentication validation tests
+* **NB:**Swagger currently serves as the primary live testing interface
 
 ```bash
-npm test
-npm run test:watch
+npm test   # (will be full active soon)
 ```
 
 ---
 
-## 🚀 Local Development
+## 🚀 Deployment Architecture
 
-### Prerequisites
+### Backend (Render)
 
-* Node.js ≥ 20
-* PostgreSQL ≥ 15
-* npm ≥ 9
+* Node.js service
+* PostgreSQL database
+* Auto CI/CD deployment
 
-```bash
-git clone https://github.com/olubusade/emr-suite-backend.git
-cd emr-suite-backend
-npm install
-cp .env.local.dev .env
-npm run migrate
-npm run seed
-npm run dev
-```
+### Frontend (Vercel)
 
-Server: `http://localhost:5000`
+* Angular/Ionic SPA
+* API-connected to backend
 
 ---
 
-## 🐳 Docker Support
-
-### Development
+## 📁 Project Structure (DDD IMPLEMENTATION)
 
 ```bash
-npm run docker:up:dev
-npm run docker:seed:dev
+docker/
+logs/
+src/
+├── config/
+├── constants/
+├── modules/
+│   ├── appointment/
+│   ├── patient/
+│   ├── clinical-note/
+│   ├── vital/
+│   ├── billing/
+│   ├── metrics/
+│   ├── user/
+│   └── audit/
+├── shared/
+│   ├── middlewares/
+│   ├── validators/
+│   ├── utils/
+│   └── constants/
+├── seed/
+├── tests/
+├── .env.docker.dev
+├── .env.local.dev
+├── .env.prod
+├── app.js
+└── server.js
 ```
-
-### Production
-
-```bash
-npm run docker:up:prod
-npm run docker:seed:prod
-```
-
-Multi-stage builds ensure:
-
-* Small image size
-* Faster deployments
-* Production-only dependencies
 
 ---
 
-## 🔁 CI/CD (GitHub Actions)
+## 🐳 Docker, DevOps & Infrastructure
 
-* Runs on every **push & PR**
-* Pipeline:
-
-  1. Spin up PostgreSQL
-  2. Run migrations & seeds
-  3. Execute Jest test suite
-
-✔ Prevents broken deployments
-✔ Enforces discipline
+* Dockerized environment (dev + prod) - **docker-compose.dev.yml** + **docker-compose.prod.yml**
+* Multi-stage builds for optimized images
+* Seed automation via **init.sql**
+* CI pipeline (GitHub Actions)
+* Environment-based config system
 
 ---
 
-## 👤 About the Author
+## 🔁 CI/CD Pipeline
+
+Every push triggers:
+
+1. PostgreSQL spin-up
+2. Migration execution
+3. Seed execution
+4. Jest test suite
+5. Build validation
+
+---
+
+## 👤 About the Engineer
 
 **Busade Adedayo**
-Senior Software Engineer (Healthcare Systems)
+Senior Backend Engineer (Healthcare Systems)
 
-* 5+ years building production EMR systems
-* Strong focus on backend architecture & security
-* Experience with real hospital workflows
-* Passionate about scalable, maintainable systems
+* 8+ years of professional software engineering experience, including **4+ years full-time** building and maintaining production Electronic Medical Records (EMR) systems and **3+ years** as a consultant to a leading EMR solutions provider.
+* Strong focus on scalable **enterprise solution architecture**, clinical workflow optimization, auditability, and production reliability.
+* Experience with hospital-grade workflows
+* AWS Cloud Practitioner certified and currently preparing for the **AWS Solutions Architect Associate** certification.
+* Broad experience across backend systems, cloud architecture, and enterprise software solutions.
 
 ---
 
 ## 📜 License
 
-MIT © 2025 — Busade Adedayo
+MIT © 2026 — Busade Adedayo
 
+---
+
+## 🚀 Final Note
+
+This system was intentionally designed to demonstrate:
+
+> **“How I think in real production healthcare systems — not just how I build APIs.”**
+
+It combines **strong architectural decisions** (DDD modular structure, intelligent Docker entrypoint, granular RBAC) with **production-grade tooling**:
+
+- Sequelize for complex ORM queries
+- Winston for structured logging
+- Prometheus for observability
+- Docker with database readiness checks
+- Comprehensive testing infrastructure (Jest + Supertest + Swagger)
+
+Explore the live Swagger UI and test the system yourself.
 ---

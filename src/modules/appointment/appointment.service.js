@@ -127,6 +127,7 @@ export async function getAppointmentById(id) {
       appointmentDate: appt.appointmentDate,
       appointmentTime: appt.appointmentTime,
       durationMinutes: appt.durationMinutes,
+      type: appt.type,
       reason: appt.reason,
       notes: appt.notes,
       status: appt.status,
@@ -236,6 +237,7 @@ export async function updateAppointment(id, updates) {
 
     if ('reason' in updates) appt.reason = updates.reason;
     if ('notes' in updates) appt.notes = updates.notes;
+    if ('type' in updates) appt.notes = updates.type;
     if (updates.status) appt.status = updates.status;
 
     if (updates.staffId) {
@@ -299,6 +301,7 @@ function formatAppointment(appt) {
     appointmentTime: plain.appointmentTime,
     createdAt:plain.createdAt,
     reason: plain.reason,
+    type: plain.type,
     status: plain.status,
     notes: plain.notes,
     patient: plain.patient ? {

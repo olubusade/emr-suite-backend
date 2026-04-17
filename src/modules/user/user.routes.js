@@ -4,47 +4,84 @@ import { authRequired } from '../../shared/middlewares/auth.middleware.js';
 import { authorize } from '../../shared/middlewares/permission.middleware.js';
 import { PERMISSIONS } from '../../constants/index.js';
 import { asyncHandler } from '../../shared/utils/asyncHandler.js';
-
+import { validate } from '../../shared/utils/validation.js';
+import {
+  userUpdateProfileSchema,
+  userCreateSchema,
+  userUpdateSchema,
+  uuidParamSchema
+} from '../../shared/validation/index.js';
 
 const router = express.Router();
 
 /**
- * =========================
- * AUTHENTICATED USER ROUTES
- * =========================
+ * =====================================================
+ * AUTH GATE (ALL USER ROUTES PROTECTED)
+ * =====================================================
  */
-
 router.use(authRequired);
+
+/**
+ * =====================================================
+ * SELF SERVICE (CURRENT USER)
+ * =====================================================
+ * These endpoints are for the logged-in user only
+ */
 
 /**
  * @swagger
  * /users/me:
  *   get:
  *     summary: Get current user profile
- *     tags: [Users]
+ *     description: Returns authenticated user profile
+ *     tags: [Users - Self Service]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         $ref: '#/components/schemas/ApiResponse'
+ *         description: Success
+ *       401:
+ *         description: Unauthorized
  */
-router.get('/me', asyncHandler(userController.getProfile));
+router.get(
+  '/me',
+  asyncHandler(userController.getProfile)
+);
 
 /**
  * @swagger
  * /users/me:
  *   patch:
  *     summary: Update current user profile
- *     tags: [Users]
+ *     description: Update logged-in user's profile
+ *     tags: [Users - Self Service]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserUpdateProfile'
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
  */
-router.patch('/me', asyncHandler(userController.updateProfile));
+router.patch(
+  '/me',
+  validate(userUpdateProfileSchema),
+  asyncHandler(userController.updateProfile)
+);
 
 /**
- * =========================
- * ADMIN / STAFF MANAGEMENT
- * =========================
+ * =====================================================
+ * ADMIN STAFF MANAGEMENT
+ * =====================================================
+ * Restricted to users with proper permissions
  */
 
 /**
@@ -52,9 +89,15 @@ router.patch('/me', asyncHandler(userController.updateProfile));
  * /users:
  *   get:
  *     summary: List all staff users
- *     tags: [Users]
+ *     description: Retrieve all staff users
+ *     tags: [Users - Admin]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ *       403:
+ *         description: Forbidden
  */
 router.get(
   '/',
@@ -67,26 +110,70 @@ router.get(
  * /users:
  *   post:
  *     summary: Create a new user
- *     tags: [Users]
+ *     description: Admin creates a new staff user
+ *     tags: [Users- Admin]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserCreate'
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *       400:
+ *         description: Bad request
+ *       403:
+ *         description: Forbidden
  */
 router.post(
   '/',
   authorize(PERMISSIONS.USER_CREATE),
+  validate(userCreateSchema),
   asyncHandler(userController.registerUser)
 );
+
+/**
+ * =====================================================
+ * ADMIN USER MANAGEMENT (BY ID)
+ * =====================================================
+ */
 
 /**
  * @swagger
  * /users/{id}:
  *   patch:
  *     summary: Update a user
- *     tags: [Users]
+ *     description: Update any user by ID (Admin only)
+ *     tags: [Users - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserUpdate'
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
  */
 router.patch(
   '/:id',
   authorize(PERMISSIONS.USER_UPDATE),
+  validate(userUpdateSchema),
   asyncHandler(userController.updateUser)
 );
 
@@ -95,11 +182,26 @@ router.patch(
  * /users/{id}:
  *   delete:
  *     summary: Delete a user
- *     tags: [Users]
+ *     description: Delete user by ID
+ *     tags:  [Users - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Deleted successfully
+ *       403:
+ *         description: Forbidden
  */
 router.delete(
   '/:id',
   authorize(PERMISSIONS.USER_DELETE),
+  validate(uuidParamSchema),
   asyncHandler(userController.deleteUser)
 );
 

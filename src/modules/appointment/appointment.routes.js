@@ -100,6 +100,7 @@ router.get(
  *             staffId: "550e8400-e29b-41d4-a716-446655440001"
  *             appointmentDate: "2026-04-12"
  *             appointmentTime: "10:30"
+ *             type: "consultation"
  *             reason: "Routine checkup"
  *     responses:
  *       201:

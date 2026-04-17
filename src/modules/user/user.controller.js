@@ -55,11 +55,11 @@ export async function updateProfile(req, res) {
   const user = await userService.updateUserProfile(req.user.id, req.body);
   
   await attachAudit(req, { 
-          action: 'PROFILE_SELF_UPDATE', 
-          entity: 'user', 
-          entityId: user.id, 
-          metadata: { updatedFields: Object.keys(req.body) }
-      });
+      action: 'PROFILE_SELF_UPDATE', 
+      entity: 'user', 
+      entityId: user.id, 
+      metadata: { updatedFields: Object.keys(req.body) }
+  });
   return ok(res, {
     id: user.id,
     email: user.email,
@@ -105,11 +105,11 @@ export async function updateUser(req, res) {
   const user = await userService.updateUser(req.params.id, req.body);
 
   await attachAudit(req, { 
-          action: 'ADMIN_USER_UPDATE', 
-          entity: 'user', 
-          entityId: user.id, 
-          metadata: { adminId: req.user.id, changes: req.body }
-      });
+    action: 'ADMIN_USER_UPDATE', 
+    entity: 'user', 
+    entityId: user.id, 
+    metadata: { adminId: req.user.id, changes: req.body }
+  });
   return ok(res, {
     id: user.id,
     email: user.email,
