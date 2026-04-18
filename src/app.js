@@ -59,7 +59,23 @@ app.use(cors({
   origin: '*', // Adjust this for production to specific domains
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] 
 }));
+
 app.use(express.json({ limit: '1mb' }));
+/**
+ * Global payload error
+ */
+
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      status: 'ERROR',
+      message: 'Invalid JSON payload',
+      details: err.message
+    });
+  }
+
+  next(err);
+});
 app.use(express.urlencoded({ extended: true }));
 
 /**

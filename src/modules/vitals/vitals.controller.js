@@ -1,6 +1,7 @@
 import { ok, created, error, fail, notFound } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import * as vitalsService from './vitals.service.js';
+import ApiError from '../../shared/utils/ApiError.js';
 
 /**
  * VITALS CONTROLLER
@@ -23,7 +24,7 @@ export async function getVital(req, res) {
   
   const vital = await vitalsService.getVitalById(req.params.id);
   if (!vital) {
-    return next(new Error('Vitals record not found'));
+    throw new ApiError('Vitals record not found');
   }
   
   return ok(res, vital);
@@ -34,7 +35,7 @@ export async function getVitalsByPatient(req, res) {
   
   const { patientId } = req.params;
   if (!patientId) { 
-      return next(new Error('Patient ID is required'));
+     throw new ApiError('Patient ID is required');
   } 
 
   const history = await vitalsService.getVitalsByPatientId(patientId);
@@ -90,6 +91,10 @@ export async function createVital(req, res) {
  * Update a vital entry (Correcting a typo)
  */
 export async function updateVital(req, res) {
+  const vitalId = req.params.id;
+  if (!vitalId) {
+    throw new ApiError(400, 'Missing Vital Id');
+  }
   const vital = await vitalsService.updateVital(req.params.id, req.body);
 
   // Audit Trail
@@ -110,7 +115,7 @@ export async function deleteVital(req, res) {
   
   const vitalId = req.params.id;
   if (!vitalId) { 
-      return next(new Error('Vital Id is required'));
+      throw new ApiError('Vital Id is required');
   }
   await vitalsService.deleteVital(vitalId);
 

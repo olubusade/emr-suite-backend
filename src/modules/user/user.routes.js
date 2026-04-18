@@ -115,14 +115,66 @@ router.patch(
  * @swagger
  * /users:
  *   get:
- *     summary: List all staff users
- *     description: Retrieve all staff users
+ *     summary: List staff users
+ *     description: Retrieve staff users with optional filters (role, active status, pagination, search)
  *     tags: [Users - Admin]
  *     security:
  *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: query
+ *         name: roleKey
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: doctor
+ *         description: Filter users by role key
+ *
+ *       - in: query
+ *         name: active
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *           example: true
+ *         description: Filter by active status
+ *
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *
+ *       - in: query
+ *         name: pageSize
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 20
+ *
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: john
+ *         description: Search users by full name
+ *
  *     responses:
  *       200:
- *         description: Success
+ *         description: Users retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
+ *
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */

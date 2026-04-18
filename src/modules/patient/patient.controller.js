@@ -2,6 +2,7 @@ import * as patientService from './patient.service.js';
 import { ok, created, error } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js'; // Assuming this middleware is correctly defined
 import { AUDIT_ACTIONS } from '../../constants/index.js';
+import ApiError from '../../shared/utils/ApiError.js';
 
 /**
  * PATIENT CONTROLLER
@@ -88,7 +89,7 @@ export async function updatePatient(req, res) {
   
   const { id } = req.params;
   if (!id) { 
-    return next(new Error('Patient ID is required'));
+    throw new ApiError('Patient ID is required');
   }
 
   const before = await patientService.getPatientById(id);
@@ -113,7 +114,7 @@ export async function updatePatient(req, res) {
 export async function deletePatient(req, res) {
   const { id } = req.params;
   if (!id) { 
-    return next(new Error('Patient ID is required'));
+    throw new ApiError('Patient ID is required');
   }
   await patientService.deletePatient(id);
   
@@ -134,7 +135,7 @@ export async function deletePatient(req, res) {
 export async function getPatient(req, res) {
   const { id } = req.params;
   if (!id) { 
-    return next(new Error('Patient ID is required'));
+    throw new ApiError('Patient ID is required');
   }
   const patient = await patientService.getPatientById(id);
 

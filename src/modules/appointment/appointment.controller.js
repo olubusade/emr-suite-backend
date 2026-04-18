@@ -2,6 +2,7 @@ import { ok, created, error,deleted } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import * as appointmentService from './appointment.service.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * APPOINTMENT CONTROLLER
  * Orchestrates clinical scheduling while maintaining a clean 
@@ -36,8 +37,11 @@ export async function listAppointments(req, res) {
  * Get a single appointment by ID
  */
 export async function getAppointment(req, res) {
-  
-    const appointment = await appointmentService.getAppointmentById(req.params.id);
+  const apptId = req.params.id;
+    if (!apptId) {
+      throw new ApiError(400, 'Missing appointment id');
+    }
+    const appointment = await appointmentService.getAppointmentById(apptId);
     
     return ok(res, appointment);
 }
@@ -68,9 +72,12 @@ export async function createAppointment(req, res) {
  * Update appointment details
  */
 export async function updateAppointment(req, res) {
-
+    const apptId = req.params.id;
+    if (!apptId) {
+      throw new ApiError(400, 'Missing appointment id');
+    }
     req.body.updatedBy = req.user.id;
-    const result = await appointmentService.updateAppointment(req.params.id, req.body);
+    const result = await appointmentService.updateAppointment(apptId, req.body);
 
     await attachAudit(req, {
       action: 'UPDATE_APPOINTMENT',
@@ -88,8 +95,11 @@ export async function updateAppointment(req, res) {
  * Mark an appointment as cancelled
  */
 export async function cancelAppointment(req, res) {
-  
-    const appointment = await appointmentService.cancelAppointment(req.params.id);
+    const apptId = req.params.id;
+    if (!apptId) {
+      throw new ApiError(400, 'Missing appointment id');
+    }
+    const appointment = await appointmentService.cancelAppointment(apptId);
 
     await attachAudit(req, {
       action: AUDIT_ACTIONS.APPOINTMENT_CANCEL,

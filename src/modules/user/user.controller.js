@@ -1,6 +1,7 @@
 import * as userService from './user.service.js';
 import { ok, created, fail, error } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * USER CONTROLLER
  * Manages identity lifecycle for hospital staff.
@@ -33,8 +34,11 @@ export async function registerUser(req, res) {
  * Get profile of the currently authenticated user
  */
 export async function getProfile(req, res) {
-  
-  const user = await userService.getUserProfile(req.user.id);
+  const userId = req.user.id;
+  if (!userId) { 
+        throw new ApiError(400, 'Missing user id');
+    }
+  const user = await userService.getUserProfile(userId);
   if (!user) return fail(res, 'User not found', 404);
 
   return ok(res, {
@@ -51,8 +55,11 @@ export async function getProfile(req, res) {
  * Self-service: Update own profile details
  */
 export async function updateProfile(req, res) {
-  
-  const user = await userService.updateUserProfile(req.user.id, req.body);
+  const userId = req.user.id;
+  if (!userId) { 
+        throw new ApiError(400, 'Missing user id');
+    }
+  const user = await userService.updateUserProfile(userId, req.body);
   
   await attachAudit(req, { 
       action: 'PROFILE_SELF_UPDATE', 
@@ -75,8 +82,14 @@ export async function listStaff(req, res) {
   
   const page = parseInt(req.query.page, 10) || 1;
   const pageSize = parseInt(req.query.pageSize, 10) || 20;
+  const active =
+    req.query.active !== undefined
+      ? req.query.active === 'true'
+      : undefined;
+  const roleKey = req.query.roleKey;
+  const search = req.query.search?.trim();
 
-  const data = await userService.listStaff({ ...req.query, page, pageSize });
+  const data = await userService.listStaff({ page, pageSize, roleKey, active, search });
 
   const items = data.items.map(user => ({
     id: user.id,
@@ -101,8 +114,11 @@ export async function listStaff(req, res) {
  * Admin: Force update a user account (e.g., changing roles or deactivating)
  */
 export async function updateUser(req, res) {
-  
-  const user = await userService.updateUser(req.params.id, req.body);
+  const userId = req.params.id;
+  if (!userId) {
+    throw new ApiError(400, 'user id is missing');
+  }
+  const user = await userService.updateUser(userId, req.body);
 
   await attachAudit(req, { 
     action: 'ADMIN_USER_UPDATE', 
@@ -122,8 +138,11 @@ export async function updateUser(req, res) {
  * Admin: Remove a user (Soft delete or deactivation recommended in Service)
  */
 export async function deleteUser(req, res) {
-  
-  userService.deleteUser(req.params.id);
+   const userId = req.params.id;
+  if (!userId) {
+    throw new ApiError(400, 'user id is missing');
+  }
+  userService.deleteUser(userId);
   await attachAudit(req, { 
     action: 'ADMIN_USER_DELETE', 
     entity: 'user', 

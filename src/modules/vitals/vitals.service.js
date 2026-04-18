@@ -35,11 +35,16 @@ export async function listVitals({ limit = 200 }) {
   const safeLimit = Math.min(Number(limit) || 200, 1000);
   
    try { 
-      return Vital.findAll({
+     return Vital.findAll({
         limit: safeLimit,
+        
         order: [['reading_at', 'DESC']],
         include: [
-          { model: Patient, attributes: ['id', 'firstName', 'lastName'] },
+          {
+            model: Patient,
+            as:'patient',
+            attributes: ['id', 'firstName', 'lastName']
+          },
           { model: User, as: 'nurse', attributes: ['id', 'fName', 'lName'] },
           { model: Appointment, attributes: ['id', 'status'] } 
         ],

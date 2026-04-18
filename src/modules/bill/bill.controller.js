@@ -3,6 +3,7 @@ import { ok, created, error } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import { logger } from '../../config/logger.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * BILL CONTROLLER
  * Manages the Revenue Cycle Management (RCM) workflow.
@@ -36,6 +37,7 @@ export async function listBills(req, res) {
     // Map DB snake_case to camelCase
     const rows = result.rows.map((bill) => ({
       id: bill.id,
+      notes:bill.notes,
       patientId: bill.patientId,
       details:bill.details,
       appointmentId: bill.appointmentId,
@@ -124,15 +126,19 @@ export async function createBill(req, res) {
  * Update bill status or details (e.g. paid status update)
  */
 export async function updateBill(req, res) {
-  
-    if (!req.params.id) { 
-       return next(new Error('Missing billing id'));
-    }
+   
     const billId = req.params.id;
+    if (!billId) {
+      throw new ApiError(400, 'Missing billing id');
+    }
+    const userId = req.user.id;
+    if (!userId) {
+      throw new ApiError(400, 'Missing user id');
+    }
     const before = await billService.getBill(billId);
     // TECH LOG: Track the start of the operation
     logger.info(`Attempting to update Bill ${billId} by user ${userId}`);
-    const bill = await billService.updateBill(billId, req.body,req.user.id);
+    const bill = await billService.updateBill(billId, req.body,userId);
 
     await attachAudit(req, { 
       action: AUDIT_ACTIONS,
@@ -160,10 +166,13 @@ export async function updateBill(req, res) {
  */
 export async function getBill(req, res) {
   
-    const billId = req.params.id;
+  const billId = req.params.id;
+  if (!billId) {
+    throw new ApiError(400, 'Missing billing id');
+  }
     const bill = await billService.getBill(billId);
 
-    if (!bill) return error(res, 404, 'Bill not found');
+    if (!bill) throw new ApiError(404, 'Bill not found');
 
     await attachAudit(req, { 
       action: AUDIT_ACTIONS.BILL_READ, 
@@ -180,7 +189,9 @@ export async function getBill(req, res) {
 export async function deleteBill(req, res) {
   
     const billId = req.params.id;
-
+    if (!billId) {
+      throw new ApiError(400, 'Missing billing id');
+    }
      await attachAudit(req, { 
       action: AUDIT_ACTIONS.BILL_CANCEL, 
       entity: 'bill', 

@@ -3,6 +3,7 @@ import { ok, created, noContent, fail, error } from '../../shared/utils/response
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
 import { logger } from '../../config/logger.js';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * ROLE & PERMISSION CONTROLLER
  * Manages the global security matrix including Roles, Permissions, 
@@ -36,6 +37,9 @@ export async function getAllPermissions(req, res) {
 export async function getRolePermissions(req, res) {
     
     const { roleId } = req.params;
+    if (!roleId) { 
+        throw new ApiError(400, 'Missing role id');
+    }
     const permissions = await roleService.getRolePermissions(roleId);
 
     // Assuming roleService.getRolePermissions returns an array of { id, key, name }
@@ -47,6 +51,9 @@ export async function getRolePermissions(req, res) {
  */
 export async function updateRolePermissions(req, res) {
     const { roleId } = req.params;
+    if (!roleId) { 
+        throw new ApiError(400, 'Missing role id');
+    }
     const { permissionKeys } = req.body; // Array of keys, e.g., ['PATIENT_READ', 'USER_CREATE']
 
     await roleService.updateRolePermissions(roleId, permissionKeys);
@@ -90,7 +97,7 @@ export async function deleteRole(req, res) {
     
     const { roleId } = req.params;
     if (!roleId) { 
-        return next(new Error('Role ID is required'));
+        throw new ApiError(400, 'Missing role id');
     }
     await roleService.deleteRole(roleId);
     
@@ -141,7 +148,7 @@ export const updateUserRoles = async (req, res) => {
     
     const { userId } = req.params;
     if (!userId) { 
-        return next(new Error('User ID is required'));
+      throw new ApiError('User ID is required');
     }
     // Expects an array of roleKeys: { roleKeys: ["ADMIN", "NURSE"] }
     const { roleKeys } = req.body;
@@ -161,7 +168,7 @@ export const getUserPermissions = async (req, res) => {
     
     const { userId } = req.params;
     if (!userId) {
-        return next(new Error('User ID is required'));
+        throw new ApiError('User ID is required');
     }
     const permissions = await roleService.getUserPermissions(userId);
     res.status(200).json(permissions);
@@ -171,7 +178,7 @@ export const updateUserPermissions = async (req, res) => {
     
     const { userId } = req.params;
     if (!userId) {
-        return next(new Error('User ID is required'));
+        throw new ApiError('User ID is required');
         }
     // Expects an array of permissionKeys: { permissions: ["PATIENT_READ", "USER_CREATE"] }
     const { permissions } = req.body;
@@ -209,7 +216,7 @@ export const attachRoleToUser = async (req, res) => {
     
     const { userId } = req.params;
     if (!userId) {
-        return next(new Error('User ID is required'));
+        throw new ApiError('User ID is required');
     }
     // Assuming the request body is { roleKey: "DOCTOR" }
     const { roleKey } = req.body; 

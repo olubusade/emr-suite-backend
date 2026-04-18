@@ -178,6 +178,9 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Patient vitals retrieved
  */
 router.get(
   '/appointment/:appointmentId',
@@ -202,11 +205,11 @@ router.get(
  * 
  *     parameters:
  *       - in: path
- *       name: id
- *       required: true
- *       schema:
- *         type: string
- *         format: uuid
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *
  *   responses:
  *    200:

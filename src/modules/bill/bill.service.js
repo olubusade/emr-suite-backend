@@ -16,7 +16,7 @@ export async function listBills({ page = 1, pageSize = 50, search }) {
   const limitInt = Number(pageSize) || 20;
   const offset = (pageInt - 1) * limitInt;
 
- let globalWhere = {};
+  let globalWhere = {};
 
   const searchTerm = typeof search === 'string' ? search.trim() : '';
 
@@ -108,10 +108,10 @@ export async function getPendingBills({ page, pageSize, search = '' }) {
   // Build search filter for Patient name or phone
   const searchFilter = search ? {
     [Op.or]: [
-      { '$patient.first_name$': { [Op.iLike]: `%${search}%` } },
-      { '$patient.last_name$': { [Op.iLike]: `%${search}%` } },
-      { '$patient.phone$': { [Op.iLike]: `%${search}%` } }
-    ]
+        { '$patient.firstName$': { [Op.iLike]: `%${search}%` } },
+        { '$patient.lastName$': { [Op.iLike]: `%${search}%` } },
+        { '$patient.phone$': { [Op.iLike]: `%${search}%` } }
+      ]
   } : {};
 
     try {
@@ -125,7 +125,8 @@ export async function getPendingBills({ page, pageSize, search = '' }) {
           {
             model: Patient,
             as: 'patient',
-            attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+            attributes: ['id', 'firstName', 'lastName', 'phone', 'email'],
+            required: !!search 
           },
           {
             model: User,
@@ -137,11 +138,6 @@ export async function getPendingBills({ page, pageSize, search = '' }) {
             as: 'clinicalNote',
             attributes: ['id', 'diagnosis']
           }
-          /* {
-            model: Bill,
-            as: 'bill',
-            attributes: ['id', 'amount', 'status']
-          } */
         ],
         limit: pageSize,
         offset: offset,
@@ -164,50 +160,57 @@ export async function getPendingBills({ page, pageSize, search = '' }) {
  * Get a single bill by ID
  */
 export async function getBill(id) {
-  const bill = await Bill.findByPk(id, {
-    include: [
-      {
-        model: Patient,
-        as: 'patient',
-        required: true,
-        attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
-      },
-      {
-        model: User,
-        as: 'creator',
-        required:false,
-        attributes: ['id', 'fName', 'lName'] 
-      },
-      {
-        model: Appointment,
-        as: 'appointment',
-        attributes: ['id', 'reason', 'appointmentDate','appointmentTime', 'totalAmount', 'amountPaid', 'paymentStatus'],
-        include: [{
-          model: ClinicalNote,
-          as: 'clinicalNote',
-          required: false,
-          attributes: ['id', 'diagnosis', 'assessment', 'plan']
-        }]
-      }
-    ]
-  });
+  try { 
+    const bill = await Bill.findByPk(id, {
+      include: [
+        {
+          model: Patient,
+          as: 'patient',
+          required: true,
+          attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+        },
+        {
+          model: User,
+          as: 'creator',
+          required:false,
+          attributes: ['id', 'fName', 'lName'] 
+        },
+        {
+          model: Appointment,
+          as: 'appointment',
+          attributes: ['id', 'reason', 'appointmentDate','appointmentTime', 'totalAmount', 'amountPaid', 'paymentStatus'],
+          include: [{
+            model: ClinicalNote,
+            as: 'clinicalNote',
+            required: false,
+            attributes: ['id', 'diagnosis', 'assessment', 'plan']
+          }]
+        }
+      ]
+    });
 
-  if (!bill) return null;
+    if (!bill) throw new ApiError(404, 'Bill record not found');;
 
-  return {
-    id: bill.id,
-    patientId: bill.patientId,
-    appointmentId: bill.appointmentId,
-    appointment:bill.appointment,
-    amount: bill.amount,
-    status: bill.status,
-    paymentMethod: bill.paymentMethod,
-    dueDate: bill.dueDate,
-    notes: bill.notes,
-    createdAt: bill.createdAt,
-    updatedAt: bill.updatedAt,
-    patient: bill.patient ? { id: bill.patient.id, fullName: bill.patient.firstName + ' ' + bill.patient.lastName } : null,
-  };
+    return {
+      id: bill.id,
+      patientId: bill.patientId,
+      appointmentId: bill.appointmentId,
+      appointment:bill.appointment,
+      amount: bill.amount,
+      status: bill.status,
+      paymentMethod: bill.paymentMethod,
+      dueDate: bill.dueDate,
+      notes: bill.notes,
+      createdAt: bill.createdAt,
+      updatedAt: bill.updatedAt,
+      patient: bill.patient ? { id: bill.patient.id, fullName: bill.patient.firstName + ' ' + bill.patient.lastName } : null,
+    };
+  }
+  catch (err) {
+    reportError(err, { service: 'BillingService', operation: 'getBill' });
+    throw err;
+  }
+  
 }
 
 /**
@@ -216,8 +219,6 @@ export async function getBill(id) {
 
 export async function createBill(data) {
   const transaction = await sequelize.transaction();
- 
-  
 
   try {
     const { 

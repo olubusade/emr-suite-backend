@@ -2,6 +2,7 @@ import * as authService from './auth.service.js';
 import { ok, error } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * AUTH CONTROLLER
  * Orchestrates the secure entry and exit points for the EMR suite.
@@ -52,7 +53,11 @@ export async function refresh(req, res) {
  * POST /api/v1/auth/logout
  */
 export async function logout(req, res) {
-    const userId = req.user?.id;
+  const userId = req.user?.id;
+    
+    if (!userId) {
+      throw new ApiError(400, 'Missing user id');
+    }
     
     // Revokes the refresh token in the database
     await authService.logout(userId, req.body.refreshToken);
@@ -74,7 +79,7 @@ export async function changePassword(req, res) {
   const userId = req.user.id;
   
   if (!userId) { 
-    return next(new Error('User Id is required'));
+    throw new ApiError(400, 'Missing user id');
   }
   
   await authService.changePassword(userId, req.body.oldPassword, req.body.newPassword);

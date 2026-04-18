@@ -18,7 +18,11 @@ export async function listClinicalNotes({ limit = 200 }) {
         order: [['createdAt', 'DESC']],
         limit: safeLimit,
         include: [
-          { model: Patient, attributes: ['id', 'full_name'] },
+          {
+            model: Patient,
+            as:'patient',
+            attributes: ['id', 'firstName', 'lastName', 'fullName']
+          },
           { model: User, as: 'doctor', attributes: ['id', 'full_name', 'email'] }
         ]
   });

@@ -59,7 +59,6 @@ export const updateVitalSchema = z.object({
     notes: z.string().optional()
   })
 });
-
 export const getVitalsSchema = z.object({
   params: z.object({ id: uuid() })
 });

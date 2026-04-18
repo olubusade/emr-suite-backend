@@ -53,8 +53,9 @@ export const listBillSchema = z.object({
 
 export const getPendingBillsSchema = z.object({
   query: z.object({
-    page: z.string().optional().transform(Number),
-    limit: z.string().optional().transform(Number),
+    page: z.preprocess((v) => Number(v) || 1, z.number().int().min(1)),
+    pageSize: z.preprocess((v) => Number(v) || 20, z.number().int().min(1).max(100)),
+    limit: z.preprocess((v) => Number(v) || 20, z.number().int().min(1).max(100)),
     search: z.string().optional(), // For searching patient name/phone
     startDate: z.string().datetime().optional(),
   })

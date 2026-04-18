@@ -39,19 +39,6 @@ const router = express.Router();
  *     security:
  *       - bearerAuth: []
  *
- *     parameters:
- *       - in: query
- *         name: patientId
- *         schema:
- *           type: string
- *           format: uuid
- *
- *       - in: query
- *         name: staffId
- *         schema:
- *           type: string
- *           format: uuid
- *
  *     responses:
  *       200:
  *         description: Clinical notes retrieved successfully
@@ -70,7 +57,6 @@ router.get(
   '/',
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
-  validate(listClinicalNotesSchema),
   asyncHandler(clinicalController.listClinicalNotes)
 );
 
@@ -182,7 +168,7 @@ router.get(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/CreateClinicalNote'
+ *             $ref: '#/components/schemas/ClinicalNote'
  *
  *     responses:
  *       201:

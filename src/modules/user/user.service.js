@@ -125,15 +125,21 @@ export async function updateUserProfile(userId, payload) {
 /**
  * List users with pagination and optional search
  */
-export async function listStaff({ page = 1, pageSize = 20, search,roleKey }) {
+export async function listStaff({ page = 1, pageSize = 20, roleKey, active, search }) {
+  
   const pageInt = Number(page) || 1;
   const limitInt = Number(pageSize) || 20;
   const offset = (pageInt - 1) * limitInt;
 
-  const where = search
-    ? { fullName: { [Op.iLike]: `%${search}%` } } // 🔑 FIX: Using imported Op
-    : {};
-  
+  const where = {
+    ...(search && {
+      fullName: { [Op.iLike]: `%${search}%` }
+    }),
+    ...(active !== undefined && {
+      active
+    })
+  };
+  console.log('where::', where);
   // NOTE: The WHERE clause should filter by role KEY, not name, for robustness.
   // Assuming STAFF_ROLES_ARRAY contains the role keys (e.g., ['DOCTOR', 'NURSE'])
   const roleWhere = roleKey 
@@ -142,7 +148,7 @@ export async function listStaff({ page = 1, pageSize = 20, search,roleKey }) {
 
   try {
          const { count, rows } = await User.findAndCountAll({
-    where: { ...where, active: true },
+    where,
     include: [
     {
       model: Role,

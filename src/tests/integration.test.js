@@ -75,7 +75,7 @@ describe('USER MODULE', () => {
 
   test('list users', async () => {
     const res = await request(app)
-      .get('/api/users/list_staff')
+      .get('/api/users')
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.statusCode).toBe(200);

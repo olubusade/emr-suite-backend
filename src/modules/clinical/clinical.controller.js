@@ -2,6 +2,7 @@ import { ok, created, error } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import * as clinicalService from './clinical.service.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * CLINICAL CONTROLLER
  * Manages patient encounter documentation. 
@@ -22,10 +23,13 @@ export async function listClinicalNotes(req, res) {
  * Get single clinical note by ID
  */
 export async function getClinicalNotes(req, res) {
-  
-  const clinical = await clinicalService.getClinicalNotesById(req.params.id);
+  const noteId = req.params.id;
+  if (!noteId) {
+      throw new ApiError(400, 'Missing clinical note id');
+  }
+  const clinical = await clinicalService.getClinicalNotesById(noteId);
   if (!clinical) {
-    return next(new Error('Clinical note not found'));
+    throw new ApiError('Clinical note not found');
   }
   return ok(res, clinical);
 }
@@ -35,7 +39,7 @@ export async function getClinicalNotes(req, res) {
   export async function getClinicalNotesByPatientId(req, res) {
     const { patientId } = req.params;
     if (!patientId) {
-      return next(new Error('Patient ID is required'));
+      throw new ApiError('Patient ID is required');
     } 
     const history = await clinicalService.getClinicalNotesByPatientId(patientId);
     return ok(res, history, 'Patient medical history retrieved');
@@ -48,7 +52,7 @@ export async function getClinicalNotesByAppointment (req, res) {
   const { appointmentId } = req.params;
   const { patientId } = req.query;
   if (!appointmentId) { 
-    return next(new Error('Appointment ID is required'));
+    throw new ApiError('Appointment ID is required');
   }
 
   if (!patientId) { 
@@ -91,6 +95,9 @@ export async function createClinicalNote(req, res) {
 export async function updateClinicalNote(req, res) {
   
   const noteId = req.params.id;
+  if (!noteId) {
+      throw new ApiError(400, 'Missing clinical note id');
+  }
   const before = await clinicalService.getClinicalNotesById(noteId);
   const clinical = await clinicalService.updateClinicalNote(noteId, req.body);
 
@@ -111,8 +118,12 @@ export async function updateClinicalNote(req, res) {
  * Delete clinical note (Soft Delete recommended in Service layer)
  */
 export async function deleteClinicalNote(req, res) {
+  const noteId = req.params.id;
+  if (!noteId) {
+      throw new ApiError(400, 'Missing clinical note id');
+  }
+  const clinical = await clinicalService.deleteClinicalNote(noteId);
   
-  const clinical = await clinicalService.deleteClinicalNote(req.params.id);
   // Audit Trail
   await attachAudit(req, {
     action: AUDIT_ACTIONS.CLINICAL_NOTE_DELETE,

@@ -4,16 +4,30 @@ import { z, uuid } from '../core.js';
 
 export const createClinicalNoteSchema = z.object({
   body: z.object({
-    // These should be verified in the controller using a middleware or database lookup
     patientId: z.string().uuid(),
     appointmentId: z.string().uuid(),
-    
-    diagnosis: z.string().min(3).max(1000).optional(),
-    subjective: z.string().optional(),
-    objective: z.string().optional(),
-    assessment: z.string().optional(),
-    plan: z.string().optional(),
-  }),
+
+    diagnosis: z.string()
+      .min(3, 'Diagnosis must be at least 3 characters')
+      .max(1000)
+      .optional(),
+
+    subjective: z.string()
+      .max(2000)
+      .optional(),
+
+    objective: z.string()
+      .max(2000)
+      .optional(),
+
+    assessment: z.string()
+      .max(2000)
+      .optional(),
+
+    plan: z.string()
+      .max(2000)
+      .optional(),
+  })
 });
 
 export const updateClinicalNoteSchema = z.object({
