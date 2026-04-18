@@ -19,6 +19,8 @@ function requireEnv(key, fallback) {
   }
   return value;
 }
+// Detect environment
+const isProduction = (process.env.NODE_ENV || process.env.ENV) === 'production';
 
 /**
  * CORE DATABASE CONFIGURATION
@@ -31,10 +33,15 @@ const dbConfig = {
   host: requireEnv('DB_HOST', 'localhost'),
   port: Number(requireEnv('DB_PORT', '5432')),
   dialect: 'postgres',
-  dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false }
-  },
-  logging: false, // Set to console.log in dev if debugging raw SQL queries
+  dialectOptions: isProduction
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      }
+    : {},
+  logging: !isProduction && console.log, // Set to console.log in dev if debugging raw SQL queries
   define: {
     timestamps: true, // Standardizes the inclusion of createdAt/updatedAt
     underscored: true, // Maps camelCase models to snake_case table columns (Postgres standard)

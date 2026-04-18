@@ -29,33 +29,68 @@
 
 > Here are key views from the system
 
-### 1. Swagger API Documentation & Testing Interface
+### 1. Swagger API Documentation & Testing Interface (System Overview)
+* Shows all endpoints grouped by module
 
 ![Swagger](./docs/screenshots/swagger.png)
 
-### 2. Authentication & JWT Flow (Login)
+### 2. Authentication (Login + JWT Token Flow)
+* Login request
+* JWT returned
+* Authorization header usage
 
 ![Auth](./docs/screenshots/auth-flow.png)
 
-### 3. Appointment Management (Doctor/Nurse View)
+### 3. Patient Module (CRUD + Profile View)
+* Patient registration
+* Patient list
+* Patient detail view
+
+### 4. Appointment System (Workflow)
+* Create appointment
+* Update appointment
 
 ![Appointments](./docs/screenshots/appointments.png)
 
-### 4. Patient Registration & Profile
 
 ![Patients](./docs/screenshots/patients.png)
 
-### 5. Clinical Notes - Create, Read, Update (Doctor-only)
+### 5. Clinical Notes - Create, Read, Update (Doctor View)
+* Create note
+* Read note
+* Update restriction (if finalized)
 
 ![Clinical Notes](./docs/screenshots/clinical-notes.png)
 
 ### 6. Billing & Payments Module (Receptionist & Admin only)
+* Pending bills
+* Paid bills
+* Invoice breakdown
 
 ![Billing](./docs/screenshots/billing.png)
 
-### 7. Metrics & Observability Dashboard (Prometheus-backed)
+### 7. Metrics & Observability Dashboard
+* Prometheus metrics endpoint
+* Performance counters
+* Request tracking
 
 ![Metrics](./docs/screenshots/metrics.png)
+
+---
+## 8. Docker System Running
+* Backend container
+* PostgreSQL container
+* Logs showing startup + seed success
+
+![Docker](./docs/screenshots/docker-running.png)
+
+## 9. Seed log output
+* Staff creation
+* RBAC mapping
+* Patient seeding
+* Billing sync
+
+![Seed](./docs/screenshots/seed-success.png)
 
 ---
 
@@ -522,13 +557,143 @@ src/
 
 ---
 
-## 🐳 Docker, DevOps & Infrastructure
+### 🐳 Docker, DevOps & Infrastructure
 
 * Dockerized environment (dev + prod) - **docker-compose.dev.yml** + **docker-compose.prod.yml**
 * Multi-stage builds for optimized images
 * Seed automation via **init.sql**
 * CI pipeline (GitHub Actions)
 * Environment-based config system
+
+---
+## 🐳 Docker Execution & Meaning of Scripts
+
+This project uses Docker to ensure environment parity across development, testing, and production.
+
+### ⚙️ Core Idea
+
+Instead of running Node.js manually, the system runs:
+
+**Docker → Node App → PostgreSQL → Migrations → Seed → API Ready**
+
+## 📦 Docker Scripts Explained
+# 🟢 Development Stack
+
+1. Start Full Dev Environment
+```js  
+  npm run docker:up:dev
+```
+**What it does:**
+
+Runs the entire backend stack in development mode.
+
+Internally executes:
+
+```js
+docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev up --build -d
+npm run docker:migrate:dev
+npm run docker:seed:dev
+```
+
+**Meaning:**
+**Step	                Description**
+* up --build -d	--      Builds and starts containers in background
+* migrate	              Runs Sequelize DB migrations
+* seed	                Populates dev database with demo data
+
+2. Run Migrations Only
+```js
+npm run docker:migrate:dev
+```
+
+**Meaning:**
+* Spins up backend container
+* Executes:
+```js
+sequelize db:migrate
+```
+* Ensures DB schema is up to date
+  
+3. Run Seeders Only
+```js
+npm run docker:seed:dev
+```
+**Meaning:**
+* Injects:
+    - Staff accounts
+    - Patients
+    - Appointments
+    - Clinical notes
+    - Bills
+    - Payments
+  
+4. Stop Dev Environment
+```js
+npm run docker:down:dev
+```
+**Meaning:**
+Stops and removes all containers for dev stack.
+
+5. Clean Orphan Containers
+```js
+npm run docker:remove-orphans:dev
+```
+**Meaning:**
+Removes leftover Docker containers from previous builds.
+
+6. View Logs
+```js
+npm run docker:logs:dev
+```
+**Meaning:**
+Streams real-time logs from backend container:
+
+* API requests
+* Errors
+* DB logs
+* Seed logs
+---
+  
+# 🟣 Production Stack
+
+7. Start Production Stack
+```js
+npm run docker:up:prod
+```
+**Meaning:**
+Runs production-ready backend:
+
+**build → start → migrate → seed**
+8. Production Migrations
+```js
+npm run docker:migrate:prod
+```
+**Meaning:**
+Applies schema changes safely in production DB.
+
+9. Production Seeder
+```js
+npm run docker:seed:prod
+```
+**Meaning:**
+Seeds production-safe baseline data (if enabled).
+
+10. Stop Production Stack
+```js
+npm run docker:down:prod
+```
+11.  Production Logs
+```js
+npm run docker:logs:prod
+```
+---
+
+# 🧠 Why This Docker Setup is Strong
+* Ensures zero manual setup
+* Fully reproducible environments
+* CI/CD compatible
+* Prevents **works on my machine**
+* Matches real enterprise deployment pipelines
 
 ---
 
