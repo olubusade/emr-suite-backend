@@ -180,7 +180,7 @@ export async function updateClinicalNote(id, updates) {
 export async function deleteClinicalNote(id) {
   try {
         const clinical = await ClinicalNote.findByPk(id);
-        if (!clinical) throw new Error('Clinical note not found');
+        if (!clinical) throw new ApiError(404, 'Clinical note not found');
 
         await clinical.destroy();
         return clinical;  

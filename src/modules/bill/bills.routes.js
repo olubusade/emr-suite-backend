@@ -162,6 +162,14 @@ r.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateBill'
+ *           example:
+ *             patientId: "550e8400-e29b-41d4-a716-446655440000"
+ *             appointmentId: "550e8400-e29b-41d4-a716-446655440001"
+ *             amount: 5000
+ *             status: "unpaid"
+ *             dueDate: "2026-04-20"
+ *             paymentMethod: "cash"
+ *             notes: "Initial billing"
  *
  *     responses:
  *       201:
@@ -222,7 +230,6 @@ r.post(
  *                   properties:
  *                     data:
  *                       $ref: '#/components/schemas/Bill'
- *
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *
@@ -276,6 +283,10 @@ r.get(
  *                   properties:
  *                     data:
  *                       $ref: '#/components/schemas/Bill'
+ *             example:
+ *               amount: 7000
+ *               status: "paid"
+ *               paymentMethod: "transfer"
  *
  *       400:
  *         description: Invalid request

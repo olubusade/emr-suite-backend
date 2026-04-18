@@ -46,7 +46,7 @@ export async function getRolePermissions(roleId) {
         });
 
         if (!role) {
-            throw new ApiError(`Role with ID ${roleId} not found.`, 404);
+            throw new ApiError(404,`Role with ID ${roleId} not found.`);
         }
         // Return an array of simple Permission objects: { id, key, name }
         return role.permissions;
@@ -114,7 +114,7 @@ export async function createRole(data) {
     const { key, name } = data;
     const existing = await Role.findOne({ where: { key } });
     if (existing) {
-        throw new ApiError(`Role key '${key}' already exists.`, 409);
+        throw new ApiError(409, `Role key '${key}' already exists.`);
     }
     return Role.create({ key, name });
 }
@@ -122,7 +122,7 @@ export async function createRole(data) {
 export async function deleteRole(roleId) {
     const result = await Role.destroy({ where: { id: roleId } });
     if (result === 0) {
-        throw new ApiError(`Role with ID ${roleId} not found.`, 404);
+        throw new ApiError(404, `Role with ID ${roleId} not found.`);
     }
     return true;
 }
@@ -131,7 +131,7 @@ export async function createPermission(data) {
     const { key, name } = data;
     const existing = await Permission.findOne({ where: { key } });
     if (existing) {
-        throw new HttpError(`Permission key '${key}' already exists.`, 409);
+        throw new HttpError(409, `Permission key '${key}' already exists.`);
     }
     return Permission.create({ key, name });
 }

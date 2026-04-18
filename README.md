@@ -246,6 +246,157 @@ export const asyncHandler = (fn) => (req, res, next) =>{
 
 ---
 
+## 🚨 Error Handling & Resilience Strategy
+
+This system implements a centralized, production-grade error handling architecture designed for predictability, observability, and frontend stability.
+
+**🧠 Philosophy**
+
+Errors are classified into two categories:
+
+**1.** Operational Errors (Expected) → Handled with ApiError
+**2.** System Errors (Unexpected) → Logged + safely masked
+
+## 🧩 Custom Error Class (ApiError) 
+```js
+export default class ApiError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+  }
+}
+```
+---
+## ⚙️ Usage in Services (Real Example)
+
+**From appointment.service.js:**
+```js
+if (Number.isNaN(when.getTime())) {
+  throw new ApiError(400, 'Invalid appointmentDate');
+}
+
+if (when < new Date(new Date().setHours(0,0,0,0))) {
+  throw new ApiError(400, 'appointmentDate cannot be in the past');
+}
+
+// Prevent double booking
+if (existing) {
+  throw new ApiError(409, 'Time slot already booked');
+}
+```
+
+---
+## 📚 Standard Error Types Used
+**Status Code	Type	Usage**
+* 400	Bad Request	Validation & business rules
+* 401	Unauthorized	Missing/invalid JWT
+* 403	Forbidden	RBAC permission failure
+* 404	Not Found	Missing resource
+* 409	Conflict	Duplicate records
+* 500	Internal Error	Unexpected failures
+
+---
+## 🔁 Error Flow (End-to-End)
+Controller → Service → throws ApiError
+                    ↓
+          Global Error Handler
+                    ↓
+        Standard JSON API Response
+---
+
+## 📦 Standard API Error Response
+```js
+{
+  "status": "ERROR",
+  "message": "appointmentDate cannot be in the past"
+}
+
+---
+
+```
+## 🛡️ Global Error Handling Layer
+All errors are intercepted centrally:
+---
+
+```js
+app.use((err, req, res, next) => {
+  reportError(err, {
+    path: req.path,
+    method: req.method,
+    userId: req.user?.id
+  });
+
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      status: 'ERROR',
+      message: err.message
+    });
+  }
+
+  return res.status(500).json({
+    status: 'ERROR',
+    message: 'Internal Server Error'
+  });
+});
+```
+---
+
+## 📊 Observability Integration
+
+All errors are:
+
+* Logged via Winston
+* Tracked with contextual metadata
+* Ready for Elasticsearch Logstash Kibana (ELK) / Loki / Datadog integration (Paid SaaS monitoring tool).
+---
+
+```js
+{
+  "level": "error",
+  "message": "appointmentDate cannot be in the past",
+  "userId": "acaba7ca-61d4...",
+  "path": "/api/appointments",
+  "method": "POST"
+}
+```
+---
+
+## 🎯 Why This Matters
+
+This approach ensures:
+
+✔ Consistent API responses for frontend
+✔ No sensitive error leakage
+✔ Easy debugging in production
+✔ Clear separation of concerns
+✔ Healthcare-grade auditability
+
+---
+
+## 🛡️ Security Event Monitoring (Refresh Token Protection)
+
+The system includes proactive detection of suspicious authentication behavior.
+
+```js
+logSecurityAlert('Possible Refresh Token Reuse Attack', {
+  userId: payload.id,
+  ip
+});
+```
+
+## 🔍 What it detects
+* Reuse of invalidated refresh tokens
+* Potential token theft
+* Session replay attempts
+  
+## 🧠 Security response strategy
+Event is logged with full context (userId, IP address)
+Refresh flow is blocked
+System maintains audit trail for investigation
+
+---
+
 ## 🧩 Domain Modules (DDD CORE)
 
 ### 🧍 Patient Module
@@ -396,7 +547,7 @@ Every push triggers:
 ## 👤 About the Engineer
 
 **Busade Adedayo**
-Senior Backend Engineer (Healthcare Systems)
+**Solution Architect & Senior Software Engineer** (Healthcare Systems)
 
 * 8+ years of professional software engineering experience, including **4+ years full-time** building and maintaining production Electronic Medical Records (EMR) systems and **3+ years** as a consultant to a leading EMR solutions provider.
 * Strong focus on scalable **enterprise solution architecture**, clinical workflow optimization, auditability, and production reliability.

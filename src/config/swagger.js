@@ -178,7 +178,7 @@ const options = {
             },
             entity: {
               type: 'string',
-              example: 'patient'
+              example: 'user'
             },
             entityId: {
               type: 'string',
@@ -379,6 +379,106 @@ const options = {
             }
           },
         },
+        CreateAppointment: {
+          type: 'object',
+          required: [
+            'patientId',
+            'staffId',
+            'appointmentDate',
+            'appointmentTime',
+            'type'
+          ],
+          properties: {
+            patientId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440000'
+            },
+            staffId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440001'
+            },
+            appointmentDate: {
+              type: 'string',
+              format: 'date',
+              example: '2026-04-12',
+              description: 'Must be today or a future date. Past dates are not allowed.'
+            },
+            appointmentTime: {
+              type: 'string',
+              example: '10:30'
+            },
+            type: {
+              type: 'string',
+              enum: ['consultation', 'follow_up', 'emergency', 'procedure'],
+              example: 'consultation'
+            },
+            reason: {
+              type: 'string',
+              example: 'Routine checkup',
+              nullable: true
+            },
+            notes: {
+              type: 'string',
+              nullable: true
+            }
+          }
+        },
+        UpdateAppointment: {
+          type: 'object',
+          description: 'Fields are optional. Only provided fields will be updated.',
+          properties: {
+            staffId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440001'
+            },
+            appointmentDate: {
+              type: 'string',
+              format: 'date',
+              example: '2026-04-12',
+              description: 'Must be today or a future date. Past dates are not allowed.'
+            },
+            appointmentTime: {
+              type: 'string',
+              example: '10:30'
+            },
+            type: {
+              type: 'string',
+              enum: ['consultation', 'follow_up', 'emergency', 'procedure'],
+              example: 'consultation'
+            },
+            status: {
+              type: 'string',
+              enum: [
+                'scheduled',
+                'checked_in',
+                'awaiting_vitals',
+                'vitals_taken',
+                'in_consultation',
+                'completed',
+                'canceled'
+              ],
+              example: 'checked_in',
+              description: 'Must follow allowed lifecycle transitions'
+            },
+            reason: {
+              type: 'string',
+              example: 'Routine checkup',
+              nullable: true
+            },
+            notes: {
+              type: 'string',
+              nullable: true
+            },
+            updatedBy: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440001'
+            },
+          }
+        },
         PaginatedAppointments: {
           type: 'object',
           properties: {
@@ -439,6 +539,85 @@ const options = {
             }
           },
         },
+        CreateBill: {
+          type: 'object',
+          required: ['patientId', 'appointmentId', 'amount'],
+          properties: {
+            patientId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440000'
+            },
+            appointmentId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440001'
+            },
+            amount: {
+              type: 'number',
+              example: 5000,
+              description: 'Must be a positive number'
+            },
+            status: {
+              type: 'string',
+              enum: ['unpaid', 'paid', 'partially_paid', 'cancelled'],
+              default: 'unpaid',
+              example: 'unpaid'
+            },
+            dueDate: {
+              type: 'string',
+              format: 'date',
+              example: '2026-04-20',
+              nullable: true
+            },
+            paymentMethod: {
+              type: 'string',
+              enum: ['cash', 'card', 'transfer', 'insurance'],
+              nullable: true,
+              example: 'cash'
+            },
+            notes: {
+              type: 'string',
+              maxLength: 500,
+              nullable: true,
+              example: 'Patient paid partially'
+            }
+          }
+        },
+        UpdateBill: {
+          type: 'object',
+          description: 'All fields are optional. Only provided fields will be updated.',
+          properties: {
+            amount: {
+              type: 'number',
+              example: 7000,
+              description: 'Must be a positive number'
+            },
+            status: {
+              type: 'string',
+              enum: ['unpaid', 'paid', 'partially_paid', 'cancelled'],
+              example: 'paid'
+            },
+            paymentMethod: {
+              type: 'string',
+              enum: ['cash', 'card', 'transfer', 'insurance'],
+              nullable: true,
+              example: 'transfer'
+            },
+            dueDate: {
+              type: 'string',
+              format: 'date',
+              example: '2026-04-25',
+              nullable: true
+            },
+            notes: {
+              type: 'string',
+              maxLength: 500,
+              nullable: true,
+              example: 'Updated after payment confirmation'
+            }
+          }
+        },
         PaginatedBills: {
           type: 'object',
           properties: {
@@ -470,7 +649,11 @@ const options = {
             patientId: { type: 'string', format: 'uuid' },
             appointmentId: { type: 'string', format: 'uuid' },
             staffId: { type: 'string', format: 'uuid' },
-
+            diagnosis: { 
+              type: 'string', 
+              example: 'Malaria',
+              nullable: true 
+            },
             subjective: { type: 'string', example: 'Patient complains of headache' },
             objective: { type: 'string', example: 'BP 120/80, Temp 37°C' },
             assessment: { type: 'string', example: 'Migraine' },
@@ -478,6 +661,60 @@ const options = {
 
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
+          }
+        },
+        CreateClinicalNote: {
+          type: 'object',
+          required: ['patientId', 'appointmentId'],
+          properties: {
+            patientId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440000'
+            },
+            appointmentId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440001'
+            },
+            diagnosis: {
+              type: 'string',
+              minLength: 3,
+              maxLength: 1000,
+              example: 'Migraine',
+              nullable: true
+            },
+            subjective: {
+              type: 'string',
+              example: 'Patient complains of headache',
+              nullable: true
+            },
+            objective: {
+              type: 'string',
+              example: 'BP 120/80, Temp 37°C',
+              nullable: true
+            },
+            assessment: {
+              type: 'string',
+              example: 'Migraine',
+              nullable: true
+            },
+            plan: {
+              type: 'string',
+              example: 'Prescribed analgesics',
+              nullable: true
+            }
+          }
+        },
+        UpdateClinicalNote: {
+          type: 'object',
+          description: 'All fields are optional. Only provided fields will be updated.',
+          properties: {
+            diagnosis: { type: 'string', nullable: true },
+            subjective: { type: 'string', nullable: true },
+            objective: { type: 'string', nullable: true },
+            assessment: { type: 'string', nullable: true },
+            plan: { type: 'string', nullable: true }
           }
         },
         PaginatedClinicalNotes: {
@@ -501,15 +738,7 @@ const options = {
             }
           }
         },
-        UpdateClinicalNote: {
-          type: 'object',
-          properties: {
-            subjective: { type: 'string' },
-            objective: { type: 'string' },
-            assessment: { type: 'string' },
-            plan: { type: 'string' }
-          }
-        },
+        
         /**
          * METRICS
          */
@@ -599,9 +828,202 @@ const options = {
               }
             }
           }
+        },
+        /**
+       * ROLES
+       */
+        Role: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            name: { type: 'string', example: 'admin' },
+            description: { type: 'string', example: 'System administrator' }
+          }
+        },
+
+        AttachRole: {
+          type: 'object',
+          required: ['roleId'],
+          properties: {
+            roleId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440000'
+            }
+          }
+        },
+
+        UpdateUserRoles: {
+          type: 'object',
+          required: ['roleIds'],
+          properties: {
+            roleIds: {
+              type: 'array',
+              items: {
+                type: 'string',
+                format: 'uuid'
+              },
+              example: [
+                "550e8400-e29b-41d4-a716-446655440000",
+                "550e8400-e29b-41d4-a716-446655440001"
+              ]
+            }
+          }
+        },
+        RolePermissionsUpdate: {
+          type: 'object',
+          required: ['permissions'],
+          properties: {
+            permissions: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: [
+                  'PATIENT_READ',
+                  'PATIENT_CREATE',
+                  'PATIENT_UPDATE',
+                  'PATIENT_DELETE',
+                  'APPOINTMENT_READ',
+                  'APPOINTMENT_CREATE',
+                  'APPOINTMENT_UPDATE'
+                ]
+              }
+            }
+          }
+        },
+        /**
+         * PERMISSION
+         */
+        Permission: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            key: { type: 'string', example: 'USER_CREATE' },
+            name: { type: 'string', example: 'Create User' }
+          }
+        },
+
+        PermissionArray: {
+          type: 'array',
+          items: {
+            $ref: '#/components/schemas/Permission'
+          }
+        },
+
+        UpdateUserPermissions: {
+          type: 'object',
+          required: ['permissionIds'],
+          properties: {
+            permissionIds: {
+              type: 'array',
+              items: {
+                type: 'string',
+                format: 'uuid'
+              },
+              example: [
+                "550e8400-e29b-41d4-a716-446655440000",
+                "550e8400-e29b-41d4-a716-446655440001"
+              ]
+            }
+          }
+        },
+
+        AttachPermission: {
+          type: 'object',
+          required: ['permissionId'],
+          properties: {
+            permissionId: {
+              type: 'string',
+              format: 'uuid',
+              example: "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        },
+        /**
+         * VITALS
+         */
+        Vital: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              patientId: { type: 'string', format: 'uuid' },
+              appointmentId: { type: 'string', format: 'uuid' },
+              readingAt: { type: 'string', format: 'date-time' },
+
+              temperature: { type: 'number', example: 36.6 },
+              heartRate: { type: 'integer', example: 72 },
+              bloodPressure: {
+                type: 'string',
+                example: '120/80',
+                description: 'Format: Systolic/Diastolic. Systolic must be greater than diastolic.'
+              },
+              respiratoryRate: { type: 'integer', example: 18 },
+              weightKg: { type: 'number', example: 70 },
+              heightCm: { type: 'number', example: 175 },
+              spo2: { type: 'number', example: 98 },
+              painScale: { type: 'integer', example: 2 },
+
+              notes: { type: 'string', nullable: true },
+
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' }
+            }
+        },
+
+        CreateVital: {
+          type: 'object',
+          required: ['patientId', 'appointmentId', 'readingAt'],
+          properties: {
+            patientId: { type: 'string', format: 'uuid' },
+            appointmentId: { type: 'string', format: 'uuid' },
+            readingAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'ISO 8601 datetime'
+            },
+
+            temperature: { type: 'number', minimum: 30, maximum: 45 },
+            heartRate: { type: 'integer', minimum: 30, maximum: 200 },
+
+            bloodPressure: {
+              type: 'string',
+              pattern: '^\\d{2,3}/\\d{2,3}$',
+              example: '120/80',
+              description: 'Systolic must be greater than diastolic'
+            },
+
+            respiratoryRate: { type: 'integer', minimum: 5, maximum: 60 },
+            weightKg: { type: 'number' },
+            heightCm: { type: 'number' },
+            spo2: {
+              type: 'number',
+              minimum: 0,
+              maximum: 100,
+              nullable: true
+            },
+            painScale: { type: 'integer', minimum: 0, maximum: 10 },
+            notes: { type: 'string', nullable: true }
+          }
+        },
+
+        UpdateVital: {
+          type: 'object',
+          properties: {
+            temperature: { type: 'number', minimum: 30, maximum: 45 },
+            heartRate: { type: 'integer', minimum: 30, maximum: 220 },
+            bloodPressure: {
+              type: 'string',
+              pattern: '^\\d{2,3}/\\d{2,3}$'
+            },
+            respiratoryRate: { type: 'integer', minimum: 5, maximum: 60 },
+            spo2: { type: 'number', minimum: 50, maximum: 100 },
+            weightKg: { type: 'number' },
+            heightCm: { type: 'number' },
+            notes: { type: 'string' }
+          }
         }
-        
       },
+      
       responses: {
           Unauthorized: {
             description: 'Authentication required',

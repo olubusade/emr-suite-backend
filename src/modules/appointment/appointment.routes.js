@@ -67,7 +67,7 @@ const router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PaginatedAppointments'
+ *               $ref: '#/components/schemas/PaginatedResponse'
  *       401:
  *         description: Unauthorized
  *       403:

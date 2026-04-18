@@ -2,6 +2,7 @@ import { Appointment, Patient, User } from '../../config/associations.js';
 import { calculateAge } from '../../shared/utils/myLibrary.js';
 import { reportError } from '../../shared/utils/monitoring.js';
 import { Op } from 'sequelize';
+import ApiError from '../../shared/utils/ApiError.js';
 /**
  * APPOINTMENT SERVICE
  * Handles database orchestration for scheduling.
@@ -117,7 +118,7 @@ export async function getAppointmentById(id) {
       ]
     });
 
-    if (!appt) throw new Error('Appointment not found');;
+    if (!appt) throw new ApiError(404, 'Appointment not found');
     
 
     return {
@@ -154,12 +155,13 @@ export async function createAppointment({
   notes 
 }) {
   const when = new Date(appointmentDate);
-  if (Number.isNaN(when.getTime())) throw new Error('Invalid appointmentDate');
   
-  // Note: For a demo, you might want to allow "today" even if 'when' 
-  // is a few minutes in the past due to server clock lag.
+  if (Number.isNaN(when.getTime())) {
+    throw new ApiError(400, 'Invalid appointmentDate');
+  }
+
   if (when < new Date(new Date().setHours(0,0,0,0))) {
-    throw new Error('appointmentDate cannot be in the past');
+    throw new ApiError(400, 'appointmentDate cannot be in the past');
   }
   //prevent double booking
   const existing = await Appointment.findOne({
@@ -171,7 +173,7 @@ export async function createAppointment({
   });
 
   if (existing) {
-    throw new Error('Time slot already booked');
+    throw new ApiError(400, 'Time slot already booked');
   }
   try {
     const [patient, staff] = await Promise.all([
@@ -179,8 +181,8 @@ export async function createAppointment({
       User.findByPk(staffId)
     ]);
 
-    if (!patient) throw new Error('Patient not found');
-    if (!staff) throw new Error('Staff not found');
+    if (!patient) throw new ApiError(404, 'Patient not found');
+    if (!staff) throw new ApiError(404, 'Staff not found');
 
     const appt = await Appointment.create({
       patientId,
@@ -208,7 +210,7 @@ export async function createAppointment({
 export async function updateAppointment(id, updates) {
   try {
     const appt = await Appointment.findByPk(id);
-    if (!appt) throw new Error('Appointment not found');
+    if (!appt) throw new ApiError(404, 'Appointment not found');
      // Capture current state BEFORE changes
     const previousData = appt.get({ plain: true });
 
@@ -218,7 +220,8 @@ export async function updateAppointment(id, updates) {
       const allowed = ALLOWED_STATUS_TRANSITIONS[currentStatus] || [];
 
       if (!allowed.includes(updates.status)) {
-        throw new Error(
+        throw new ApiError(
+          400,
           `Invalid status transition from ${currentStatus} to ${updates.status}`
         );
       }
@@ -242,12 +245,12 @@ export async function updateAppointment(id, updates) {
 
     if (updates.staffId) {
       const staff = await User.findByPk(updates.staffId);
-      if (!staff) throw new Error('Staff not found');
+      if (!staff) throw new ApiError(404, 'Staff not found');
       appt.staffId = updates.staffId;
     }
     if (updates.updatedBy) {
       const staff = await User.findByPk(updates.updatedBy);
-      if (!staff) throw new Error('Staff not found');
+      if (!staff) throw new ApiError(404, 'Staff not found');
       appt.updatedBy = updates.updatedBy;
     }
    
@@ -276,7 +279,7 @@ export async function updateAppointment(id, updates) {
 export async function cancelAppointment(id) {
   try {
     const appt = await Appointment.findByPk(id);
-    if (!appt) throw new Error('Appointment not found');
+    if (!appt) throw new ApiError(404, 'Appointment not found');
 
     appt.status = 'canceled';
     await appt.save();

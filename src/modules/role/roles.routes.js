@@ -56,7 +56,7 @@ r.get('/', authRequired, authorize(PERMISSIONS.ROLE_READ),
  *             properties:
  *               name:
  *                 type: string
- *                 example: doctor
+ *                 example: biller
  *     responses:
  *       201:
  *         description: Role created successfully
@@ -122,9 +122,16 @@ r.delete('/:roleId', authRequired, authorize(PERMISSIONS.ROLE_DELETE), asyncHand
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/PermissionArray'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.get('/permissions/master', authRequired, authorize(PERMISSIONS.PERMISSION_READ), asyncHandler(roleController.getAllPermissions));
 
@@ -149,7 +156,14 @@ r.get('/permissions/master', authRequired, authorize(PERMISSIONS.PERMISSION_READ
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/PermissionArray'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), asyncHandler(roleController.getRolePermissions));
 
@@ -158,9 +172,11 @@ r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_REA
  * /roles/{roleId}/permissions:
  *   put:
  *     summary: Update role permissions
+ *     description: Replaces all permissions assigned to a role
  *     tags: [Role Permissions]
  *     security:
  *       - bearerAuth: []
+ *
  *     parameters:
  *       - in: path
  *         name: roleId
@@ -168,21 +184,49 @@ r.get('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_REA
  *         schema:
  *           type: string
  *           format: uuid
+ *
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [permissions]
  *             properties:
  *               permissions:
  *                 type: array
+ *                 description: List of permission keys to assign
  *                 items:
  *                   type: string
  *                   example: PATIENT_READ
+ *                 example:
+ *                   - PATIENT_READ
+ *                   - PATIENT_CREATE
+ *                   - APPOINTMENT_READ
+ *
  *     responses:
  *       200:
- *         description: Role permissions updated
+ *         description: Role permissions updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *
+ *       400:
+ *         description: Invalid request
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.put('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), asyncHandler(roleController.updateRolePermissions));
 
@@ -195,7 +239,39 @@ r.put('/:roleId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPD
  * /users/{userId}/roles:
  *   get:
  *     summary: Retrieve user roles
+ *     description: Returns all roles assigned to a user
  *     tags: [User Roles]
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *
+ *     responses:
+ *       200:
+ *         description: User roles retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Role'
+ *
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.get('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_READ), asyncHandler(roleController.getUserRoles));
 
@@ -204,7 +280,35 @@ r.get('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_READ), as
  * /users/{userId}/roles:
  *   put:
  *     summary: Replace user roles
+ *     description: Overwrites all roles assigned to a user
  *     tags: [User Roles]
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserRoles'
+ *
+ *     responses:
+ *       200:
+ *         description: Roles updated successfully
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.put('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_UPDATE), asyncHandler(roleController.updateUserRoles));
 
@@ -213,7 +317,35 @@ r.put('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_UPDATE), 
  * /users/{userId}/roles:
  *   post:
  *     summary: Attach role to user
+ *     description: Adds a single role to a user
  *     tags: [User Roles]
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AttachRole'
+ *
+ *     responses:
+ *       200:
+ *         description: Role attached successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.post('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_CREATE), asyncHandler(roleController.attachRoleToUser));
 
@@ -227,6 +359,29 @@ r.post('/users/:userId/roles', authRequired, authorize(PERMISSIONS.ROLE_CREATE),
  *   get:
  *     summary: Retrieve user direct permissions
  *     tags: [User Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: User permissions retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/PermissionArray'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.get('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_READ), asyncHandler(roleController.getUserPermissions));
 
@@ -235,7 +390,30 @@ r.get('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSI
  * /users/{userId}/permissions:
  *   put:
  *     summary: Replace user permissions
+ *     description: Overwrites all existing permissions for a user
  *     tags: [User Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserPermissions'
+ *     responses:
+ *       200:
+ *         description: Permissions updated successfully
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.put('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_UPDATE), asyncHandler(roleController.updateUserPermissions));
 
@@ -244,7 +422,30 @@ r.put('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSI
  * /users/{userId}/permissions:
  *   post:
  *     summary: Attach permission to user
+ *     description: Adds a single permission to a user
  *     tags: [User Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AttachPermission'
+ *     responses:
+ *       200:
+ *         description: Permission attached successfully
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 r.post('/users/:userId/permissions', authRequired, authorize(PERMISSIONS.PERMISSION_CREATE), asyncHandler(roleController.attachPermissionToUser));
 

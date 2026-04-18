@@ -25,7 +25,6 @@ router.use(authRequired);
  * =====================================================
  * SELF SERVICE (CURRENT USER)
  * =====================================================
- * These endpoints are for the logged-in user only
  */
 
 /**
@@ -40,8 +39,23 @@ router.use(authRequired);
  *     responses:
  *       200:
  *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         id: { type: string }
+ *                         email: { type: string }
+ *                         fullName: { type: string }
+ *                         role: { type: string }
+ *                         active: { type: boolean }
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  */
 router.get(
   '/me',
@@ -66,10 +80,24 @@ router.get(
  *     responses:
  *       200:
  *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         id: { type: string }
+ *                         email: { type: string }
+ *                         fullName: { type: string }
+ *                         role: { type: string }
  *       400:
  *         description: Bad request
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  */
 router.patch(
   '/me',
@@ -81,7 +109,6 @@ router.patch(
  * =====================================================
  * ADMIN STAFF MANAGEMENT
  * =====================================================
- * Restricted to users with proper permissions
  */
 
 /**
@@ -97,7 +124,7 @@ router.patch(
  *       200:
  *         description: Success
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.get(
   '/',
@@ -111,7 +138,7 @@ router.get(
  *   post:
  *     summary: Create a new user
  *     description: Admin creates a new staff user
- *     tags: [Users- Admin]
+ *     tags: [Users - Admin]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -123,10 +150,24 @@ router.get(
  *     responses:
  *       201:
  *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         id: { type: string }
+ *                         email: { type: string }
+ *                         fullName: { type: string }
+ *                         role: { type: string }
  *       400:
  *         description: Bad request
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.post(
   '/',
@@ -166,9 +207,9 @@ router.post(
  *       200:
  *         description: User updated successfully
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: Not found
+ *         $ref: '#/components/responses/NotFound'
  */
 router.patch(
   '/:id',
@@ -183,7 +224,7 @@ router.patch(
  *   delete:
  *     summary: Delete a user
  *     description: Delete user by ID
- *     tags:  [Users - Admin]
+ *     tags: [Users - Admin]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -196,7 +237,7 @@ router.patch(
  *       204:
  *         description: Deleted successfully
  *       403:
- *         description: Forbidden
+ *         $ref: '#/components/responses/Forbidden'
  */
 router.delete(
   '/:id',

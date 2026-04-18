@@ -4,7 +4,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 /**
  * MONITORING UTILITY
  * Handles internal system alerts and error reporting.
- */
+*/
 
 export const reportError = (error, context = {}) => {
   
@@ -37,9 +37,14 @@ export const reportError = (error, context = {}) => {
 export const logSecurityAlert = (message, context = {}) => {
   
   const timestamp = new Date().toISOString();
+  const detail = {
+    timestamp,
+    message,
+    ...context,
+  };
 
   if (isProduction) {
-    logger.warn(`[SECURITY_ALERT] ${message}`, context);
+    logger.warn(`[SECURITY_ALERT] ${message}`, detail);
   } else {
     console.warn('\x1b[33m%s\x1b[0m', `⚠️ SECURITY ALERT: ${message}`);
     if (Object.keys(context).length > 0) console.table(context);

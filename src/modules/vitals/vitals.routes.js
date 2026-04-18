@@ -42,7 +42,14 @@ const router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Vital'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
@@ -105,6 +112,37 @@ router.post(
  *   get:
  *     summary: Retrieve patient vitals
  *     tags: [Vitals]
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *
+ *     responses:
+ *       200:
+ *         description: Patient vitals retrieved
  */
 router.get(
   '/patient/:patientId',
@@ -124,6 +162,22 @@ router.get(
  *   get:
  *     summary: Retrieve appointment vitals
  *     tags: [Vitals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: appointmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *
+ *       - in: query
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  */
 router.get(
   '/appointment/:appointmentId',
@@ -143,6 +197,29 @@ router.get(
  *   get:
  *     summary: Retrieve single vital
  *     tags: [Vitals]
+ *     security:
+ *       - bearerAuth: []
+ * 
+ *     parameters:
+ *       - in: path
+ *       name: id
+ *       required: true
+ *       schema:
+ *         type: string
+ *         format: uuid
+ *
+ *   responses:
+ *    200:
+ *       description: Vital retrieved successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             allOf:
+ *               - $ref: '#/components/schemas/ApiResponse'
+ *               - type: object
+ *                 properties:
+ *                   data:
+ *                     $ref: '#/components/schemas/Vital'
  */
 router.get(
   '/:id',
@@ -162,6 +239,27 @@ router.get(
  *   put:
  *     summary: Update vital
  *     tags: [Vitals]
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateVital'
+ *
+ *     responses:
+ *       200:
+ *         description: Vital updated successfully
  */
 router.put(
   '/:id',

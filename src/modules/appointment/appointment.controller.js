@@ -36,20 +36,17 @@ export async function listAppointments(req, res) {
  * Get a single appointment by ID
  */
 export async function getAppointment(req, res) {
-  try {
+  
     const appointment = await appointmentService.getAppointmentById(req.params.id);
     
     return ok(res, appointment);
-  } catch (err) {
-    next(err);
-  }
 }
 
 /**
  * Create a new appointment
  */
 export async function createAppointment(req, res) {
-  try {
+  
     const payload = {
       ...req.body,
       createdBy: req.user.id
@@ -65,16 +62,13 @@ export async function createAppointment(req, res) {
     });
 
     return created(res, appointment, 'Appointment scheduled successfully');
-  } catch (err) {
-    next(err);
-  }
 }
 
 /**
  * Update appointment details
  */
 export async function updateAppointment(req, res) {
-  try {
+
     req.body.updatedBy = req.user.id;
     const result = await appointmentService.updateAppointment(req.params.id, req.body);
 
@@ -88,16 +82,13 @@ export async function updateAppointment(req, res) {
     });
 
     return ok(res, result, 'Appointment updated successfully');
-  } catch (err) {
-    next(err);
-  }
 }
 
 /**
  * Mark an appointment as cancelled
  */
 export async function cancelAppointment(req, res) {
-  try {
+  
     const appointment = await appointmentService.cancelAppointment(req.params.id);
 
     await attachAudit(req, {
@@ -108,7 +99,4 @@ export async function cancelAppointment(req, res) {
     });
 
     return deleted(res, { id: appointment.id, status: appointment.status }, 'Appointment cancelled');
-  } catch (err) {
-     next(err);
-  }
 }
