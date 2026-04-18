@@ -24,7 +24,16 @@
 * 🌐**Frontend (Angular):** [https://your-frontend.vercel.app](https://your-frontend.vercel.app)
 
 ---
+## ⚠️ Live Demo Note
 
+The backend is hosted on Render Free Tier.
+It may take up to 30 seconds to respond on first request due to cold start.
+
+To test immediately:
+- Open Swagger UI - [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+- Use `/api/health` endpoint first - [https://your-backend.onrender.com/api/health](https://your-backend.onrender.com/api/health) 
+  
+---
 ## 📸 System Screenshots
 
 > Here are key views from the system
