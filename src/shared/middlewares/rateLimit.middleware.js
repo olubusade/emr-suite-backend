@@ -39,3 +39,13 @@ export const authLimiter = rateLimit({
     error: 'Too many login attempts, please try again later.'
   },
 });
+/**
+ * BTG Heartbeat limiter (1 minute window, 30 requests per user)
+ * This is to prevent excessive heartbeat requests from the client when a BTG session is active.
+ */
+
+export const btgHeartbeatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30, // 30 heartbeats per minute per user
+  message: 'Too many BTG heartbeat requests'
+});

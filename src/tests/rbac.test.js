@@ -35,7 +35,8 @@ describe('Cross-Module RBAC Enforcement', () => {
     { name: 'Patient', route: '/api/patients', permCreate: PERMISSIONS.PATIENT_CREATE },
     { name: 'Clinical Note', route: '/api/clinical-notes', permRead: PERMISSIONS.CLINICAL_NOTE_READ },
     { name: 'Audit', route: '/api/audits', permRead: PERMISSIONS.AUDIT_READ },
-    { name: 'Metrics', route: '/api/metrics', permRead: PERMISSIONS.METRICS_READ }
+    { name: 'Metrics', route: '/api/metrics', permRead: PERMISSIONS.METRICS_READ },
+    { name: 'btg', route: '/api/btg', permRead: PERMISSIONS.BREAK_GLASS_READ }
   ];
 
   modules.forEach(mod => {

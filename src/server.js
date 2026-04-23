@@ -23,13 +23,14 @@ async function start() {
      * In a production EMR, we rely on Migrations (Sequelize-CLI).
      * Automatic syncing is disabled here to prevent accidental data loss.
      */
-     /* await sequelize.sync({ alter: false }); */
+     /* await sequelize.sync({ alter: true }); */
 
     // 2. PORT BINDING
-    app.listen(config.port, () => {
-      logger.info(`Service Online: Busade's EMR Demo API running at http://localhost:${config.port}`, {
+    const PORT = config.port || 5000;
+    app.listen(PORT, () => {
+      logger.info(`Service Online: Busade's EMR Demo API running at http://localhost:${PORT}`, {
         environment: config.env,
-        port: config.port,
+        port: PORT,
         processId: process.pid
       });
     });

@@ -1,4 +1,4 @@
-import { Patient, Bill, User, Appointment,Role, sequelize } from '../../config/associations.js';
+import { Patient, Bill, User, Appointment, BTGRequest, BTGSession, Role, sequelize } from '../../config/associations.js';
 import { QueryTypes, where, Op } from 'sequelize';
 import { DateTime } from 'luxon';
 import { reportError } from '../../shared/utils/monitoring.js';
@@ -31,8 +31,7 @@ export async function getMetricsData({ months = 12 }) {
       [Op.between]: [todayStart, todayEnd]
     }
   };
-  // 1. Get Today's date in YYYY-MM-DD format to match your DB column
-  const todayISO = DateTime.now().toISODate();
+  
   try {
     const [
       patientsCount,
@@ -40,6 +39,10 @@ export async function getMetricsData({ months = 12 }) {
       appointmentsCount,  
       revenuePaid,
       revenuePending,
+      pendingBTGCount,
+      activeBTGSessionCount,
+      approvedBTGCount,
+      rejectedBTGCount,
       // 🏥 New Clinical Data
       todaysAppointments,
       patientGroups,
@@ -54,7 +57,20 @@ export async function getMetricsData({ months = 12 }) {
       Appointment.count(),
       Bill.sum('amount', { where: { status: 'paid' } }),
       Bill.sum('amount', { where: { status: 'pending' } }),
-
+      // BTG Metrics
+      BTGRequest.count({ where: { status: 'PENDING' } }),
+      BTGRequest.count({
+  where: {
+    status: 'APPROVED',
+    expiresAt: { [Op.gt]: new Date() }
+  }
+      }),
+      BTGRequest.count({
+  where: {
+    status: 'REJECTED'
+  }
+}),
+      BTGSession.count({ where: { status: 'ACTIVE' } }),
       // Fetch Today's Appointments with Patient Details
       Appointment.findAll({
         order: [['appointmentDate', 'DESC']], 
@@ -110,6 +126,10 @@ export async function getMetricsData({ months = 12 }) {
         appointments: Number(appointmentsCount) || 0,
         revenuePaid: Number(revenuePaid) || 0,
         revenuePending: Number(revenuePending) || 0,
+        pendingBTGCount: Number(pendingBTGCount) || 0,
+        activeBTGSessionCount: Number(activeBTGSessionCount) || 0,
+        approvedBTGCount: Number(approvedBTGCount) || 0,
+        rejectedBTGCount: Number(rejectedBTGCount) || 0,
       },
       clinical: {
         todaysAppointments,

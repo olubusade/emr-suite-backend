@@ -45,19 +45,19 @@ export async function getVitalsByPatient(req, res) {
  * Get vitals specifically captured during a specific visit
  */
 export async function getVitalsByAppointment(req, res) {
-  
+  console.log('getVitalsByAppointment called with params:', req.params, 'and query:', req.query);
   const { appointmentId } = req.params;
   const { patientId } = req.query;
   
   if (!appointmentId || !patientId) {
-      return next(new Error('Patient ID and Appointment ID are required'));
+      throw new ApiError('Patient ID and Appointment ID are required');
   }
 
   const data = { appointmentId, patientId };
   const history = await vitalsService.getVitalsByAppointment(data);
   
   if (!history) { 
-        return next(new Error('No vitals found for this specific visit'));
+      throw new ApiError('No vitals found for this specific visit');
   }
 
   return ok(res, history);

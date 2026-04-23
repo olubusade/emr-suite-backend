@@ -1,4 +1,4 @@
-import { sequelize, Role, Permission, User, Patient, Bill, Appointment, UserPermission, RolePermission, UserRole, Payment, Vital, ClinicalNote } from '../config/associations.js';
+import { sequelize, Role, Permission, User, Patient, Bill, Appointment, UserPermission, RolePermission, UserRole, Payment, Vital, ClinicalNote, BTGRequest } from '../config/associations.js';
 
 import { seedRoles } from './roles.seed.js';
 import { seedPermissions } from './permissions.seed.js';
@@ -13,6 +13,7 @@ import { seedPayments } from './payments.seed.js';
 import { seedVitals } from './vitals.seed.js';
 import { seedClinicalNotes } from './clinical.seed.js';
 import { computeBillStatus } from '../shared/utils/billCompute.js';
+import { seedBTGRequests } from './btg.seed.js';
 import { reportError } from '../shared/utils/monitoring.js';
 import { logger } from '../config/logger.js';
 async function seed() {
@@ -48,7 +49,14 @@ async function seed() {
 
     // 6. Seed Payments
     const payments = await seedPayments(Payment, bills);
+    // 7. Seed Break-The-Glass Requests (BTG)
+    await seedBTGRequests(BTGRequest, users, patients);
+
+    // Post-seed reconciliation: Sync bill statuses based on payments
+    
     await syncBillStatuses(Bill, bills, payments);
+
+    
     
     logger.info('Seed completed successfully', {
       service: 'database',

@@ -16,6 +16,8 @@ import { PaymentModel } from '../modules/bill/payment.model.js';
 import { UserRoleModel } from '../modules/user/userRole.model.js';
 import { VitalModel } from '../modules/vitals/vitals.model.js';
 import { ClinicalNoteModel } from '../modules/clinical/clinical.model.js';
+import { BTGRequestModel } from '../modules/btg/btg.model.js';
+import { BTGSessionModel } from '../modules/btg/btg-session/btg-session.model.js';
 
 // Initialize models
 const User = UserModel(sequelize, DataTypes);
@@ -33,6 +35,8 @@ const UserRole = UserRoleModel(sequelize, DataTypes);
 
 const Vital = VitalModel(sequelize, DataTypes);
 const ClinicalNote = ClinicalNoteModel(sequelize, DataTypes);
+const BTGRequest = BTGRequestModel(sequelize, DataTypes);
+const BTGSession = BTGSessionModel(sequelize, DataTypes);
 
 // ----------------- Associations -----------------
 // Multi-roles: User ↔ Role (through UserRole)
@@ -167,6 +171,66 @@ Appointment.hasOne(ClinicalNote, {
   as: 'clinicalNote'
 });
 
+// user → BTQRequest
+User.hasMany(BTGRequest, {
+  foreignKey: 'requestedBy',
+  as: 'btgRequests'
+});
+BTGRequest.belongsTo(User, {
+  foreignKey: 'requestedBy',
+  as: 'requester'
+});
+// Admin → BTQRequest
+User.hasMany(BTGRequest, {
+  foreignKey: 'approvedBy',
+  as: 'approvedBTGRequests'
+});
+
+BTGRequest.belongsTo(User, {
+  foreignKey: 'approvedBy',
+  as: 'approver'
+});
+// Patient → BTQRequest
+Patient.hasMany(BTGRequest, {
+  foreignKey: 'patientId',
+  as: 'btgRequests'
+});
+
+BTGRequest.belongsTo(Patient, {
+  foreignKey: 'patientId',
+  as: 'patient'
+});
+
+// Optional: specific clinical note - For future use if we want to link BTG requests to specific clinical notes
+ClinicalNote.hasMany(BTGRequest, {
+  foreignKey: 'clinicalNoteId',
+  as: 'btgRequests'
+});
+
+BTGRequest.belongsTo(ClinicalNote, {
+  foreignKey: 'clinicalNoteId',
+  as: 'clinicalNote'
+});
+
+// A BTG request can have many active viewers
+BTGRequest.hasMany(BTGSession, {
+  foreignKey: 'btgId',
+  as: 'sessions',
+  onDelete: 'CASCADE'
+});
+
+BTGSession.belongsTo(BTGRequest, {
+  foreignKey: 'btgId',
+  as: 'btg'
+});
+
+// Each session belongs to a user (doctor/nurse)
+BTGSession.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+
 // ----------------- Exports -----------------
 export {
   sequelize,
@@ -183,5 +247,7 @@ export {
   Appointment,
   Payment,
   Vital,
-  ClinicalNote
+  ClinicalNote,
+  BTGRequest,
+  BTGSession
 };

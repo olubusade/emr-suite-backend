@@ -3,6 +3,8 @@ import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import * as clinicalService from './clinical.service.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
 import ApiError from '../../shared/utils/ApiError.js';
+import { canAccessClinical } from '../../shared/access/access.engine.js';
+import app from '../../app.js';
 /**
  * CLINICAL CONTROLLER
  * Manages patient encounter documentation. 
@@ -35,15 +37,43 @@ export async function getClinicalNotes(req, res) {
 }
 /**
  * Get all clinical notes for a specific patient (Medical History)
+ * BTG + RBAC protected access
  */
-  export async function getClinicalNotesByPatientId(req, res) {
-    const { patientId } = req.params;
-    if (!patientId) {
-      throw new ApiError('Patient ID is required');
-    } 
-    const history = await clinicalService.getClinicalNotesByPatientId(patientId);
-    return ok(res, history, 'Patient medical history retrieved');
+export async function getClinicalNotesByPatientId(req, res) {
+  const { patientId } = req.params;
+
+  if (!patientId) {
+    throw new ApiError(400, 'Patient ID is required');
   }
+
+  // 🔐 ACCESS DECISION
+  const access = await canAccessClinical({
+    userId: req.user.id,
+    patientId
+  });
+
+  if (!access.allowed) {
+    throw new ApiError(403, 'Access denied to clinical records');
+  }
+
+  const history =
+    await clinicalService.getClinicalNotesByPatientId(patientId);
+
+  return ok(
+    res,
+    history,
+    'OK',
+    {
+      accessMode: access.btgActive ? 'BREAK_GLASS' : 'NORMAL',
+      btgActive: !!access.btgActive,
+      expiresAt: access.expiresAt,
+      grantedBy: access.grantedBy,
+      approvedAt: access.approvedAt,
+      btgId: access.btgId,
+      reason: access.reason
+    }
+  );
+}
 /**
  * Get clinical note for a specific appointment
  */

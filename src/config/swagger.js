@@ -39,6 +39,10 @@ const options = {
       {
         name: 'User Permissions',
         description: 'Direct permission assignment (PBAC override)',
+      },
+      {
+        name: 'Break Glass',
+        description: 'Emergency access control workflow'
       }
     ],
     servers: [
@@ -1021,7 +1025,123 @@ const options = {
             heightCm: { type: 'number' },
             notes: { type: 'string' }
           }
-        }
+        },
+       /**
+         * =========================
+         * BREAK THE GLASS
+         * =========================
+         */
+
+        BreakGlassRequest: {
+          type: 'object',
+          required: ['patientId', 'reason'],
+          properties: {
+            patientId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            reason: {
+              type: 'string',
+              example: 'Patient unconscious in ER, urgent access required'
+            }
+          }
+        },
+
+        // OPTIONAL (only if you want audit comment on approve)
+        BreakGlassApprove: {
+          type: 'object',
+          properties: {
+            comment: {
+              type: 'string',
+              example: 'Approved due to emergency ICU situation'
+            }
+          }
+        },
+
+        // OPTIONAL (reject reason override if not using path body)
+        BreakGlassReject: {
+          type: 'object',
+          properties: {
+            reason: {
+              type: 'string',
+              example: 'Not justified for emergency access'
+            }
+          }
+        },
+
+        BreakGlassResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            patientId: { type: 'string', format: 'uuid' },
+            status: { type: 'string', example: 'PENDING' },
+            reason: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' }
+          }
+        },
+
+        BreakGlassApprovalResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            status: { type: 'string', example: 'APPROVED' },
+            approvedBy: { type: 'string', format: 'uuid' },
+            approvedAt: { type: 'string', format: 'date-time' },
+            expiresAt: { type: 'string', format: 'date-time' }
+          }
+        },
+        /**
+         * BREAK THE GLASS SESSION
+         */
+          BTGSessionRegister: {
+            type: 'object',
+            required: ['btgId', 'patientId'],
+            properties: {
+              btgId: {
+                type: 'string',
+                format: 'uuid'
+              },
+              patientId: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          },
+
+          BTGSessionViewer: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string', format: 'uuid' },
+              name: { type: 'string', example: 'Nurse Amina Yusuf' },
+              role: { type: 'string', example: 'nurse' },
+              accessedAt: { type: 'string', format: 'date-time' },
+              lastSeenAt: { type: 'string', format: 'date-time' }
+            }
+        },
+        BTGSessionResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              patientId: { type: 'string', format: 'uuid' },
+              userId: { type: 'string', format: 'uuid' },
+              btgRequestId: { type: 'string', format: 'uuid' },
+              startTime: { type: 'string', format: 'date-time' },
+              expiresAt: { type: 'string', format: 'date-time' },
+              status: { type: 'string', example: 'ACTIVE' }
+            }
+          },
+
+          BTGSessionViewerList: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'array',
+                items: {
+                  $ref: '#/components/schemas/BTGSessionViewer'
+                }
+              }
+            }
+          }
       },
       
       responses: {

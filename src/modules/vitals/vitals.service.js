@@ -79,14 +79,16 @@ export async function getVitalById(id) {
  * Historical View: Get all past vitals for a patient to track trends
  */
 export async function getVitalsByPatientId(patientId) {
-  return await Vital.findAll({
+  const vitals = await Vital.findAll({
     where: { patientId },
     include: [
       { model: User, as: 'nurse', attributes: ['id', 'fName', 'lName'] },
       { model: Appointment, attributes: ['id', 'status', 'appointmentDate'] }
     ],
-    order: [['readingAt', 'DESC']] // 👈 Latest first for clinical history
+    order: [['readingAt', 'DESC']]
   });
+
+  return vitals.map(formatVital);
 }
 
 export async function getVitalsByAppointment(data) {
@@ -188,4 +190,65 @@ export async function deleteVital(id) {
     throw err;
   }
  
+}
+
+//----------------------------------------------------------------------------------
+//  HELPER FUNCTIONS
+//----------------------------------------------------------------------------------  
+function isToday(date) {
+  const d = new Date(date);
+  const today = new Date();
+
+  return (
+    d.getDate() === today.getDate() &&
+    d.getMonth() === today.getMonth() &&
+    d.getFullYear() === today.getFullYear()
+  );
+}
+
+function formatVital(vital) {
+  const appointment = vital.Appointment || {};
+  const status = appointment.status;
+
+  const isSameDay = isToday(vital.readingAt);
+
+  const isEditableStatus = ['vitals_taken', 'in_consultation'].includes(status);
+
+  const editable = isSameDay && isEditableStatus;
+   
+  const viewOnly = !editable;
+
+
+  return {
+    id: vital.id,
+    patientId: vital.patientId,
+    appointmentId: vital.appointmentId,
+    temperature: vital.temperature,
+    bloodPressure: vital.bloodPressure,
+    heartRate: vital.heartRate,
+    respiratoryRate: vital.respiratoryRate,
+    weightKg: vital.weightKg,
+    heightCm: vital.heightCm,
+    bmi: vital.bmi,
+    spo2: vital.spo2,
+    painScale: vital.painScale,
+    notes: vital.notes,
+    readingAt: vital.readingAt,
+
+    editable,
+    viewOnly,
+
+    appointment: {
+      id: appointment.id,
+      status: appointment.status,
+      appointmentDate: appointment.appointmentDate
+    },
+
+    nurse: vital.nurse
+      ? {
+          id: vital.nurse.id,
+          name: `${vital.nurse.fName} ${vital.nurse.lName}`
+        }
+      : null
+  };
 }

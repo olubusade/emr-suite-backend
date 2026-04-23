@@ -57,7 +57,7 @@ export async function getClinicalNotesById(id) {
  */
 export async function getClinicalNotesByPatientId(patientId) {
   try {
-    return await ClinicalNote.findAll({
+    const notes = await ClinicalNote.findAll({
       where: { patientId },
       include: [
         { 
@@ -72,7 +72,8 @@ export async function getClinicalNotesByPatientId(patientId) {
         }
       ],
       order: [['createdAt', 'DESC']]
-    });   
+    });  
+    return notes;
   } catch (err) {
     reportError(err, { service: 'ClinicalService', operation: 'getClinicalNotesByPatientId', patientId: patientId });
     throw err;

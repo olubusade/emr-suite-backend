@@ -14,6 +14,13 @@
 ![RBAC](https://img.shields.io/badge/Security-RBAC-red?style=flat-square)
 
 ---
+## 🎥 Live System Demo (Quick Walkthrough)
+
+> A short walkthrough showing authentication, appointment flow, billing, and clinical records.
+
+▶️ https://your-video-link.com
+
+---
 
 ## 🌍 Live Demo Links
 
@@ -26,12 +33,12 @@
 ---
 ## ⚠️ Live Demo Note
 
-The backend is hosted on Render Free Tier.
-It may take up to 30 seconds to respond on first request due to cold start.
+> The backend is hosted on Render Free Tier.
+> It may take up to 30 seconds to respond on first request due to cold start.
 
 To test immediately:
-- Open Swagger UI - [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
-- Use `/api/health` endpoint first - [https://your-backend.onrender.com/api/health](https://your-backend.onrender.com/api/health) 
+- Open Swagger UI - https://your-backend.onrender.com/api/docs
+- Use `/api/health` endpoint first - https://your-backend.onrender.com/api/health
   
 ---
 ## 📸 System Screenshots
@@ -54,15 +61,13 @@ To test immediately:
 * Patient registration
 * Patient list
 * Patient detail view
+![Patients](./docs/screenshots/patients.png)
 
 ### 4. Appointment System (Workflow)
 * Create appointment
 * Update appointment
 
 ![Appointments](./docs/screenshots/appointments.png)
-
-
-![Patients](./docs/screenshots/patients.png)
 
 ### 5. Clinical Notes - Create, Read, Update (Doctor View)
 * Create note
@@ -122,8 +127,7 @@ It implements real hospital workflows including:
 ---
 
 ## 🧠 Architecture Philosophy (DDD-Based Design)
-
-This system is structured around **business domains, not technical layers**.
+> This system is structured around **business domains, not technical layers**.
 
 ```
 src/
@@ -191,8 +195,7 @@ npm run seed
 
 exec npm run start
 ```
----
-Dockerfiles:**Dockerfile** (multi-stage with deps/runtime separation) and **Dockerfile.dev** (hot-reload with nodemon).
+> Dockerfiles:**Dockerfile** (multi-stage with deps/runtime separation) and **Dockerfile.dev** (hot-reload with nodemon).
 
 ---
 ### 🔐 2. Advanced RBAC & Permission System (Role & Permission-Based Access Control)
@@ -253,7 +256,7 @@ JavaScriptconst validatePatientEnums = (data) => {
 
 ### 5. Schema-first Validation (Zod)
 
-All requests are validated at the edge:
+> All requests are validated at the edge:
 
 ```js
 export const updateAppointmentSchema = z.object({
@@ -292,14 +295,18 @@ export const asyncHandler = (fn) => (req, res, next) =>{
 
 ## 🚨 Error Handling & Resilience Strategy
 
-This system implements a centralized, production-grade error handling architecture designed for predictability, observability, and frontend stability.
+> This system implements a centralized, production-grade error handling architecture designed for predictability, observability, and frontend stability.
+
+---
 
 **🧠 Philosophy**
 
-Errors are classified into two categories:
+> Errors are classified into two categories:
 
 **1.** Operational Errors (Expected) → Handled with ApiError
 **2.** System Errors (Unexpected) → Logged + safely masked
+
+---
 
 ## 🧩 Custom Error Class (ApiError) 
 ```js
@@ -355,10 +362,8 @@ Controller → Service → throws ApiError
   "status": "ERROR",
   "message": "appointmentDate cannot be in the past"
 }
-
----
-
 ```
+---
 ## 🛡️ Global Error Handling Layer
 All errors are intercepted centrally:
 ---
@@ -393,6 +398,7 @@ All errors are:
 * Logged via Winston
 * Tracked with contextual metadata
 * Ready for Elasticsearch Logstash Kibana (ELK) / Loki / Datadog integration (Paid SaaS monitoring tool).
+
 ---
 
 ```js
@@ -429,11 +435,15 @@ logSecurityAlert('Possible Refresh Token Reuse Attack', {
 });
 ```
 
+---
+
 ## 🔍 What it detects
 * Reuse of invalidated refresh tokens
 * Potential token theft
 * Session replay attempts
-  
+
+---
+
 ## 🧠 Security response strategy
 Event is logged with full context (userId, IP address)
 Refresh flow is blocked
@@ -490,8 +500,8 @@ System maintains audit trail for investigation
 
 ## 🧪 Swagger API Testing (LIVE SYSTEM FEATURE)
 
-This project is fully testable via Swagger:
-Swagger UI - Live Testing
+> This project is fully testable via Swagger:
+**Swagger UI - Live Testing**
 👉 **Swagger UI (Live Testing & API Docs) direclty in the browser:** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
 
 ### Includes:
@@ -577,11 +587,11 @@ src/
 ---
 ## 🐳 Docker Execution & Meaning of Scripts
 
-This project uses Docker to ensure environment parity across development, testing, and production.
+> This project uses Docker to ensure environment parity across development, testing, and production.
 
 ### ⚙️ Core Idea
 
-Instead of running Node.js manually, the system runs:
+> Instead of running Node.js manually, the system runs:
 
 **Docker → Node App → PostgreSQL → Migrations → Seed → API Ready**
 
@@ -594,7 +604,7 @@ Instead of running Node.js manually, the system runs:
 ```
 **What it does:**
 
-Runs the entire backend stack in development mode.
+> Runs the entire backend stack in development mode.
 
 Internally executes:
 
@@ -628,7 +638,7 @@ sequelize db:migrate
 npm run docker:seed:dev
 ```
 **Meaning:**
-* Injects:
+> Injects:
     - Staff accounts
     - Patients
     - Appointments
@@ -641,21 +651,21 @@ npm run docker:seed:dev
 npm run docker:down:dev
 ```
 **Meaning:**
-Stops and removes all containers for dev stack.
+> Stops and removes all containers for dev stack.
 
 5. Clean Orphan Containers
 ```js
 npm run docker:remove-orphans:dev
 ```
 **Meaning:**
-Removes leftover Docker containers from previous builds.
+> Removes leftover Docker containers from previous builds.
 
 6. View Logs
 ```js
 npm run docker:logs:dev
 ```
 **Meaning:**
-Streams real-time logs from backend container:
+> Streams real-time logs from backend container:
 
 * API requests
 * Errors
@@ -670,7 +680,7 @@ Streams real-time logs from backend container:
 npm run docker:up:prod
 ```
 **Meaning:**
-Runs production-ready backend:
+> Runs production-ready backend:
 
 **build → start → migrate → seed**
 8. Production Migrations
@@ -678,19 +688,20 @@ Runs production-ready backend:
 npm run docker:migrate:prod
 ```
 **Meaning:**
-Applies schema changes safely in production DB.
+> Applies schema changes safely in production DB.
 
 9. Production Seeder
 ```js
 npm run docker:seed:prod
 ```
 **Meaning:**
-Seeds production-safe baseline data (if enabled).
+> Seeds production-safe baseline data (if enabled).
 
 10. Stop Production Stack
 ```js
 npm run docker:down:prod
 ```
+
 11.  Production Logs
 ```js
 npm run docker:logs:prod
@@ -708,7 +719,7 @@ npm run docker:logs:prod
 
 ## 🔁 CI/CD Pipeline
 
-Every push triggers:
+> Every push triggers:
 
 1. PostgreSQL spin-up
 2. Migration execution
@@ -739,11 +750,11 @@ MIT © 2026 — Busade Adedayo
 
 ## 🚀 Final Note
 
-This system was intentionally designed to demonstrate:
+> This system was intentionally designed to demonstrate:
 
 > **“How I think in real production healthcare systems — not just how I build APIs.”**
 
-It combines **strong architectural decisions** (DDD modular structure, intelligent Docker entrypoint, granular RBAC) with **production-grade tooling**:
+> It combines **strong architectural decisions** (DDD modular structure, intelligent Docker entrypoint, granular RBAC) with **production-grade tooling**:
 
 - Sequelize for complex ORM queries
 - Winston for structured logging

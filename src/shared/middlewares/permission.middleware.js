@@ -11,13 +11,25 @@ export function authorize(permissionKey) {
     try {
       if (!req.user) throw new ApiError(401, 'Unauthorized');
 
-      const hasPermission = await rbacService.userHasPermission(req.user.id, permissionKey);
+      // Normalize to array (this is the ONLY change)
+      const permissions = Array.isArray(permissionKey)
+        ? permissionKey
+        : [permissionKey];
+
+      // ANY permission passes (backward compatible behavior)
+      const checks = await Promise.all(
+        permissions.map(p =>
+          rbacService.userHasPermission(req.user.id, p)
+        )
+      );
+
+      const hasPermission = checks.some(Boolean);
 
       if (!hasPermission) {
         await logAudit({
           userId: req.user.id,
           action: 'ACCESS_DENIED',
-          resource: permissionKey,
+          resource: permissions.join(','), // handles both cases
           status: 'FAILED',
           metadata: {
             ipAddress: req.ip,
@@ -29,6 +41,7 @@ export function authorize(permissionKey) {
 
         throw new ApiError(403, 'Forbidden: insufficient permissions');
       }
+
 
       next();
     } catch (err) {

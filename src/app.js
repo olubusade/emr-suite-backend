@@ -14,6 +14,9 @@ import {
   authLimiter
 } from './shared/middlewares/rateLimit.middleware.js';
 
+import { startBTGExpiryJob } from './jobs/btg-expiry.job.js';
+
+
 const app = express();
 /**
  * Allows single req.ip in production
@@ -125,6 +128,14 @@ app.use('/api', routes);
  * Must remain the final middleware to catch all upstream 'next(err)' calls.
  * This keeps the controller logic clean of try-catch blocks where possible.
  */
+
+/**
+ * 
+ * BTG CRON JOBS
+ * 
+*/
+//startBTGExpiryJob();
+// Note: The errorHandler middleware will handle all errors thrown in the route handlers and middlewares above it. It should be the last middleware added to the app.
 app.use(errorHandler);
 
 export default app;

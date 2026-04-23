@@ -2,6 +2,7 @@ import * as metricsService from './metrics.service.js';
 import { ok, error } from '../../shared/utils/response.js';
 import { register } from '../../shared/middlewares/metrics.middleware.js';
 import { logger } from '../../config/logger.js';
+import app from '../../app.js';
 /**
  * Get metrics data
  * GET /api/metrics
@@ -20,6 +21,10 @@ export async function getMetrics(req, res) {
       totalAppointments: totals.appointments,
       revenue: totals.revenuePaid,
       revenuePending: totals.revenuePending,
+      pendingBTGCount: totals.pendingBTGCount,
+      activeBTGSessionCount: totals.activeBTGSessionCount,
+      approvedBTGCount: totals.approvedBTGCount,
+      rejectedBTGCount: totals.rejectedBTGCount,
       monthlyPatientTrend: monthlyPatientTrend,
       prometheusMetrics: prometheusMetrics,
     };
