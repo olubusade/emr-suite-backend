@@ -8,51 +8,43 @@ import { logger } from '../config/logger.js';
  * Runs every 5 minutes
  */
 export function startBTGExpiryJob() {
-
-  cron.schedule('*/5 * * * *', async () => {
-    logger.info('Running BTG expiry job...')
-
+  cron.schedule('*/1 * * * *', async () => {
     const now = new Date();
 
     try {
-
-      // =========================
-      // 1. EXPIRE BTG REQUESTS
-      // =========================
-      const expiredRequests = await BTGRequest.update(
+      // expire BTG requests
+      const [reqCount] = await BTGRequest.update(
         { status: 'EXPIRED' },
         {
           where: {
             status: 'APPROVED',
-            expiresAt: {
-              [Op.ne]: null,
-              [Op.lt]: now
-            }
+            expiresAt: { [Op.lt]: now }
           }
         }
       );
-      logger.info(`BTG Requests expired: ${expiredRequests[0] || 0}`);
 
-      // =========================
-      // 2. EXPIRE BTG SESSIONS
-      // =========================
-      const expiredSessions = await BTGSession.update(
+      // expire sessions (inactivity-based)
+      const [sessionCount] = await BTGSession.update(
         { status: 'EXPIRED' },
         {
           where: {
             status: 'ACTIVE',
-            expiresAt: {
-                [Op.lt]:now
+            lastSeenAt: {
+              [Op.lt]: new Date(Date.now() - 10 * 60 * 1000)
             }
           }
         }
       );
-      logger.info(`BTG Sessions expired: ${expiredSessions[0] || 0}`);
+
+      logger.info(`BTG expired: requests=${reqCount}, sessions=${sessionCount}`);
 
     } catch (error) {
-      reportError(error, { service: 'BTG Session', operation: 'BTGCronJob'});
-      throw error;
+      reportError(error, {
+        service: 'BTG',
+        operation: 'expiry-cron'
+      });
     }
   });
+
   logger.info('BTG Expiry Cron Job started (every 5 minutes)');
 }

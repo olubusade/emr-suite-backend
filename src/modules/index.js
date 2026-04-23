@@ -11,6 +11,8 @@ import clinicalRoutes from './clinical/clinical.routes.js';
 import vitalsRoutes from './vitals/vitals.routes.js';
 import btgRoutes from './btg/btg.routes.js';
 import btgSessionRoutes from './btg/btg-session/btg-session.routes.js';
+import fhirRoutes from '../fhir/routes/fhir.routes.js';
+
 const router = express.Router();
 
 // -------------------- Auth -------------------- //
@@ -50,7 +52,7 @@ router.use('/btg', btgRoutes);
 router.use('/btg-session', btgSessionRoutes);
 
 // -------------------- FHIR Export -------------------- //
-// (Could be its own module if it grows, but for now it's just one endpoint in the patient module)
-
+// FHIR routes are grouped under /fhir for clarity and to apply specific middleware if needed.
+router.use('/fhir', fhirRoutes);
 
 export default router;

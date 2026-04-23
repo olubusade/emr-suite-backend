@@ -16,6 +16,7 @@ import {
 
 import { startBTGExpiryJob } from './jobs/btg-expiry.job.js';
 
+import { randomUUID } from 'crypto';
 
 const app = express();
 /**
@@ -59,11 +60,11 @@ app.use(morgan('combined', {
  */
 app.use(helmet());
 app.use(cors({ 
-  origin: '*', // Adjust this for production to specific domains
+  origin: process.env.CORS_ORIGIN || '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] 
 }));
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '5mb' }));
 /**
  * Global payload error
  */
@@ -89,6 +90,9 @@ app.use(rateLimiter); // Application-wide default
 app.use('/api/auth/register', createAccountLimiter);
 app.use('/api/auth/login', authLimiter);
 
+ // Protecting FHIR endpoints with stricter limits due to potential for heavy queries
+app.use('/api/fhir', rateLimiter);
+
 // Strict protection for core EMR domain resources
 const protectedResources = [
   '/api/bills', 
@@ -99,6 +103,16 @@ const protectedResources = [
   '/api/vitals'
 ];
 protectedResources.forEach(path => app.use(path, rateLimiter));
+
+// =========================
+// DOMAIN ROUTING
+// =========================
+// All business logic is modularized under /api for clarity and maintainability.
+app.use((req, res, next) => {
+  req.id = randomUUID();
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
 
 /**
  * 5. EXTERNAL DOCUMENTATION & MONITORING
@@ -134,7 +148,9 @@ app.use('/api', routes);
  * BTG CRON JOBS
  * 
 */
-//startBTGExpiryJob();
+if (process.env.ENABLE_CRON === 'true') {
+  startBTGExpiryJob();
+}
 // Note: The errorHandler middleware will handle all errors thrown in the route handlers and middlewares above it. It should be the last middleware added to the app.
 app.use(errorHandler);
 

@@ -13,15 +13,42 @@ const options = {
       title: 'Busade EMR-Suite Backend API (Demo)',
       version: '1.0.0',
       description: `
-      This is the backend API for the Busade EMR-Suite demo project.
-      **Note:** This is a demo of the wiCare EMR system designed to demonstrates:
-      - Patient management
-      - Appointment scheduling
-      - Clinical workflows (Vitals, Notes)
-      - Billing & invoices
-      - Authentication, RBAC & PBAC
-      - Audit logging
-            `,
+        Busade EMR-Suite is a production-grade Electronic Medical Record (EMR) backend demonstrating modern healthcare system architecture.
+
+        ### Core Capabilities
+        - Patient Management & Demographics
+        - Appointment Scheduling (PAS)
+        - Clinical Workflows (Vitals, SOAP Notes, Clinical History)
+        - Billing & Revenue Tracking
+
+        ### Security & Compliance
+        - JWT Authentication
+        - Role-Based Access Control (RBAC)
+        - Permission-Based Access Control (PBAC)
+        - Break-The-Glass (BTG) Emergency Access Workflow
+        - Real-time BTG Session Monitoring (Active Viewers)
+        - Full Audit Trail Logging (HIPAA-inspired design)
+
+        ### Advanced Features
+        - Real-time Emergency Access Countdown
+        - Live Viewer Tracking during BTG Sessions
+        - Automatic Expiry via Cron Jobs
+        - Intelligent Access Restriction Engine
+
+        ### Interoperability (FHIR - HL7 Standard)
+        This API exposes a subset of FHIR resources for interoperability:
+        - Patient
+        - Observation (Vitals)
+        - Condition (Diagnosis)
+        - ClinicalImpression (Clinical Notes)
+        - AuditEvent (System Logs)
+
+        These endpoints enable integration with external healthcare systems.
+
+        ---
+
+        ⚠️ Note: This is a demo system showcasing enterprise EMR architecture and is not intended for direct clinical deployment.
+        `
     },
     tags: [
       {
@@ -43,6 +70,14 @@ const options = {
       {
         name: 'Break Glass',
         description: 'Emergency access control workflow'
+      },
+      {
+        name: 'Break Glass Session',
+        description: 'Real-time monitoring of active BTG sessions and viewers'
+      },
+      {
+        name: 'FHIR',
+        description: 'HL7 FHIR interoperability endpoints (Patient, Observation, Condition, AuditEvent, Clinical Notes)'
       }
     ],
     servers: [
@@ -1093,55 +1128,206 @@ const options = {
         /**
          * BREAK THE GLASS SESSION
          */
-          BTGSessionRegister: {
-            type: 'object',
-            required: ['btgId', 'patientId'],
-            properties: {
-              btgId: {
-                type: 'string',
-                format: 'uuid'
-              },
-              patientId: {
-                type: 'string',
-                format: 'uuid'
-              }
+        BTGSessionRegister: {
+          type: 'object',
+          required: ['btgId', 'patientId'],
+          properties: {
+            btgId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            patientId: {
+              type: 'string',
+              format: 'uuid'
             }
-          },
-
-          BTGSessionViewer: {
-            type: 'object',
-            properties: {
-              userId: { type: 'string', format: 'uuid' },
-              name: { type: 'string', example: 'Nurse Amina Yusuf' },
-              role: { type: 'string', example: 'nurse' },
-              accessedAt: { type: 'string', format: 'date-time' },
-              lastSeenAt: { type: 'string', format: 'date-time' }
-            }
+          }
+        },
+        BTGSessionViewer: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', format: 'uuid' },
+            name: { type: 'string', example: 'Nurse Amina Yusuf' },
+            role: { type: 'string', example: 'nurse' },
+            accessedAt: { type: 'string', format: 'date-time' },
+            lastSeenAt: { type: 'string', format: 'date-time' }
+          }
         },
         BTGSessionResponse: {
-            type: 'object',
-            properties: {
-              id: { type: 'string', format: 'uuid' },
-              patientId: { type: 'string', format: 'uuid' },
-              userId: { type: 'string', format: 'uuid' },
-              btgRequestId: { type: 'string', format: 'uuid' },
-              startTime: { type: 'string', format: 'date-time' },
-              expiresAt: { type: 'string', format: 'date-time' },
-              status: { type: 'string', example: 'ACTIVE' }
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            patientId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string', format: 'uuid' },
+            btgRequestId: { type: 'string', format: 'uuid' },
+            startTime: { type: 'string', format: 'date-time' },
+            expiresAt: { type: 'string', format: 'date-time' },
+            status: { type: 'string', example: 'ACTIVE' }
+          }
+        },
+        BTGSessionViewerList: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/BTGSessionViewer'
+              }
             }
-          },
+          }
+        },
+        /*--------------
+          * FHIR RESOURCES - Interoperability 
+        * --------------*/
+        PatientFHIR: {
+          type: 'object',
+          properties: {
+            resourceType: { type: 'string', example: 'Patient' },
+            id: { type: 'string' },
+            name: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  text: { type: 'string' }
+                }
+              }
+            },
+            gender: { type: 'string' },
+            birthDate: { type: 'string', format: 'date' }
+          }
+        },
 
-          BTGSessionViewerList: {
-            type: 'object',
-            properties: {
-              data: {
-                type: 'array',
-                items: {
-                  $ref: '#/components/schemas/BTGSessionViewer'
+        ObservationFHIR: {
+          type: 'object',
+          properties: {
+            resourceType: { type: 'string', example: 'Observation' },
+            id: { type: 'string' },
+            subject: {
+              type: 'object',
+              properties: {
+                reference: { type: 'string' }
+              }
+            },
+            valueString: { type: 'string' },
+            effectiveDateTime: { type: 'string', format: 'date-time' }
+          }
+        },
+
+        ConditionFHIR: {
+          type: 'object',
+          properties: {
+            resourceType: { type: 'string', example: 'Condition' },
+            id: { type: 'string' },
+            subject: {
+              type: 'object',
+              properties: {
+                reference: { type: 'string' }
+              }
+            },
+            code: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' }
+              }
+            }
+          }
+        },
+
+        ClinicalImpressionFHIR: {
+          type: 'object',
+          properties: {
+            resourceType: { type: 'string', example: 'ClinicalImpression' },
+            id: { type: 'string' },
+            subject: {
+              type: 'object',
+              properties: {
+                reference: { type: 'string' }
+              }
+            },
+            description: { type: 'string' }
+          }
+        },
+
+        AuditEventFHIR: {
+          type: 'object',
+          properties: {
+            resourceType: { type: 'string', example: 'AuditEvent' },
+            id: { type: 'string' },
+            action: { type: 'string' },
+            recorded: { type: 'string', format: 'date-time' }
+          }
+        },
+        FHIR_Composition: {
+          type: 'object',
+          properties: {
+            resourceType: {
+              type: 'string',
+              example: 'Composition'
+            },
+            id: {
+              type: 'string',
+              example: 'note-uuid'
+            },
+            status: {
+              type: 'string',
+              example: 'final'
+            },
+            type: {
+              type: 'object',
+              properties: {
+                text: {
+                  type: 'string',
+                  example: 'Clinical Note'
+                }
+              }
+            },
+            subject: {
+              type: 'object',
+              properties: {
+                reference: {
+                  type: 'string',
+                  example: 'Patient/uuid'
+                }
+              }
+            },
+            author: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  display: {
+                    type: 'string',
+                    example: 'Dr. John Doe'
+                  }
+                }
+              }
+            },
+            date: {
+              type: 'string',
+              format: 'date-time'
+            },
+            title: {
+              type: 'string',
+              example: 'Clinical Encounter Note'
+            },
+            section: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  text: {
+                    type: 'object',
+                    properties: {
+                      status: { type: 'string', example: 'generated' },
+                      div: { type: 'string', example: '<div>SOAP content</div>' }
+                    }
+                  }
                 }
               }
             }
           }
+        }
       },
       
       responses: {
@@ -1218,6 +1404,7 @@ const options = {
     './src/modules/**/*.js',
     './src/shared/**/*.js',
     './src/docs/**/*.yaml',
+    './src/fhir/**/*.js'
   ],
 };
 
