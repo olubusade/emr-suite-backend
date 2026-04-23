@@ -370,7 +370,7 @@ src/
 │                       → Jest + Supertest (unit, integration, RBAC tests)
 
 docker/                → Containerization setup
-│                       → Multi-stage Dockerfiles, docker-compose, entrypoint scripts
+│                       → Multi-stage  (Dockerfiles, docker-compose, entrypoint scripts)
 
 logs/                  → Application logging layer
 │                       → combined.log, error.log, exception tracking, security logs
@@ -718,7 +718,7 @@ MIT © 2026 - Busade Adedayo
 
 ---
 
-## 🚀 FINAL NOTE (OPTIMIZED)
+## 🚀 FINAL NOTE
 
 > This project was intentionally designed to demonstrate how **real-world healthcare systems are engineered, secured, and scaled in production environments** — not just how APIs are built.
 
@@ -736,28 +736,6 @@ It combines **clinical workflow intelligence** with **enterprise-grade software 
 ---
 
 > **Engineering philosophy:**
-> “I don’t just build APIs — I design systems that behave like real hospitals under production constraints.”
-
----
-
-## 🎯 Why this version is best
-
-* Keeps **clinical relevance (Version 1 strength)**
-* Keeps **engineering maturity (Version 2 strength)**
-* Adds:
-
-  * System thinking signal (very important for global recruiters)
-  * Clear separation of concerns
-  * Balanced storytelling (clinical + engineering)
-
----
-
-If you use this exact tone in your README closing, it positions you not as:
-
-> “backend developer”
-
-but as:
-
-> **Healthcare systems engineer / solution architect level**
+> "I don't just build APIs - I design systems that behave like real hospitals under production constraints."
 
 ---
