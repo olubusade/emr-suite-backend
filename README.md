@@ -1,104 +1,172 @@
 ---
 
-# 🏥 EMR-Suite Backend (Flagship Healthcare System)
+# 🏥 EMR-Suite Backend — Enterprise Healthcare System (Flagship Project)
 
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square)
+![Express](https://img.shields.io/badge/Framework-Express-black?style=flat-square)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square)
 ![Sequelize](https://img.shields.io/badge/ORM-Sequelize-lightblue?style=flat-square)
-![Winston](https://img.shields.io/badge/Logging-Winston-orange?style=flat-square)
-![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus-red?style=flat-square)
-![Architecture](https://img.shields.io/badge/Architecture-DDD%20Modular-purple?style=flat-square)
-![Security](https://img.shields.io/badge/Security-RBAC-red?style=flat-square)
-![Testing](https://img.shields.io/badge/Testing-Jest-orange?style=flat-square)
-![Docker](https://img.shields.io/badge/Deployment-Docker-blue?style=flat-square)
+![Zod](https://img.shields.io/badge/Validation-Zod-purple?style=flat-square)
+![Swagger](https://img.shields.io/badge/API-OpenAPI%203.0-brightgreen?style=flat-square)
+![FHIR](https://img.shields.io/badge/HL7-FHIR%20R4-blue?style=flat-square)
 ![RBAC](https://img.shields.io/badge/Security-RBAC-red?style=flat-square)
+![PBAC](https://img.shields.io/badge/Security-PBAC-darkred?style=flat-square)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange?style=flat-square)
+![Winston](https://img.shields.io/badge/Logging-Winston-yellow?style=flat-square)
+![Prometheus](https://img.shields.io/badge/Metrics-Prometheus-red?style=flat-square)
+![Docker](https://img.shields.io/badge/Deployment-Docker-blue?style=flat-square)
+![Cron](https://img.shields.io/badge/Scheduler-Node--Cron-lightgrey?style=flat-square)
+![Architecture](https://img.shields.io/badge/Architecture-DDD-purple?style=flat-square)
 
 ---
-## 🎥 Live System Demo (Quick Walkthrough)
 
-> A short walkthrough showing authentication, appointment flow, billing, and clinical records.
+## 🎥 System Demo (Full Workflow)
 
-▶️ https://your-video-link.com
+▶️ [https://your-video-link.com](https://your-video-link.com)
+
+**Covers:**
+
+* Authentication (JWT + refresh token flow)
+* Role & Permission-based access (RBAC + PBAC)
+* Patient lifecycle
+* Clinical workflows (SOAP notes, vitals / Triage)
+* Billing & invoices
+* 🚨 Break-the-Glass (BTG Emergency Access) + Access Tracking
+* 🔗 FHIR interoperability endpoints
+* Swagger live API testing
 
 ---
 
-## 🌍 Live Demo Links
+## 🌍 Live System
 
-> These links give you an access to the project demo.
-
-* **Backend API (Production):** [https://your-backend.onrender.com/api](https://your-backend.onrender.com/api)
-* **Swagger UI (Live Testing & API Docs):** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
-* 🌐**Frontend (Angular):** [https://your-frontend.vercel.app](https://your-frontend.vercel.app)
+* **Backend API:** [https://your-backend.onrender.com/api](https://your-backend.onrender.com/api)
+* **Swagger Docs:** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+* **Frontend:** [https://your-frontend.vercel.app](https://your-frontend.vercel.app)
 
 ---
-## ⚠️ Live Demo Note
 
-> The backend is hosted on Render Free Tier.
-> It may take up to 30 seconds to respond on first request due to cold start.
+## 🧠 SYSTEM OVERVIEW
 
-To test immediately:
-- Open Swagger UI - https://your-backend.onrender.com/api/docs
-- Use `/api/health` endpoint first - https://your-backend.onrender.com/api/health
-  
+**EMR-Suite Backend** is a **production-grade Electronic Medical Records (EMR) system** designed using **Domain-Driven Design (DDD)** principles and aligned with **real hospital workflows and healthcare interoperability standards (FHIR R4)**.
+
+It demonstrates how modern healthcare systems are built with:
+
+- **Enterprise-grade security** (JWT, RBAC, PBAC)
+- **Auditability & compliance tracking**
+- **Metrics, Observability & Monitoring (Prometheus + Winston)**
+- **FHIR-based interoperability for clinical data exchange**
+
 ---
+
+### 🏥 Core Capabilities
+
+The system simulates real-world hospital operations:
+
+- Patient lifecycle management  
+- Appointment scheduling & workflow  
+- Clinical documentation (SOAP notes)  
+- Vitals & triage tracking  
+- Billing & invoice management  
+- 🚨 Break-the-Glass (BTG) emergency access control  
+- 🔗 FHIR interoperability layer (Patient, Observation, Condition, AuditEvent)  
+- Audit & compliance tracking
+- Observability & metrics (Prometheus)
+
+> ⚠️ This is not a CRUD demo — it is a **system-level backend architecture** built to reflect real healthcare production environments.
+
+---
+
 ## 📸 System Screenshots
 
 > Here are key views from the system
 
 ### 1. Swagger API Documentation & Testing Interface (System Overview)
+
 * Shows all endpoints grouped by module
+* JWT auth testing
+* Validated endpoints (Zod)
+* Demonstrates backend completeness
 
 ![Swagger](./docs/screenshots/swagger.png)
+> Full API Surface — Swagger Documentation & Live Testing
 
 ### 2. Authentication (Login + JWT Token Flow)
-* Login request
-* JWT returned
-* Authorization header usage
+* Login → JWT issued
+* Token used in Authorization header
+* Permissions embedded in token
 
 ![Auth](./docs/screenshots/auth-flow.png)
+> Secure Authentication — JWT + Role & Permission Context
 
 ### 3. Patient Module (CRUD + Profile View)
 * Patient registration
 * Patient list
-* Patient detail view
+* Patient profile view
+* Core demographic + medical identity
+  
 ![Patients](./docs/screenshots/patients.png)
+> Patient Lifecycle Management
 
 ### 4. Appointment System (Workflow)
-* Create appointment
-* Update appointment
+* Create appointment / update appointment
+* Status lifecycle
+* Role-aware flows
 
 ![Appointments](./docs/screenshots/appointments.png)
+> Appointment Scheduling & Workflow Management
 
-### 5. Clinical Notes - Create, Read, Update (Doctor View)
-* Create note
-* Read note
-* Update restriction (if finalized)
+### 5. Clinical Notes (SOAP) - Create, Read, Update (Doctor View)
+* Subjective / Objective / Assessment / Plan
+* Doctor-authored
+* Immutable history (if finalized)
 
 ![Clinical Notes](./docs/screenshots/clinical-notes.png)
+> Clinical Documentation — Structured SOAP Notes
 
-### 6. Billing & Payments Module (Receptionist & Admin only)
+### 6. Vitals / Triage
+* Blood pressure, temperature, SPO2, BMI etc
+* Structured observations
+* Feeds FHIR Observation
+
+![Vitals](./docs/screenshots/vitals.png)
+> Vitals Capture — Nurse/Triage Workflow
+
+### 7. Billing & Invoices
 * Pending bills
 * Paid bills
-* Invoice breakdown
+* Invoice generation / printing
 
 ![Billing](./docs/screenshots/billing.png)
+> Billing & Financial Workflow
 
-### 7. Metrics & Observability Dashboard
+### 8. Break-the-Glass (BTG)
+**Temporary access override**
+**Countdown timer**
+**Active viewers tracking**
+**Full audit logging**
+
+![BTG](./docs/screenshots/btg.png)
+> Emergency Access (Break-the-Glass) with Real-Time Monitoring
+
+### 9. Metrics & Observability Dashboard
 * Prometheus metrics endpoint
 * Performance counters
-* Request tracking
+* Request tracking & latency
+* Error rates
+* System health
 
 ![Metrics](./docs/screenshots/metrics.png)
+> System Observability — Metrics & Performance Monitoring
 
----
-## 8. Docker System Running
+## 10. Docker System Running
 * Backend container
 * PostgreSQL container
-* Logs showing startup + seed success
+* Startup logs (migrations + seed)
 
 ![Docker](./docs/screenshots/docker-running.png)
+> Containerized Deployment Environment
 
-## 9. Seed log output
+## 11. Seed log output
 * Staff creation
 * RBAC mapping
 * Patient seeding
@@ -108,325 +176,272 @@ To test immediately:
 
 ---
 
-## 📌 Overview
+# 🏗️ Architecture Philosophy (DDD Modular Design)
+The system is structured around **business domains rather than technical layers**, following Domain-Driven Design (DDD).
 
-**EMR-Suite Backend** is a **production-grade**, domain-driven Electronic Medical Records (EMR) system designed using **DDD (Domain Driven Design)** principles.
+Key architectural decisions:
 
-It implements real hospital workflows including:
-
-* Patient management
-* Appointment lifecycle
-* Clinical documentation
-* Vitals tracking (Triage)
-* Billing
-* Audit & compliance tracking
-* Metrics & observability
-
-> ⚠️ **This is not a CRUD API demo**
-> It is a **system-level backend architecture** built to reflect real healthcare production systems and with **enterprise-level security and compliance in mind**.
----
-
-## 🧠 Architecture Philosophy (DDD-Based Design)
-> This system is structured around **business domains, not technical layers**.
-
-```
-src/
-├── modules/        → Business domains (Appointment, Patient, Billing…)
-├── shared/         → Cross-cutting concerns (auth, utils, validators)
-├── config/         → Infrastructure setup (DB, JWT, Swagger)
-├── constants/      → Roles, permissions, enums
-├── seed/           → System bootstrap data
-├── docker/         → Containerization
-├── tests/
-```
+- **Domain isolation** — each module owns its business logic  
+- **Interoperability-first design** — leveraging FHIR standards  
+- **Separation of concerns (SoC)** across validation, services, and infrastructure  
+- **Scalable modular structure** aligned with real hospital systems  
 
 ### Why this matters:
 
-* Each module is **self-contained**
-* Clear Separation of Concern - **(SoC)** i.e. Controllers, services, models are co-located
-* Easy scaling per domain
-* Mirrors enterprise backend architecture patterns
+* Each domain is **independent & scalable**
+* Business logic is isolated per module
+* Mirrors enterprise hospital systems
+* Clean separation of concerns (SoC)
 
 ---
 
-## 🏗️ System Architecture Flow
+# 🏥 Core Healthcare Features
+
+## 🔐 Authentication
+
+* JWT-based auth
+* Secure token validation middleware
+
+## RBAC (Role-Based Access Control)
+
+* SUPER ADMIN, ADMIN, RECEPTIONIST, DOCTOR, NURSE
+* Who are you?
+
+## PBAC (Permission-Based Access Control)
+
+* Fine-grained permission system
+* What are you permitted to do?
+
+## 🧍 Patient Management
+
+* Registration & profile
+* Clinical history tracking
+* Encounter-based records
+
+## 🩺 Clinical Notes (SOAP Model)
+
+* Subjective / Objective / Assessment / Plan
+* Immutable clinical history
+* Doctor-authored records
+
+## 💉 Vitals & Observations
+
+* Nurse-driven monitoring
+* Structured medical measurements
+
+## 📅 Appointment System
+
+* Scheduling lifecycle
+* Role-based views (Doctor/Nurse/Admin)
+
+## 💳 Billing Module
+
+* Invoice generation
+* Payment tracking
+* Financial audit readiness
+
+## 🚨 Break-The-Glass (BTG)
+
+* Emergency access to restricted records
+* Time-bound access sessions
+* Live viewer tracking
+* Automatic expiry cron job and Audit Log
+
+---
+
+# 🔗 FHIR INTEROPERABILITY LAYER (HL7 STANDARD)
+
+> Enables external systems to integrate with EMR data.
+
+## Supported FHIR Endpoints
+
+```
+GET /api/fhir/Patient/:id
+GET /api/fhir/Observation?patient=
+GET /api/fhir/Condition?patient=
+GET /api/fhir/ClinicalNotes?patient=
+GET /api/fhir/AuditEvent
+```
+
+## FHIR Resources Exposed:
+
+* Patient → demographic & identity
+* Observation → vitals & measurements
+* Condition → diagnosis
+* Composition → clinical SOAP notes
+* AuditEvent → system access logs
+
+> Enables interoperability with external hospital systems, insurance platforms, and research tools.
+
+---
+
+# 🏗️ SYSTEM ARCHITECTURE
+
+## 🔁 High-Level Backend Flow
 
 ```mermaid
 flowchart TD
-Client --> ExpressApp
-ExpressApp --> AuthMiddleware
-ExpressApp --> RBACMiddleware
-ExpressApp --> ValidationLayer
-ValidationLayer --> Controller
-AuthMiddleware --> Controller
-RBACMiddleware --> Controller
-Controller --> ServiceLayer
-ServiceLayer --> SequelizeORM
-SequelizeORM --> PostgreSQL
+Client --> API[Express API Layer]
 
-ExpressApp --> AuditSystem
-ExpressApp --> MetricsSystem
-ExpressApp --> Logger
+API --> Auth[JWT Auth Middleware]
+API --> RBAC[RBAC / PBAC Middleware]
+API --> Validate[Zod Validation Layer]
+
+Validate --> Controller
+Auth --> Controller
+RBAC --> Controller
+
+Controller --> Service
+Service --> ORM[Sequelize ORM]
+ORM --> DB[(PostgreSQL)]
+
+API --> Logger[Winston Logger]
+API --> Metrics[Prometheus Metrics]
+API --> Audit[Audit System]
+
+Service --> FHIR[FHIR Mapper Layer]
+FHIR --> External[External Systems]
 ```
 
 ---
 
-## 🧠 Key Engineering Highlights & Tools Used
+## 🔗 FHIR INTEROPERABILITY ARCHITECTURE
 
-### 1. Production Docker Setup with Database Readiness (Top-Notch DevOps)
-* Uses multi-stage Docker + intelligent entrypoint with pg_isready.
-```From docker/entrypoint.sh:```
-```js 
-sh#!/bin/sh
-set -e
+```mermaid
+flowchart LR
+EMR_DB[(Internal DB)]
+ServiceLayer --> Mapper[FHIR Mapping Layer]
 
-# DATABASE READINESS CHECK (prevents crash during Postgres init)
-if [ -n "$DB_HOST" ] && [ "$DB_HOST" != "localhost" ]; then
-  echo "[entrypoint] Waiting for database..."
-  until pg_isready -h "$$   DB_HOST" -p "   $${DB_PORT:-5432}" -U "${DB_USER:-postgres}" >/dev/null 2>&1; do
-    echo "[entrypoint] Database not ready, retrying..."
-    sleep 2
-  done
-fi
+Mapper --> PatientFHIR[Patient Resource]
+Mapper --> ObservationFHIR[Observation Resource]
+Mapper --> ConditionFHIR[Condition Resource]
+Mapper --> CompositionFHIR[Clinical Notes]
+Mapper --> AuditFHIR[AuditEvent]
 
-# Auto-run migrations and seeders
-npm run migrate
-npm run seed
-
-exec npm run start
+PatientFHIR --> ExternalSystems
+ObservationFHIR --> ExternalSystems
+ConditionFHIR --> ExternalSystems
+CompositionFHIR --> ExternalSystems
+AuditFHIR --> ExternalSystems
 ```
-> Dockerfiles:**Dockerfile** (multi-stage with deps/runtime separation) and **Dockerfile.dev** (hot-reload with nodemon).
+
+> Enables integration with:
+
+* Insurance platforms
+* National health systems
+* Research databases
+* External EMR systems
 
 ---
-### 🔐 2. Advanced RBAC & Permission System (Role & Permission-Based Access Control)
 
-* Fine-grained permission system
-* Not role-based only — **permission-driven authorization**
-* Used across routes for secure, role-aware access.
-* Example:
+# 🧩 CORE MODULES (DDD)
+
+```bash
+src/
+├── modules/          → Business domains (DDD core)
+│   ├── patient/           → Patient lifecycle management
+│   ├── appointment/       → Scheduling & clinical workflow
+│   ├── clinical-notes/    → SOAP-based clinical documentation
+│   ├── vitals/           → Nurse-driven observations & triage
+│   ├── billing/          → Invoicing & financial management
+│   ├── user/             → Staff management & identity
+│   ├── audit/            → Compliance & system audit logs
+│   ├── btg/              → Break-the-Glass emergency access system
+
+├── fhir/              → Interoperability layer (FHIR R4 compliant APIs)
+│                       → Patient, Observation, Condition, AuditEvent, Composition
+
+├── shared/            → Cross-cutting concerns
+│                       → Authentication, RBAC/PBAC, validation (Zod), utilities, error handling
+
+├── config/            → Infrastructure configuration
+│                       → Database (Sequelize), Swagger setup, logger (Winston), environment config
+
+├── constants/         → System-wide constants
+│                       → Roles, permissions, enums, status codes
+
+├── jobs/              → Background processes
+│                       → Cron jobs (BTG expiry, session cleanup, scheduled tasks)
+
+├── seed/              → Database bootstrap
+│                       → Initial users, roles, permissions, demo hospital data
+
+├── tests/             → Automated testing suite
+│                       → Jest + Supertest (unit, integration, RBAC tests)
+
+docker/                → Containerization setup
+│                       → Multi-stage Dockerfiles, docker-compose, entrypoint scripts
+
+logs/                  → Application logging layer
+│                       → combined.log, error.log, exception tracking, security logs
+
+.env.docker.dev        → Docker development environment configuration
+.env.local.dev         → Local development environment configuration
+.env.prod              → Production environment configuration
+
+app.js                 → Express application setup (middlewares, routing, security, observability)
+server.js             → Application entry point (server bootstrap, port binding, startup logs)
+```
+
+---
+
+# 🚨 BREAK-THE-GLASS (BTG) SYSTEM
+
+> Emergency access mechanism for restricted patient data
+
+### Features:
+
+* Time-bound access sessions
+* Live viewer tracking
+* Countdown expiration
+* Auto-expiry via cron job
+* Full audit logging
 
 ```js
-const authorize = (requiredPermission) => {
-  return (req, res, next) => {
-    if (!req.user.permissions?.includes(requiredPermission)) {
-      return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+// Auto-expiry job
+await BTGRequest.update(
+  { status: 'EXPIRED' },
+  {
+    where: {
+      status: 'APPROVED',
+      expiresAt: { [Op.lt]: new Date() }
     }
+  }
+);
+```
+
+---
+
+# 🔐 SECURITY ARCHITECTURE
+
+## 1. JWT Authentication Guard (Access Control Layer)
+Protects all secured endpoints by validating access tokens.
+
+```js
+export function authRequired(req, res, next) {
+  const hdr = req.headers.authorization || '';
+  const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
+  if (!token) return fail(res, 401, 'Authentication required');
+  try {
+    const payload = verifyAccess(token);
+    req.user = payload;
     next();
-  };
-}
-```
----
-### 3. Edge Validation & Enum Safety (Zod-style patterns)
-* Prevents invalid data early (fixed issues like MARITAL_ENUM.includes is not a function seen in logs).
-* From **shared/validators/patient.validator.js**
-```js 
-JavaScriptconst validatePatientEnums = (data) => {
-  if (data.maritalStatus && !MARITAL_ENUM.includes(data.maritalStatus)) {
-    throw new Error('Invalid marital status value');
-  }
-  // Additional strict enum & schema checks
-};
-```
----
-### 4. Structured Audit Logging System with Winston (Healthcare-grade)
-
-* Every sensitive mutation is tracked:
-* Production-grade JSON logging with context.
-
-* Actor ID
-* Before/After state
-* Entity affected
-* Timestamp
-* Action type
-
-* Structured log from (logs/error.log & combined.log)
-```js
-{
-  "level": "error",
-  "message": "column Appointment.type does not exist",
-  "timestamp": "2026-04-16T10:58:11.957Z",
-  "userId": "1b325fee-937a-4423-b0e3-bb525657a636",
-  "path": "/api/metrics",
-  "method": "GET"
-}
-```
-> This mirrors real-world **clinical compliance requirements (HIPAA-like auditability)**
-
----
-
-### 5. Schema-first Validation (Zod)
-
-> All requests are validated at the edge:
-
-```js
-export const updateAppointmentSchema = z.object({
-  body: z.object({
-    appointmentDate: isoDateString().optional(),
-    status: APPOINTMENT_STATUS_ENUM.optional()
-  })
-});
-```
----
-
-### 📊 6. Observability Layer with Prometheus
-
-* Prometheus metrics (`/metrics`)
-* Winston structured logging
-* Request latency tracking
-* Error rate monitoring
-* Uses **prom-client** for custom counters (request latency, error rates, route performance).
-* Exposed at **/metrics**.
-
----
-
-### 🔁 7. Async Safety Layer
-
-* Centralized async handler
-* Prevent unhandled promise rejections
-* From **shared/utils/asyncHandler.js**:
-
-```js
-export const asyncHandler = (fn) => (req, res, next) =>{
-  Promise.resolve(fn(req, res, next)).catch(next);
-}
-```
-
----
-
-## 🚨 Error Handling & Resilience Strategy
-
-> This system implements a centralized, production-grade error handling architecture designed for predictability, observability, and frontend stability.
-
----
-
-**🧠 Philosophy**
-
-> Errors are classified into two categories:
-
-**1.** Operational Errors (Expected) → Handled with ApiError
-**2.** System Errors (Unexpected) → Logged + safely masked
-
----
-
-## 🧩 Custom Error Class (ApiError) 
-```js
-export default class ApiError extends Error {
-  constructor(statusCode, message) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = true;
+  } catch {
+    return fail(res, 401, 'Invalid or expired token');
   }
 }
 ```
----
-## ⚙️ Usage in Services (Real Example)
-
-**From appointment.service.js:**
-```js
-if (Number.isNaN(when.getTime())) {
-  throw new ApiError(400, 'Invalid appointmentDate');
-}
-
-if (when < new Date(new Date().setHours(0,0,0,0))) {
-  throw new ApiError(400, 'appointmentDate cannot be in the past');
-}
-
-// Prevent double booking
-if (existing) {
-  throw new ApiError(409, 'Time slot already booked');
-}
-```
-
----
-## 📚 Standard Error Types Used
-**Status Code	Type	Usage**
-* 400	Bad Request	Validation & business rules
-* 401	Unauthorized	Missing/invalid JWT
-* 403	Forbidden	RBAC permission failure
-* 404	Not Found	Missing resource
-* 409	Conflict	Duplicate records
-* 500	Internal Error	Unexpected failures
-
----
-## 🔁 Error Flow (End-to-End)
-Controller → Service → throws ApiError
-                    ↓
-          Global Error Handler
-                    ↓
-        Standard JSON API Response
----
-
-## 📦 Standard API Error Response
-```js
-{
-  "status": "ERROR",
-  "message": "appointmentDate cannot be in the past"
-}
-```
----
-## 🛡️ Global Error Handling Layer
-All errors are intercepted centrally:
----
+## 🔄 2. Refresh Token Security Layer
+Ensures secure session renewal with expiration control.
 
 ```js
-app.use((err, req, res, next) => {
-  reportError(err, {
-    path: req.path,
-    method: req.method,
-    userId: req.user?.id
+export const signRefresh = (payload) =>
+  jwt.sign(payload, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshTtl
   });
-
-  if (err instanceof ApiError) {
-    return res.status(err.statusCode).json({
-      status: 'ERROR',
-      message: err.message
-    });
-  }
-
-  return res.status(500).json({
-    status: 'ERROR',
-    message: 'Internal Server Error'
-  });
-});
 ```
----
-
-## 📊 Observability Integration
-
-All errors are:
-
-* Logged via Winston
-* Tracked with contextual metadata
-* Ready for Elasticsearch Logstash Kibana (ELK) / Loki / Datadog integration (Paid SaaS monitoring tool).
-
----
-
-```js
-{
-  "level": "error",
-  "message": "appointmentDate cannot be in the past",
-  "userId": "acaba7ca-61d4...",
-  "path": "/api/appointments",
-  "method": "POST"
-}
-```
----
-
-## 🎯 Why This Matters
-
-This approach ensures:
-
-✔ Consistent API responses for frontend
-✔ No sensitive error leakage
-✔ Easy debugging in production
-✔ Clear separation of concerns
-✔ Healthcare-grade auditability
-
----
-
-## 🛡️ Security Event Monitoring (Refresh Token Protection)
-
-The system includes proactive detection of suspicious authentication behavior.
+## 🚨 3. Threat Detection & Security Monitoring
+Detects suspicious authentication behavior such as token reuse or session hijacking.
 
 ```js
 logSecurityAlert('Possible Refresh Token Reuse Attack', {
@@ -435,332 +450,314 @@ logSecurityAlert('Possible Refresh Token Reuse Attack', {
 });
 ```
 
----
-
-## 🔍 What it detects
-* Reuse of invalidated refresh tokens
-* Potential token theft
-* Session replay attempts
-
----
-
-## 🧠 Security response strategy
-Event is logged with full context (userId, IP address)
-Refresh flow is blocked
-System maintains audit trail for investigation
+### 🧠 Security Coverage
+**Detects:**
+* Token reuse attacks
+* Session hijacking attempts
+* Replay attacks
+* Unauthorized access attempts
 
 ---
 
-## 🧩 Domain Modules (DDD CORE)
+## 4. RBAC + PBAC (Hybrid Authorization Model)
 
-### 🧍 Patient Module
+```js
+authorize(PERMISSIONS.CLINICAL_NOTE_READ)
+```
 
-* Registration
-* Demographics
-* Medical identity
+* RBAC → defines who you are (Doctor, Nurse, Admin)
+* PBAC → defines what you can do (fine-grained permissions)
 
-### 📅 Appointment Module
+### 🧠 Role Enforcement Middleware
+```js
+export const authorize = (permission) => {
+  return (req, res, next) => {
+    const userPermissions = req.user?.permissions || [];
 
-* Scheduling
-* Status Lifecycle 
-* Role-aware views - Doctor/Nurse scheduling flow
+    if (!userPermissions.includes(permission)) {
+      return res.status(403).json({
+        status: 'FAIL',
+        message: 'Insufficient permissions'
+      });
+    }
 
-### 🩺 Clinical Notes Module
+    next();
+  };
+};
+```
+### 🏥 Example in FHIR / Clinical Access Layer
+```js
+router.get(
+  '/ClinicalNotes',
+  authRequired,
+  authorize(PERMISSIONS.CLINICAL_NOTE_READ),
+  validate(FHIRClinicalNoteSchema),
+  asyncHandler(getClinicalNotesFHIR)
+);
+```
 
-* Doctor-only access
-* Immutable clinical history with full audit trail
+**✔ Enterprise pipeline design** 👉 Authentication layer → Authorization layer → Validation layer → Business logic layer
 
-### 💉 Vitals Module
+## 5. Request Validation & Schema Enforcement (Zod Layer)
+All inputs validated at the edge:
 
-* Nurse-driven inputs
-* Structured medical measurements
+```js
+validate(FHIRPatientSchema)
+```
+Purpose:
+✔ Prevents invalid or malicious payloads at entry point
+✔ Enforces API contracts
+✔ Improves system stability
 
-### 💳 Billing Module
+### 🧠 Validation Middleware
 
-* Invoice generation
-* Payment tracking
-* Revenue audit readiness
+```js
+export const FHIRClinicalNoteSchema = z.object({
+  query: z.object({
+    patient: z.string().uuid(),
+    dateFrom: z.string().optional(),
+    dateTo: z.string().optional()
+  })
+});
+```
 
-### 📊 Metrics Module
+## 6. Rate Limiting & API Abuse Protection
 
-* Aggregated hospital KPIs using Sequelize complex queries
-* Patient trends
-* Operational insights
+```js
+app.use(rateLimiter);
+app.use('/api/auth/login', authLimiter);
+```
+### 🛡️ Global Rate Limiter (System-wide protection)
+```js
+export const rateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: {
+    status: 'FAIL',
+    message: 'Too many requests, please try again later'
+  }
+});
+```
 
-### 👤 User Module
+### 🔐 Strict Auth Endpoint Protection
+```js
+export const authLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: {
+    status: 'FAIL',
+    message: 'Too many login attempts'
+  }
+});
+```
 
-* Staff management
-* Role assignment
-* Profile lifecycle
+## 7. Combined Security Pipeline (IMPORTANT INSIGHT)
+```js
+router.get(
+  '/Patient/:id',
+  authRequired,
+  authorize(PERMISSIONS.PATIENT_READ),
+  validate(FHIRPatientSchema),
+  asyncHandler(getPatientFHIR)
+);
+```
+---
 
-### Audit Module
-* Compliance logging
+# 📊 OBSERVABILITY & LOGGING
+
+## Logging Layers (Winston)
+
+* Error logs → `logs/error.log`
+* Combined logs → `logs/combined.log`
+* HTTP logs → Morgan → Winston
+
+```json
+{
+  "level": "error",
+  "message": "Invalid enum value",
+  "userId": "uuid",
+  "path": "/api/btg",
+  "method": "POST"
+}
+```
 
 ---
 
-## 🧪 Swagger API Testing (LIVE SYSTEM FEATURE)
+## Prometheus Metrics
 
-> This project is fully testable via Swagger:
-**Swagger UI - Live Testing**
-👉 **Swagger UI (Live Testing & API Docs) direclty in the browser:** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+```bash
+GET /metrics
+```
+
+Tracks:
+
+* Request latency
+* Error rates
+* Endpoint performance
+
+---
+
+# 🔗 FHIR API (INTEROPERABILITY)
+
+## Endpoints
+
+```bash
+GET /api/fhir/Patient/:id
+GET /api/fhir/Observation?patient=
+GET /api/fhir/Condition?patient=
+GET /api/fhir/ClinicalNotes?patient=
+GET /api/fhir/AuditEvent
+```
+
+## Example Response
+
+```json
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "entry": [...]
+}
+```
+
+---
+
+# 📚 SWAGGER API DOCUMENTATION
+
+👉 [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+
+### Features:
+
+* JWT authentication testing
+* RBAC validation
+* Full request/response schemas
+* FHIR endpoints documentation
+
+---
+
+# 🐳 DOCKER & DEPLOYMENT
+
+## Development
+
+```bash
+npm run docker:up:dev
+```
+
+## Production
+
+```bash
+npm run docker:up:prod
+```
 
 ### Includes:
 
-* Live request execution
-* JWT authentication testing
-* RBAC enforcement validation
-* Schema-based request validation
-* Real database interaction
+* Multi-stage builds
+* DB readiness checks
+* Auto migrations + seed
+* Environment-based configs
 
 ---
 
-## 🧪 Testing Strategy
+# 🔁 CRON JOB SYSTEM
 
-* Jest + Supertest suite ready in **/tests**
-* Integration tests across modules will run agains real PostgreSQL
+```js
+cron.schedule('*/5 * * * *', async () => {
+  // expire BTG sessions
+});
+```
+
+✔ Prevents stale access
+✔ Ensures compliance
+
+---
+
+# 🧠 ENGINEERING HIGHLIGHTS
+
+* Domain-Driven Design (DDD)
+* FHIR R4 Interoperability
+* RBAC + PBAC security model
+* Break-the-Glass emergency system
+* Real-time viewer tracking
+* Prometheus observability
+* Winston structured logging
+* Swagger-first API design
+* Zod schema validation
+* Dockerized infrastructure
+* Cron-based lifecycle management
+
+---
+
+# 🧪 TESTING STRATEGY
+
+* Jest + Supertest (in progress)
+* Swagger as live testing interface
 * RBAC negative testing
-* Authentication validation tests
-* **NB:**Swagger currently serves as the primary live testing interface
-
-```bash
-npm test   # (will be full active soon)
-```
+* Integration-ready structure
 
 ---
 
-## 🚀 Deployment Architecture
-
-### Backend (Render)
-
-* Node.js service
-* PostgreSQL database
-* Auto CI/CD deployment
-
-### Frontend (Vercel)
-
-* Angular/Ionic SPA
-* API-connected to backend
-
----
-
-## 📁 Project Structure (DDD IMPLEMENTATION)
-
-```bash
-docker/
-logs/
-src/
-├── config/
-├── constants/
-├── modules/
-│   ├── appointment/
-│   ├── patient/
-│   ├── clinical-note/
-│   ├── vital/
-│   ├── billing/
-│   ├── metrics/
-│   ├── user/
-│   └── audit/
-├── shared/
-│   ├── middlewares/
-│   ├── validators/
-│   ├── utils/
-│   └── constants/
-├── seed/
-├── tests/
-├── .env.docker.dev
-├── .env.local.dev
-├── .env.prod
-├── app.js
-└── server.js
-```
-
----
-
-### 🐳 Docker, DevOps & Infrastructure
-
-* Dockerized environment (dev + prod) - **docker-compose.dev.yml** + **docker-compose.prod.yml**
-* Multi-stage builds for optimized images
-* Seed automation via **init.sql**
-* CI pipeline (GitHub Actions)
-* Environment-based config system
-
----
-## 🐳 Docker Execution & Meaning of Scripts
-
-> This project uses Docker to ensure environment parity across development, testing, and production.
-
-### ⚙️ Core Idea
-
-> Instead of running Node.js manually, the system runs:
-
-**Docker → Node App → PostgreSQL → Migrations → Seed → API Ready**
-
-## 📦 Docker Scripts Explained
-# 🟢 Development Stack
-
-1. Start Full Dev Environment
-```js  
-  npm run docker:up:dev
-```
-**What it does:**
-
-> Runs the entire backend stack in development mode.
-
-Internally executes:
-
-```js
-docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev up --build -d
-npm run docker:migrate:dev
-npm run docker:seed:dev
-```
-
-**Meaning:**
-**Step	                Description**
-* up --build -d	--      Builds and starts containers in background
-* migrate	              Runs Sequelize DB migrations
-* seed	                Populates dev database with demo data
-
-2. Run Migrations Only
-```js
-npm run docker:migrate:dev
-```
-
-**Meaning:**
-* Spins up backend container
-* Executes:
-```js
-sequelize db:migrate
-```
-* Ensures DB schema is up to date
-  
-3. Run Seeders Only
-```js
-npm run docker:seed:dev
-```
-**Meaning:**
-> Injects:
-    - Staff accounts
-    - Patients
-    - Appointments
-    - Clinical notes
-    - Bills
-    - Payments
-  
-4. Stop Dev Environment
-```js
-npm run docker:down:dev
-```
-**Meaning:**
-> Stops and removes all containers for dev stack.
-
-5. Clean Orphan Containers
-```js
-npm run docker:remove-orphans:dev
-```
-**Meaning:**
-> Removes leftover Docker containers from previous builds.
-
-6. View Logs
-```js
-npm run docker:logs:dev
-```
-**Meaning:**
-> Streams real-time logs from backend container:
-
-* API requests
-* Errors
-* DB logs
-* Seed logs
----
-  
-# 🟣 Production Stack
-
-7. Start Production Stack
-```js
-npm run docker:up:prod
-```
-**Meaning:**
-> Runs production-ready backend:
-
-**build → start → migrate → seed**
-8. Production Migrations
-```js
-npm run docker:migrate:prod
-```
-**Meaning:**
-> Applies schema changes safely in production DB.
-
-9. Production Seeder
-```js
-npm run docker:seed:prod
-```
-**Meaning:**
-> Seeds production-safe baseline data (if enabled).
-
-10. Stop Production Stack
-```js
-npm run docker:down:prod
-```
-
-11.  Production Logs
-```js
-npm run docker:logs:prod
-```
----
-
-# 🧠 Why This Docker Setup is Strong
-* Ensures zero manual setup
-* Fully reproducible environments
-* CI/CD compatible
-* Prevents **works on my machine**
-* Matches real enterprise deployment pipelines
-
----
-
-## 🔁 CI/CD Pipeline
-
-> Every push triggers:
-
-1. PostgreSQL spin-up
-2. Migration execution
-3. Seed execution
-4. Jest test suite
-5. Build validation
-
----
-
-## 👤 About the Engineer
+## 👤 ABOUT THE ENGINEER
 
 **Busade Adedayo**
-**Solution Architect & Senior Software Engineer** (Healthcare Systems)
+*Senior Software Engineer / Solution Architect (Healthcare Systems)*
 
-* 8+ years of professional software engineering experience, including **4+ years full-time** building and maintaining production Electronic Medical Records (EMR) systems and **3+ years** as a consultant to a leading EMR solutions provider.
-* Strong focus on scalable **enterprise solution architecture**, clinical workflow optimization, auditability, and production reliability.
-* Experience with hospital-grade workflows
-* AWS Cloud Practitioner certified and currently preparing for the **AWS Solutions Architect Associate** certification.
-* Broad experience across backend systems, cloud architecture, and enterprise software solutions.
+* 5-8+ years of experience building and scaling production-grade **Electronic Medical Record (EMR)** systems
+Led architecture and development of domain-driven, modular healthcare platforms used in real clinical workflows
+Strong focus on:
+✔  Clinical workflow digitization (SOAP notes, vitals, prescriptions)
+✔ System architecture & scalability (DDD, modular monolith design)
+✔ Healthcare interoperability (FHIR R4 standards)
+Security & compliance (RBAC, PBAC, audit logging, BTG - emergency access)
+✔ Experienced in designing enterprise backend systems with observability, logging, and monitoring layers
+✔ AWS Cloud Practitioner certified | Preparing for AWS Solutions Architect - Associate
+✔ **Passionate about building global-standard healthcare infrastructure from Africa for global markets*
 
 ---
-
 ## 📜 License
 
-MIT © 2026 — Busade Adedayo
+MIT © 2026 - Busade Adedayo
 
 ---
 
-## 🚀 Final Note
+## 🚀 FINAL NOTE (OPTIMIZED)
 
-> This system was intentionally designed to demonstrate:
+> This project was intentionally designed to demonstrate how **real-world healthcare systems are engineered, secured, and scaled in production environments** — not just how APIs are built.
 
-> **“How I think in real production healthcare systems — not just how I build APIs.”**
+It combines **clinical workflow intelligence** with **enterprise-grade software architecture**, including:
 
-> It combines **strong architectural decisions** (DDD modular structure, intelligent Docker entrypoint, granular RBAC) with **production-grade tooling**:
+* 🧠 Clinical intelligence (SOAP notes, vitals, structured patient records)
+* 🚨 Emergency access workflows (Break-the-Glass secure override system)
+* 🔗 Healthcare interoperability (FHIR R4 standard integration)
+* 🔐 Enterprise security (JWT authentication, RBAC + PBAC, audit logging)
+* 📊 Observability & monitoring (Prometheus metrics, Winston structured logs)
+* 🧱 Domain-Driven Design (modular architecture aligned to hospital domains)
+* 🐳 Production-ready DevOps (Dockerized environment with DB readiness checks)
+* 🧪 Testing infrastructure (Jest + Supertest + API validation via Swagger)
 
-- Sequelize for complex ORM queries
-- Winston for structured logging
-- Prometheus for observability
-- Docker with database readiness checks
-- Comprehensive testing infrastructure (Jest + Supertest + Swagger)
+---
 
-Explore the live Swagger UI and test the system yourself.
+> **Engineering philosophy:**
+> “I don’t just build APIs — I design systems that behave like real hospitals under production constraints.”
+
+---
+
+## 🎯 Why this version is best
+
+* Keeps **clinical relevance (Version 1 strength)**
+* Keeps **engineering maturity (Version 2 strength)**
+* Adds:
+
+  * System thinking signal (very important for global recruiters)
+  * Clear separation of concerns
+  * Balanced storytelling (clinical + engineering)
+
+---
+
+If you use this exact tone in your README closing, it positions you not as:
+
+> “backend developer”
+
+but as:
+
+> **Healthcare systems engineer / solution architect level**
+
 ---
