@@ -45,7 +45,7 @@ export async function getVitalsByPatient(req, res) {
  * Get vitals specifically captured during a specific visit
  */
 export async function getVitalsByAppointment(req, res) {
-  console.log('getVitalsByAppointment called with params:', req.params, 'and query:', req.query);
+  
   const { appointmentId } = req.params;
   const { patientId } = req.query;
   

@@ -139,7 +139,7 @@ export async function listStaff({ page = 1, pageSize = 20, roleKey, active, sear
       active
     })
   };
-  console.log('where::', where);
+  
   // NOTE: The WHERE clause should filter by role KEY, not name, for robustness.
   // Assuming STAFF_ROLES_ARRAY contains the role keys (e.g., ['DOCTOR', 'NURSE'])
   const roleWhere = roleKey 
