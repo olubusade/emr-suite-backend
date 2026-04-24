@@ -13,29 +13,45 @@ export async function seedVitals(Vital, nurse, appointments) {
     return [];
   }
   const vitalsData = eligibleApps.map((app, index) => {
-    const heightCm = 175;
-    const weightKg = 70 + index;
-    const bmi = (weightKg / ((heightCm / 100) ** 2)).toFixed(1);
+  const heightCm = 175;
+  const weightKg = 70 + index;
 
-    return {
-      id: uuidv4(),
-      patientId: app.patientId,
-      appointmentId: app.id,
-      nurseId: nurseId,
-      createdBy: nurseId,
-      readingAt: app.appointmentDate,
-      bloodPressure: '120/80',
-      heartRate: 72,
-      temperature: 36.6,
-      respiratoryRate: 18,
-      weightKg,
-      heightCm,
-      bmi,
-      spo2: 98,
-      painScale: 0,
-      notes: 'Standard triage readings captured during intake.',
-    };
-  });
+  const bmiRaw = weightKg / ((heightCm / 100) ** 2);
+  const bmi = Number(bmiRaw.toFixed(1));
+
+  return {
+    id: uuidv4(),
+    patientId: app.patientId,
+    appointmentId: app.id,
+    nurseId: nurseId,
+    createdBy: nurseId,
+
+    readingAt: app.appointmentDate,
+
+    // 🩺 Core vitals
+    bloodPressure: '120/80',
+    heartRate: 72,
+    temperature: 36.6,
+    respiratoryRate: 18,
+    spo2: 98,
+    painScale: 0,
+
+    weightKg,
+    heightCm,
+    bmi,
+
+    triageLevel: index % 4 === 0 ? 'MEDIUM' : 'LOW',
+    consciousnessLevel: 'ALERT',
+    source: 'NURSE',
+
+    // 📏 Units (consistent with model defaults)
+    temperatureUnit: 'C',
+    heightUnit: 'cm',
+    weightUnit: 'kg',
+
+    notes: 'Standard triage readings captured during intake.',
+  };
+});
 
   try {
     process.stdout.write(`⏳ Recording triage data for ${vitalsData.length} encounters... `);

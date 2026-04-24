@@ -291,6 +291,48 @@ export async function cancelAppointment(id) {
   
 }
 
+const VALID_STATUSES = [
+  'scheduled',
+  'checked_in',
+  'in_consultation',
+  'completed'
+];
+
+export const updateAppointmentStatus = async (
+  appointmentId,
+  status,
+  userId
+) => {
+
+  if (!VALID_STATUSES.includes(status)) {
+    throw new ApiError(400, 'Invalid appointment status');
+  }
+
+  const appointment = await Appointment.findByPk(appointmentId);
+
+  if (!appointment) {
+    throw new ApiError(404, 'Appointment not found');
+  }
+
+  // enforce flow rules
+  if (appointment.status === 'completed') {
+    throw new ApiError(400, 'Completed appointment cannot be modified');
+  }
+
+  // Example: prevent skipping flow
+  if (appointment.status === 'scheduled' && status === 'completed') {
+    throw new ApiError(400, 'Cannot jump directly to completed');
+  }
+
+  appointment.status = status;
+
+  appointment.updatedBy = userId;
+
+  await appointment.save();
+
+  return appointment;
+};
+
 /**
  * Helper: Standardized Data Transfer Object (DTO)
  */

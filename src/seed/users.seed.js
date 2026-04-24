@@ -10,17 +10,17 @@ export async function seedUsers(User) {
   const usersToSeed = [
     {
       key: 'super_admin',
-      fName: 'Super',
+      fName: 'System',
       lName: 'Admin',
-      email: 'superadmin@busade-emr-demo.com',
+      email: 'systemadmin@busade-emr-demo.com',
       pass: 'superadmin@123',
       designation: 'System Administrator'
     },
     {
       key: 'admin',
-      fName: 'Admin',
-      lName: 'User',
-      email: 'admin@busade-emr-demo.com',
+      fName: 'Hospital',
+      lName: 'Admin',
+      email: 'hospitaladmin@busade-emr-demo.com',
       pass: 'admin@123',
       designation: 'Hospital Administrator'
     },
@@ -28,7 +28,7 @@ export async function seedUsers(User) {
       key: 'doctor',
       fName: 'John',
       lName: 'Doe',
-      email: 'doctor@busade-emr-demo.com',
+      email: 'physician@busade-emr-demo.com',
       pass: 'doctor@123',
       designation: 'Consultant Physician'
     },
@@ -44,7 +44,7 @@ export async function seedUsers(User) {
       key: 'receptionist',
       fName: 'Jane',
       lName: 'Williams',
-      email: 'reception@busade-emr-demo.com',
+      email: 'frontdesk@busade-emr-demo.com',
       pass: 'reception@123',
       designation: 'Front Desk Officer'
     },

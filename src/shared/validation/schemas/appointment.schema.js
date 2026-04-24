@@ -24,6 +24,27 @@ export const updateAppointmentSchema = z.object({
     staffId: uuid().optional()
   })
 });
+/**
+ * PATCH: Update Appointment Status (Check-in / Check-out flow)
+ */
+export const updateAppointmentStatusSchema = z.object({
+  params: z.object({
+    id: uuid()
+  }),
+
+  body: z.object({
+    status: APPOINTMENT_STATUS_ENUM,
+
+    reason: z.string()
+      .max(255)
+      .optional()
+      .describe('Optional reason for status change (audit purpose)'),
+
+    updatedBy: uuid()
+      .optional()
+      .describe('User performing the action (optional if taken from auth)')
+  })
+});
 
 export const getAppointmentSchema = z.object({
   params: z.object({ id: uuid() })

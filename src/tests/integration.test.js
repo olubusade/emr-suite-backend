@@ -27,7 +27,7 @@ describe('AUTH MODULE', () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'admin@busade-emr-demo.com',
+        email: 'hospitaladmin@busade-emr-demo.com',
         password: 'password123'
       });
 

@@ -25,7 +25,7 @@ export async function setupDB() {
     fName: 'Admin',
     lName: 'User',
     fullName: 'Admin User',
-    email: 'admin@busade-emr-demo.com',
+    email: 'hospitaladmin@busade-emr-demo.com',
     passwordHash: adminPassword,
     active: true
   });

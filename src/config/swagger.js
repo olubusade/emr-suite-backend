@@ -10,46 +10,39 @@ const options = {
     openapi: '3.0.0',
 
     info: {
-      title: 'Busade EMR-Suite Backend API (Demo)',
-      version: '1.0.0',
-      description: `
-        Busade EMR-Suite is a production-grade Electronic Medical Record (EMR) backend demonstrating modern healthcare system architecture.
+        title: 'Busade EMR-Suite Backend API',
+        version: '1.0.0',
+        description: `
+      Busade EMR-Suite is a production-grade Electronic Medical Record (EMR) backend designed to demonstrate modern, scalable healthcare system architecture.
 
-        ### Core Capabilities
-        - Patient Management & Demographics
-        - Appointment Scheduling (PAS)
-        - Clinical Workflows (Vitals, SOAP Notes, Clinical History)
-        - Billing & Revenue Tracking
+      ### 🏥 Core Modules
+      - Patient Management & Demographics
+      - Appointment Scheduling (PAS)
+      - Clinical Workflows (Vitals, SOAP Notes, Clinical History)
+      - Billing & Financial Operations
 
-        ### Security & Compliance
-        - JWT Authentication
-        - Role-Based Access Control (RBAC)
-        - Permission-Based Access Control (PBAC)
-        - Break-The-Glass (BTG) Emergency Access Workflow
-        - Real-time BTG Session Monitoring (Active Viewers)
-        - Full Audit Trail Logging (HIPAA-inspired design)
+      ### 🔐 Security & Access Control
+      - JWT-based Authentication
+      - Role-Based Access Control (RBAC)
+      - Permission-Based Access Control (PBAC)
+      - Break-The-Glass (BTG) Emergency Access Workflow
+      - Time-bound privileged access with automatic expiry
+      - Real-time session monitoring and active viewer tracking
+      - Comprehensive audit trail logging (HIPAA-inspired design)
 
-        ### Advanced Features
-        - Real-time Emergency Access Countdown
-        - Live Viewer Tracking during BTG Sessions
-        - Automatic Expiry via Cron Jobs
-        - Intelligent Access Restriction Engine
+      ### 🔗 Interoperability (FHIR® — HL7® Standard)
+      This API exposes selected FHIR resources to support integration with external healthcare systems:
+      - Patient
+      - Observation (Vitals)
+      - Condition (Diagnosis)
+      - ClinicalImpression (Clinical Notes)
+      - AuditEvent (System Logs)
 
-        ### Interoperability (FHIR - HL7 Standard)
-        This API exposes a subset of FHIR resources for interoperability:
-        - Patient
-        - Observation (Vitals)
-        - Condition (Diagnosis)
-        - ClinicalImpression (Clinical Notes)
-        - AuditEvent (System Logs)
+      ---
 
-        These endpoints enable integration with external healthcare systems.
-
-        ---
-
-        ⚠️ Note: This is a demo system showcasing enterprise EMR architecture and is not intended for direct clinical deployment.
-        `
-    },
+      ⚠️ This system is provided for demonstration and architectural evaluation purposes and is not intended for direct clinical use.
+      `
+      },
     tags: [
       {
         name: 'Roles',
@@ -116,7 +109,7 @@ const options = {
           properties: {
             email: {
               type: 'string',
-              example: 'admin@busade-emr-demo.com'
+              example: 'hospitaladmin@busade-emr-demo.com'
             },
             password: {
               type: 'string',
@@ -516,6 +509,17 @@ const options = {
               format: 'uuid',
               example: '550e8400-e29b-41d4-a716-446655440001'
             },
+          }
+        },
+         UpdateAppointmentStatusDTO: {
+          type: 'object',
+          required: ['status'],
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['scheduled', 'checked_in', 'in_consultation', 'completed'],
+              example: 'checked_in'
+            }
           }
         },
         PaginatedAppointments: {
@@ -1196,6 +1200,41 @@ const options = {
             birthDate: { type: 'string', format: 'date' }
           }
         },
+        // =========================
+      // 📦 FHIR BUNDLE
+      // =========================
+      BundleFHIR: {
+        type: 'object',
+        properties: {
+          resourceType: {
+            type: 'string',
+            example: 'Bundle'
+          },
+          type: {
+            type: 'string',
+            example: 'searchset'
+          },
+          total: {
+            type: 'integer',
+            example: 10
+          },
+          entry: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                resource: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/PatientFHIR' },
+                    { $ref: '#/components/schemas/ObservationFHIR' }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+
 
         ObservationFHIR: {
           type: 'object',

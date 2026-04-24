@@ -27,11 +27,11 @@ const isProduction = (process.env.NODE_ENV || process.env.ENV) === 'production';
  * Shared across Development, Test, and Production to ensure parity.
  */
 const dbConfig = {
-  username: requireEnv('DB_USER', 'postgres'),
-  password: requireEnv('DB_PASS', 'postgres'),
-  database: requireEnv('DB_NAME', 'busade_emr_demo_db'),
-  host: requireEnv('DB_HOST', 'localhost'),
-  port: Number(requireEnv('DB_PORT', '5432')),
+  username: requireEnv('DB_USER'),
+  password: requireEnv('DB_PASS'),
+  database: requireEnv('DB_NAME'),
+  host: requireEnv('DB_HOST'),
+  port: Number(requireEnv('DB_PORT')),
   dialect: 'postgres',
   dialectOptions: isProduction
     ? {

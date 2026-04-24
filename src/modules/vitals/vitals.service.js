@@ -234,6 +234,13 @@ function formatVital(vital) {
     painScale: vital.painScale,
     notes: vital.notes,
     readingAt: vital.readingAt,
+    triageLevel: vital.triageLevel,
+    consciousnessLevel: vital.consciousnessLevel,
+    source: vital.source,
+    temperatureUnit: vital.temperatureUnit,
+    heightUnit: vital.heightUnit,
+    weightUnit: vital.weightUnit,
+
 
     editable,
     viewOnly,

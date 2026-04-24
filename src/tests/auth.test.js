@@ -6,7 +6,7 @@ let adminToken, adminRefresh;
 
 beforeAll(async () => {
   await setupDB();
-  const login = await loginAs('admin@busade-emr-demo.com', 'password123');
+  const login = await loginAs('hospitaladmin@busade-emr-demo.com', 'password123');
   adminToken = login.accessToken;
   adminRefresh = login.refreshToken;
 });
@@ -17,7 +17,7 @@ describe('Auth Module Integration', () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'admin@busade-emr-demo.com',
+        email: 'hospitaladmin@busade-emr-demo.com',
         password: 'password123'
       });
 
@@ -30,7 +30,7 @@ describe('Auth Module Integration', () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'admin@busade-emr-demo.com',
+        email: 'hospitaladmin@busade-emr-demo.com',
         password: 'wrong_password'
       });
 

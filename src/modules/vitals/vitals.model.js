@@ -35,7 +35,20 @@ export const VitalModel = (sequelize, DataTypes) => {
           validate: { min: 0, max: 10 },
           comment: '0 to 10 scale'
         }, // 0=none, 10=worst
-
+        source: {
+          type: DataTypes.ENUM('NURSE', 'DEVICE', 'MANUAL'),
+          defaultValue: 'MANUAL'
+        },
+        consciousnessLevel: {
+          type: DataTypes.ENUM('ALERT', 'VERBAL', 'PAIN', 'UNRESPONSIVE'),
+        },
+        triageLevel: {
+          type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),
+          defaultValue: 'LOW'
+        },
+        temperatureUnit: { type: DataTypes.STRING, defaultValue: 'C' },
+        heightUnit: { type: DataTypes.STRING, defaultValue: 'cm' },
+        weightUnit: { type: DataTypes.STRING, defaultValue: 'kg' },
         notes: { type: DataTypes.TEXT },
         createdBy: {
         type: DataTypes.UUID,

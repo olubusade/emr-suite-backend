@@ -28,7 +28,7 @@ async function start() {
     // 2. PORT BINDING
     const PORT = config.port || 5000;
     app.listen(PORT, () => {
-      logger.info(`Service Online: Busade's EMR Demo API running at http://localhost:${PORT}`, {
+      logger.info(`Service Online: Busade's EMR Platform API running at http://localhost:${PORT}`, {
         environment: config.env,
         port: PORT,
         processId: process.pid

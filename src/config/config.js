@@ -44,6 +44,9 @@ if (fs.existsSync(envFile)) {
 
 /**
  * CONFIGURATION VALIDATOR
+ *  * requireEnv ensures that we fail fast if any critical configuration is missing,
+ * which is essential for a production-grade EMR system to avoid silent failures.
+ * It allows fall backs for local development but enforces strict requirements in production environments.
  */
 function requireEnv(key, fallback) {
   const value = process.env[key] || fallback;
@@ -60,11 +63,11 @@ function requireEnv(key, fallback) {
 }
 
 const dbConfig = {
-  username: requireEnv('DB_USER', 'postgres'),
-  password: requireEnv('DB_PASS', 'postgres'),
-  database: requireEnv('DB_NAME', 'busade_emr_demo_db'),
-  host: requireEnv('DB_HOST', 'localhost'),
-  port: Number(requireEnv('DB_PORT', '5432')),
+  username: requireEnv('DB_USER'),
+  password: requireEnv('DB_PASS'),
+  database: requireEnv('DB_NAME'),
+  host: requireEnv('DB_HOST'),
+  port: Number(requireEnv('DB_PORT')),
   dialect: 'postgres',
 
   // Only log SQL queries in development
@@ -78,15 +81,15 @@ const dbConfig = {
  * GLOBAL CONFIGURATION OBJECT
  */
 export const config = {
-  port: Number(requireEnv('PORT', '5000')),
+  port: Number(requireEnv('PORT')),
   env,
-  corsOrigin: requireEnv('CORS_ORIGIN', '*'),
+  corsOrigin: requireEnv('CORS_ORIGIN'),
 
   jwt: {
     secret: requireEnv('JWT_SECRET'),
     refreshSecret: requireEnv('JWT_REFRESH_SECRET'),
-    accessTtl: requireEnv('ACCESS_TTL', '15m'),
-    refreshTtl: requireEnv('REFRESH_TTL', '7d'),
+    accessTtl: requireEnv('ACCESS_TTL'),
+    refreshTtl: requireEnv('REFRESH_TTL'),
   },
 
   db: dbConfig,

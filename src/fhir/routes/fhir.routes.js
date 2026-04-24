@@ -54,7 +54,7 @@ router.use(authRequired);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FHIR_Patient'
+ *               $ref: '#/components/schemas/PatientFHIR'
  */
 router.get(
   '/Patient/:id',
@@ -102,7 +102,7 @@ router.get(
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FHIR_Bundle'
+ *               $ref: '#/components/schemas/BundleFHIR'
  */
 router.get(
   '/Observation',
@@ -137,7 +137,7 @@ router.get(
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FHIR_Bundle'
+ *               $ref: '#/components/schemas/BundleFHIR'
  */
 router.get(
   '/Condition',
@@ -182,7 +182,7 @@ router.get(
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FHIR_Bundle'
+ *               $ref: '#/components/schemas/BundleFHIR'
  */
 router.get(
   '/ClinicalNotes',
@@ -217,7 +217,7 @@ router.get(
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FHIR_Bundle'
+ *               $ref: '#/components/schemas/BundleFHIR'
  */
 router.get(
   '/AuditEvent',

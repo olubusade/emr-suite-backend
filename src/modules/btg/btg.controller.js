@@ -3,6 +3,7 @@ import { ok, error } from '../../shared/utils/response.js';
 import { attachAudit } from '../../shared/middlewares/audit.middleware.js';
 import { logger } from '../../config/logger.js';
 import { AUDIT_ACTIONS } from '../../constants/index.js';
+import { UUID } from 'sequelize';
 
 /**
  * REQUEST BREAK-GLASS (NURSE)
@@ -67,9 +68,10 @@ export async function listBTGRequests(req, res) {
   await attachAudit(req, {
     action: AUDIT_ACTIONS.BREAK_GLASS_READ,
     entity: 'btg_request',
-    entityId: 'BTG_LIST',
+     entityId: req.user.id,
     metadata: {
       query: req.query,
+      entityRef: 'BTG_LIST',
       resultCount: result.items.length
     }
   });

@@ -32,7 +32,7 @@ export async function listAudits(req, res) {
       pageSize: Number(pageSize),
       filters
     });
-
+    
     const rows = result.items.map(row => ({
       id: row.id,
       user: row.actor,

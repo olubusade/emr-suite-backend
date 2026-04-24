@@ -235,4 +235,57 @@ router.delete(
   asyncHandler(appt.cancelAppointment)
 );
 
+/**
+ * PATCH /appointments/:id/status
+ */
+/**
+ * @swagger
+ * /appointments/{id}/status:
+ *   patch:
+ *     summary: Update appointment status (Check-in / Check-out / etc.)
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Appointment ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [scheduled, checked_in, in_consultation, completed]
+ *                 example: checked_in
+ *               reason:
+ *                 type: string
+ *                 example: Patient arrived at front desk
+ *     responses:
+ *       200:
+ *         description: Appointment status updated successfully
+ *       400:
+ *         description: Invalid request
+ *       404:
+ *         description: Appointment not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.patch(
+  '/:id/status',
+  authRequired,
+  authorize(PERMISSIONS.APPOINTMENT_UPDATE),
+  validate(getAppointmentSchema),
+  asyncHandler(appt.updateAppointmentStatus)
+);
+
+
 export default router;

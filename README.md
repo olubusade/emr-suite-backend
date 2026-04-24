@@ -22,7 +22,7 @@
 
 ## 🎥 System Demo (Full Workflow)
 
-▶️ [https://your-video-link.com](https://your-video-link.com)
+▶️ [https://emr.busade.dev](https://emr.busade.dev)
 
 **Covers:**
 
@@ -39,9 +39,9 @@
 
 ## 🌍 Live System
 
-* **Backend API:** [https://your-backend.onrender.com/api](https://your-backend.onrender.com/api)
-* **Swagger Docs:** [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
-* **Frontend:** [https://your-frontend.vercel.app](https://your-frontend.vercel.app)
+* **Backend API:** [https://emr.busade.dev/api](https://emr.busade.dev/api)
+* **Swagger Docs:** [https://emr.busade.dev/api/docs](https://emr.busade.dev/api/docs)
+* **Frontend:** [https://emr.busade.dev](https://emr.busade.dev)
 
 ---
 
@@ -623,7 +623,7 @@ GET /api/fhir/AuditEvent
 
 # 📚 SWAGGER API DOCUMENTATION
 
-👉 [https://your-backend.onrender.com/api/docs](https://your-backend.onrender.com/api/docs)
+👉 [https://emr.busade.dev/api/docs](https://emr.busade.dev/api/docs)
 
 ### Features:
 

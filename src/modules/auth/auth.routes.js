@@ -34,7 +34,7 @@ const router = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/LoginRequest'
  *           example:
- *             email: admin@busade-emr-demo.com
+ *             email: hospitaladmin@busade-emr-demo.com
  *             password: admin@123
  *
  *     responses:

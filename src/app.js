@@ -23,6 +23,7 @@ const app = express();
  * Allows single req.ip in production
  * */
 if (process.env.NODE_ENV === 'production') {
+  
   app.set('trust proxy', 1);
 } else {
   app.set('trust proxy', false);
@@ -38,7 +39,14 @@ app.get('/api/health', (req, res) => {
     status: 'UP',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    memory: process.memoryUsage()
+    memory: process.memoryUsage(),
+    env: process.env.NODE_ENV || 'undefined',
+    version: '1.0.0',
+    process: {
+      id: process.pid,
+      platform: process.platform,
+      nodeVersion: process.version
+    }
   });
 });
 

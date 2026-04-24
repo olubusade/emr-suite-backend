@@ -85,7 +85,6 @@ export async function updateAppointment(req, res) {
       entityId: result.appointment.id,
       before: result.audit.before,
       after: result.audit.after
-      
     });
 
     return ok(res, result, 'Appointment updated successfully');
@@ -110,3 +109,25 @@ export async function cancelAppointment(req, res) {
 
     return deleted(res, { id: appointment.id, status: appointment.status }, 'Appointment cancelled');
 }
+
+export const updateAppointmentStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.user?.id;
+
+    if (!status) {
+      throw new ApiError(400, 'Status is required');
+    }
+
+    const updated = await appointmentService.updateAppointmentStatus(
+      id,
+      status,
+      userId
+    );
+    return ok(res, updated, 'Appointment status updated successfully');
+
+  } catch (error) {
+    next(error);
+  }
+};

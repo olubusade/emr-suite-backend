@@ -13,7 +13,7 @@ beforeAll(async () => {
   const admin = await createTestUser({ 
     role: 'admin', 
     full_name: 'Admin User', 
-    email: 'admin@busade-emr-demo.com' 
+    email: 'hospitaladmin@busade-emr-demo.com' 
   });
   tokens.admin = admin.accessToken;
 });
@@ -48,7 +48,7 @@ describe('User Module CRUD Integration', () => {
       .set('Authorization', `Bearer ${tokens.admin}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data.email).toBe('admin@busade-emr-demo.com');
+    expect(res.body.data.email).toBe('hospitaladmin@busade-emr-demo.com');
   });
 
   it('should update a specific user via ID', async () => {
