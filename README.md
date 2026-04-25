@@ -39,7 +39,7 @@
 
 ## 🌍 Live System
 
-* **Backend API:** [https://emr.busade.dev/api](https://emr.busade.dev/api)
+* **Backend API:** [https://emr.busade.dev/api/health](https://emr.busade.dev/api/health)
 * **Swagger Docs:** [https://emr.busade.dev/api/docs](https://emr.busade.dev/api/docs)
 * **Frontend:** [https://emr.busade.dev](https://emr.busade.dev)
 
