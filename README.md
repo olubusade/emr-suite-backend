@@ -38,12 +38,13 @@
 ---
 
 ## 🌍 Live System
-
-* **System Health:** [https://emr.busade.dev/api/health](https://emr.busade.dev/api/health)
-* **Swagger Docs:** [https://emr.busade.dev/api/docs](https://emr.busade.dev/api/docs)
-* **Frontend:** [https://emr.busade.dev](https://emr.busade.dev)
-
+`
+- <a href="https://emrapi.busade.dev/api/health" target="_blank">Syste, Live Health Check</a>
+- <a href="https://emrapi.busade.dev/api/docs" target="_blank">Swagger API Documentation</a>
+- - <a href="https://emrapi.busade.dev/api/docs" target="_blank">Frontend</a>
+`
 ---
+
 
 ## 🧠 SYSTEM OVERVIEW
 
