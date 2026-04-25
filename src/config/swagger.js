@@ -79,7 +79,7 @@ const options = {
         description: 'Development Server',
       },
       {
-        url: 'https://emr.busade.dev/api',
+        url: 'https://emrapi.busade.dev/api',
         description: 'Production Server',
       },
     ],
@@ -185,13 +185,54 @@ const options = {
          * USER
          * =========================
          */
+        /**
+         * Admin
+         */
+        User: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            email: { type: 'string' },
+            role: { type: 'string' }
+          }
+        },
+        UserCreate: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            email: { type: 'string' },
+            role: { type: 'string' }
+          }
+        },
+        UserUpdate: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            phone: { type: 'string' },
+            
+            roleId: { type: 'string' },
+            gender: {
+              type: 'string',
+              enum:['male', 'female', 'other', 'unknown']
+             },
+            destination: { type: 'string' },
+          }
+        },
+        /**
+         * Current Logged In User
+         */
         UserUpdateProfile: {
           type: 'object',
           properties: {
             fName: { type: 'string', example: 'John' },
             lName: { type: 'string', example: 'Doe' },
-            designation: { type: 'string', example: 'Senior Nurse' },
-            email: { type: 'string', example: 'john@hospital.com' }
+            designation: { type: 'string', example: 'Senior Nurse' }
           }
         },
         /**

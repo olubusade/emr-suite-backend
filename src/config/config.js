@@ -80,6 +80,7 @@ const dbConfig = {
 /**
  * GLOBAL CONFIGURATION OBJECT
  */
+//JWT_SECRET=$(openssl rand -base64 32)
 export const config = {
   port: Number(requireEnv('PORT')),
   env,
