@@ -18,6 +18,7 @@
         "docker:remove-orphans:prod": "docker compose -f docker/docker-compose.prod.yml down --remove-orphans",
         "docker:logs:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev logs -f",
         "docker:logs:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod logs -f",
+        "docker:running-container":"docker ps",
         "migrate": "sequelize db:migrate",
         "migrate:undo": "sequelize db:migrate:undo",
         "migrate:undo:all": "sequelize db:migrate:undo:all",

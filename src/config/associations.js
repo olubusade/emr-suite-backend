@@ -40,12 +40,7 @@ const BTGSession = BTGSessionModel(sequelize, DataTypes);
 
 // ----------------- Associations -----------------
 // Multi-roles: User ↔ Role (through UserRole)
-User.belongsToMany(Role, {
-  through: UserRole,
-  foreignKey: 'user_id',
-  otherKey: 'role_id',
-  as: 'roles',
-});
+User.belongsToMany(Role, { through: UserRole, foreignKey: 'user_id', otherKey: 'role_id', as: 'roles'});
 Role.belongsToMany(User, {
   through: UserRole,
   foreignKey: 'role_id',
@@ -66,6 +61,22 @@ Permission.belongsToMany(Role, {
   otherKey: 'roleId',
   as: 'roles',
 });
+
+// User ↔ Permission (through UserPermission)
+User.belongsToMany(Permission, {
+  through: UserPermission,
+  foreignKey: 'userId',
+  otherKey: 'permissionId',
+  as: 'permissions',
+});
+Permission.belongsToMany(User, {
+  through: UserPermission,
+  foreignKey: 'permissionId',
+  otherKey: 'userId',
+  as: 'users',
+});
+
+
 /* Role.associate = models => {
   Role.belongsToMany(models.Permission, {
     through: models.RolePermission,
@@ -84,34 +95,15 @@ Permission.associate = models => {
   });
 }; */
 
-// User ↔ Permission (through UserPermission)
-User.belongsToMany(Permission, {
-  through: UserPermission,
-  foreignKey: 'userId',
-  otherKey: 'permissionId',
-  as: 'permissions',
-});
-Permission.belongsToMany(User, {
-  through: UserPermission,
-  foreignKey: 'permissionId',
-  otherKey: 'userId',
-  as: 'users',
-});
 
 // Patient ↔ Bill
 Patient.hasMany(Bill, { foreignKey: 'patient_id', as: 'bills' });
 Bill.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
 // Appointment ↔ Bill
-Appointment.hasOne(Bill, { 
-  foreignKey: 'appointmentId',
-  as: 'bill' 
-});
+Appointment.hasOne(Bill, { foreignKey: 'appointmentId', as: 'bill'});
 
-Bill.belongsTo(Appointment, { 
-  foreignKey: 'appointmentId',
-  as: 'appointment'
-});
+Bill.belongsTo(Appointment, { foreignKey: 'appointmentId', as: 'appointment'});
 
 // Bill ↔ User
 Bill.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
@@ -160,76 +152,35 @@ User.hasMany(ClinicalNote, { foreignKey: 'staffId', as: 'doctorNotes' });
 ClinicalNote.belongsTo(User, { foreignKey: 'staffId', as: 'doctor' });
 
 // ClinicalNote → Appointment
-ClinicalNote.belongsTo(Appointment, {
-  foreignKey: 'appointmentId',
-  as: 'appointment'
-});
+ClinicalNote.belongsTo(Appointment, { foreignKey: 'appointmentId', as: 'appointment'});
 
 // Appointment → ClinicalNote
-Appointment.hasOne(ClinicalNote, {
-  foreignKey: 'appointmentId',
-  as: 'clinicalNote'
-});
+Appointment.hasOne(ClinicalNote, { foreignKey: 'appointmentId', as: 'clinicalNote'});
 
 // user → BTQRequest
-User.hasMany(BTGRequest, {
-  foreignKey: 'requestedBy',
-  as: 'btgRequests'
-});
-BTGRequest.belongsTo(User, {
-  foreignKey: 'requestedBy',
-  as: 'requester'
-});
+User.hasMany(BTGRequest, { foreignKey: 'requestedBy', as: 'btgRequests'});
+BTGRequest.belongsTo(User, { foreignKey: 'requestedBy', as: 'requester'});
 // Admin → BTQRequest
-User.hasMany(BTGRequest, {
-  foreignKey: 'approvedBy',
-  as: 'approvedBTGRequests'
-});
+User.hasMany(BTGRequest, {foreignKey: 'approvedBy', as: 'approvedBTGRequests'});
 
-BTGRequest.belongsTo(User, {
-  foreignKey: 'approvedBy',
-  as: 'approver'
-});
+BTGRequest.belongsTo(User, { foreignKey: 'approvedBy', as: 'approver'});
 // Patient → BTQRequest
-Patient.hasMany(BTGRequest, {
-  foreignKey: 'patientId',
-  as: 'btgRequests'
-});
+Patient.hasMany(BTGRequest, { foreignKey: 'patientId', as: 'btgRequests'});
 
-BTGRequest.belongsTo(Patient, {
-  foreignKey: 'patientId',
-  as: 'patient'
-});
+BTGRequest.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient'});
 
 // Optional: specific clinical note - For future use if we want to link BTG requests to specific clinical notes
-ClinicalNote.hasMany(BTGRequest, {
-  foreignKey: 'clinicalNoteId',
-  as: 'btgRequests'
-});
+ClinicalNote.hasMany(BTGRequest, { foreignKey: 'clinicalNoteId', as: 'btgRequests'});
 
-BTGRequest.belongsTo(ClinicalNote, {
-  foreignKey: 'clinicalNoteId',
-  as: 'clinicalNote'
-});
+BTGRequest.belongsTo(ClinicalNote, { foreignKey: 'clinicalNoteId', as: 'clinicalNote'});
 
 // A BTG request can have many active viewers
-BTGRequest.hasMany(BTGSession, {
-  foreignKey: 'btgId',
-  as: 'sessions',
-  onDelete: 'CASCADE'
-});
+BTGRequest.hasMany(BTGSession, { foreignKey: 'btgId', as: 'sessions', onDelete: 'CASCADE'});
 
-BTGSession.belongsTo(BTGRequest, {
-  foreignKey: 'btgId',
-  as: 'btg'
-});
+BTGSession.belongsTo(BTGRequest, { foreignKey: 'btgId', as: 'btg'});
 
 // Each session belongs to a user (doctor/nurse)
-BTGSession.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
-});
-
+BTGSession.belongsTo(User, { foreignKey: 'userId', as: 'user'});
 
 // ----------------- Exports -----------------
 export {

@@ -27,7 +27,7 @@ export async function registerBTGViewer({ btgId, patientId, user }) {
     });
     
     const role = user.roles.some(r => r === 'nurse') ? true : false;
-    // 🔒 Optional strict control
+    // strict control
     if (!role) {
         throw new ApiError(403, 'Only nurses can initiate BTG sessions');
     }

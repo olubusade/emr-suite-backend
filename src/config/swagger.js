@@ -3,7 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 
 /**
  * SWAGGER API DOCUMENTATION CONFIGURATION
- * OpenAPI 3.0 - EMR-Suite Demo Backend
+ * OpenAPI 3.0 - Busade EMR-Suite Backend
  */
 const options = {
   definition: {

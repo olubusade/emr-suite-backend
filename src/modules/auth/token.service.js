@@ -1,8 +1,6 @@
-// utils/jwtService.js
 import * as jwtUtil from './jwt.js';
 import ApiError from './ApiError.js';
 import { reportError } from './monitoring.js';
-
 /**
  * JWT SERVICE UTILITY
  * Standardized wrapper for token operations.
@@ -22,9 +20,7 @@ export function generateAuthTokens(payload) {
     reportError(err, { utility: 'jwtService', operation: 'generateAuthTokens' });
     throw new ApiError(500, 'Failed to initialize secure session');
   }
-  
 }
-
 /**
  * Verify access token
  * @param {string} token
@@ -46,7 +42,6 @@ export function verifyAccess(token) {
     throw new ApiError(401, isExpired ? 'Access session expired' : 'Invalid access credentials');
   }
 }
-
 /**
  * Verify refresh token
  * @param {string} token
@@ -58,11 +53,9 @@ export function verifyRefresh(token) {
     if (!token) throw new Error('No refresh token provided');
     return jwtUtil.verifyRefresh(token);
   } catch (err) {
-    const isExpired = err.name === 'TokenExpiredError';
-    
+    const isExpired = err.name === 'TokenExpiredError';   
     // Refresh token failures are higher priority security events
     reportError(err, { utility: 'jwtService', operation: 'verifyRefresh', severity: 'medium' });
-
     throw new ApiError(401, isExpired ? 'Refresh session expired' : 'Invalid refresh credentials');
   }
 }

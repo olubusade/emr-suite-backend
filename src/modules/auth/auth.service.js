@@ -59,9 +59,6 @@ async function collectPermissions(user) {
     reportError(err, { service: 'AuthService', operation: 'collectPermissions', userId: user.id });
     return []; // Return empty permissions rather than crashing the login
   }
-  
-
-  
 }
 
 function formatUser(user, permissions = []) {

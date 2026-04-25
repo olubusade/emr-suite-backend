@@ -1,6 +1,6 @@
 ---
-
 # 🏥 EMR-Suite Backend — Enterprise Healthcare System (Flagship Project)
+---
 
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat-square)
 ![Express](https://img.shields.io/badge/Framework-Express-black?style=flat-square)
@@ -80,99 +80,104 @@ The system simulates real-world hospital operations:
 
 > Here are key views from the system
 
-### 1. Swagger API Documentation & Testing Interface (System Overview)
+### 🧱 System Architecture & Entry Point
 
-* Shows all endpoints grouped by module
-* JWT auth testing
-* Validated endpoints (Zod)
-* Demonstrates backend completeness
+![Architecture](./docs/screenshots/architecture.png)
+
+> Modular backend structure with clear domain separation (`modules`, `shared`, `fhir`) and a centralized middleware pipeline.
+> Designed for scalability, maintainability, and production readiness.
+
+---
+
+### 🔌 Swagger API Documentation & Testing Interface (System Overview)
 
 ![Swagger](./docs/screenshots/swagger.png)
-> Full API Surface — Swagger Documentation & Live Testing
 
-### 2. Authentication (Login + JWT Token Flow)
-* Login → JWT issued
-* Token used in Authorization header
-* Permissions embedded in token
+> Fully documented REST API grouped by domain modules.
+> Supports live request/response testing with JWT-secured and Zod validated endpoints.
+> Demonstratees backend completeness
 
-![Auth](./docs/screenshots/auth-flow.png)
-> Secure Authentication — JWT + Role & Permission Context
+---
 
-### 3. Patient Module (CRUD + Profile View)
-* Patient registration
-* Patient list
-* Patient profile view
-* Core demographic + medical identity
-  
-![Patients](./docs/screenshots/patients.png)
-> Patient Lifecycle Management
+### 🔐 Secure Authentication (Login + JWT Token Flow)
 
-### 4. Appointment System (Workflow)
-* Create appointment / update appointment
-* Status lifecycle
-* Role-aware flows
+![Auth Logic](./docs/screenshots/auth-flow.png)
+> Login → JWT issued
+> Token used in Authorization header
+> Token-based authentication with access and refresh strategy.
+> Permissions embedded in token
+> Explicit handling of expired vs invalid tokens ensures secure session management.
 
-![Appointments](./docs/screenshots/appointments.png)
-> Appointment Scheduling & Workflow Management
+---
 
-### 5. Clinical Notes (SOAP) - Create, Read, Update (Doctor View)
-* Subjective / Objective / Assessment / Plan
-* Doctor-authored
-* Immutable history (if finalized)
+### 🚨 Break-The-Glass (BTG) Security Logic
 
-![Clinical Notes](./docs/screenshots/clinical-notes.png)
-> Clinical Documentation — Structured SOAP Notes
+![BTG Logic](./docs/screenshots/btg-logic.png)
 
-### 6. Vitals / Triage
-* Blood pressure, temperature, SPO2, BMI etc
-* Structured observations
-* Feeds FHIR Observation
+> Controlled emergency access workflow with justification checks and time-bound access.
+> Designed for high-security clinical environments with full auditability.
 
-![Vitals](./docs/screenshots/vitals.png)
-> Vitals Capture — Nurse/Triage Workflow
+---
 
-### 7. Billing & Invoices
-* Pending bills
-* Paid bills
-* Invoice generation / printing
+### 🌐 Interoperability Layer (FHIR R4)
 
-![Billing](./docs/screenshots/billing.png)
-> Billing & Financial Workflow
+![FHIR](./docs/screenshots/fhir-response.png)
 
-### 8. Break-the-Glass (BTG)
-**Temporary access override**
-**Countdown timer**
-**Active viewers tracking**
-**Full audit logging**
+> FHIR-compliant API responses aligned with HL7 standards.
+> Enables seamless integration with external healthcare systems.
 
-![BTG](./docs/screenshots/btg.png)
-> Emergency Access (Break-the-Glass) with Real-Time Monitoring
+---
 
-### 9. Metrics & Observability Dashboard
-* Prometheus metrics endpoint
-* Performance counters
-* Request tracking & latency
-* Error rates
-* System health
+### 🧪 Clinical Data Validation (Zod)
+
+![Validation](./docs/screenshots/zod-validation.png)
+
+> Schema-based validation layer enforcing strict input constraints.
+> Prevents invalid or malformed clinical data from entering the system.
+
+---
+
+### 🗄️ Database Integrity & Relationships
+
+![Database](./docs/screenshots/db-relations.png)
+
+> Relational data modeling with well-defined associations between entities.
+> Optimized for consistency, integrity, and performant query execution.
+
+---
+
+### 📊 Observability & Performance Monitoring
 
 ![Metrics](./docs/screenshots/metrics.png)
-> System Observability — Metrics & Performance Monitoring
 
-## 10. Docker System Running
-* Backend container
-* PostgreSQL container
-* Startup logs (migrations + seed)
+> Prometheus metrics endpoint exposing system performance data.
+> Includes request latency, CPU usage, and runtime health indicators.
 
-![Docker](./docs/screenshots/docker-running.png)
-> Containerized Deployment Environment
+---
 
-## 11. Seed log output
-* Staff creation
-* RBAC mapping
-* Patient seeding
-* Billing sync
+### 🐳 Infrastructure & Orchestration
+
+![Docker Config](./docs/screenshots/docker-compose.png)
+
+> Multi-service container orchestration using Docker Compose.
+> Defines application, database, and supporting services with health checks.
+
+---
+
+### 🖥️ Development Orchestration & Containerization
+
+![Docker Running](./docs/screenshots/docker-running.png)
+
+> The system utilizes a multi-container Docker environment to ensure full environment parity between development, staging, and production. This setup includes automated health checks for the PostgreSQL service.
+
+---
+
+### 🚀 Data Seeding & Deployment
 
 ![Seed](./docs/screenshots/seed-success.png)
+
+> Automated data seeding process initializing core entities and relationships.
+> System boots into a fully usable state with realistic sample data.
 
 ---
 

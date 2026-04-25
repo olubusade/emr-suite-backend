@@ -5,7 +5,7 @@ export const createAppointmentSchema = z.object({
   body: z.object({
     patientId: uuid(),
     staffId: uuid(),
-      appointmentDate: isoDateString(),    
+    appointmentDate: isoDateString(),    
     appointmentTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
     reason: z.string().max(255).optional(),
     notes: z.string().optional()
@@ -58,12 +58,10 @@ export const listAppointmentsSchema = z.object({
   query: z.object({
     page: z.preprocess((v) => Number(v) || 1, z.number()),
     limit: z.preprocess((v) => Number(v) || 20, z.number()),
-    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),
-    //Allow the new timeFrame flag
+    offset: z.preprocess((v) => (v ? Number(v) : 0), z.number().int().min(0).optional()),    
     timeFrame: APPOINTMENT_TIMEFRAME_ENUM.optional(),
     staffId: uuid().optional(),
     patientId: uuid().optional(),
-    // Keep the actual database status separate
     status: APPOINTMENT_STATUS_ENUM.optional(),
     search: z.string().optional(),
     sortBy: z.string().optional(),

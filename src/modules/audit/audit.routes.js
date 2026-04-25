@@ -10,6 +10,13 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   name: Audits
+ * 
+ *   description: Clinical Audit logs
+ */
+/**
+ * @swagger
  * /audit:
  *   get:
  *     summary: Retrieve audit logs with filters and pagination
