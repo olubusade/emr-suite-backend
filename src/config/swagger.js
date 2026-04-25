@@ -1055,56 +1055,122 @@ const options = {
         },
 
         CreateVital: {
-          type: 'object',
-          required: ['patientId', 'appointmentId', 'readingAt'],
-          properties: {
-            patientId: { type: 'string', format: 'uuid' },
-            appointmentId: { type: 'string', format: 'uuid' },
-            readingAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'ISO 8601 datetime'
-            },
+  type: 'object',
+  required: ['patientId', 'appointmentId', 'readingAt'],
+  properties: {
+    patientId: { type: 'string', format: 'uuid' },
+    appointmentId: { type: 'string', format: 'uuid' },
 
-            temperature: { type: 'number', minimum: 30, maximum: 45 },
-            heartRate: { type: 'integer', minimum: 30, maximum: 200 },
+    readingAt: {
+      type: 'string',
+      format: 'date-time'
+    },
 
-            bloodPressure: {
-              type: 'string',
-              pattern: '^\\d{2,3}/\\d{2,3}$',
-              example: '120/80',
-              description: 'Systolic must be greater than diastolic'
-            },
+    temperature: { type: 'number', minimum: 30, maximum: 45 },
+    temperatureUnit: {
+      type: 'string',
+      enum: ['C', 'F'],
+      default: 'C'
+    },
 
-            respiratoryRate: { type: 'integer', minimum: 5, maximum: 60 },
-            weightKg: { type: 'number' },
-            heightCm: { type: 'number' },
-            spo2: {
-              type: 'number',
-              minimum: 0,
-              maximum: 100,
-              nullable: true
-            },
-            painScale: { type: 'integer', minimum: 0, maximum: 10 },
-            notes: { type: 'string', nullable: true }
-          }
+    heartRate: { type: 'integer', minimum: 30, maximum: 200 },
+
+    bloodPressure: {
+      type: 'string',
+      pattern: '^\\d{2,3}/\\d{2,3}$'
+    },
+
+    respiratoryRate: { type: 'integer', minimum: 5, maximum: 60 },
+
+    weightKg: { type: 'number' },
+    weightUnit: {
+      type: 'string',
+      enum: ['kg', 'lb'],
+      default: 'kg'
+    },
+
+    heightCm: { type: 'number' },
+    heightUnit: {
+      type: 'string',
+      enum: ['cm', 'm', 'ft', 'in'],
+      default: 'cm'
+    },
+
+    spo2: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 100
+    },
+
+    painScale: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 10
+    },
+
+    source: {
+      type: 'string',
+      enum: ['NURSE', 'DEVICE', 'MANUAL'],
+      default: 'MANUAL'
+    },
+
+    consciousnessLevel: {
+      type: 'string',
+      enum: ['ALERT', 'VERBAL', 'PAIN', 'UNRESPONSIVE']
+    },
+
+    triageLevel: {
+      type: 'string',
+      enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
+      default: 'LOW'
+    },
+
+    notes: { type: 'string' }
+  }
         },
 
         UpdateVital: {
-          type: 'object',
-          properties: {
-            temperature: { type: 'number', minimum: 30, maximum: 45 },
-            heartRate: { type: 'integer', minimum: 30, maximum: 220 },
-            bloodPressure: {
-              type: 'string',
-              pattern: '^\\d{2,3}/\\d{2,3}$'
-            },
-            respiratoryRate: { type: 'integer', minimum: 5, maximum: 60 },
-            spo2: { type: 'number', minimum: 50, maximum: 100 },
-            weightKg: { type: 'number' },
-            heightCm: { type: 'number' },
-            notes: { type: 'string' }
-          }
+  type: 'object',
+  properties: {
+    temperature: { type: 'number', minimum: 30, maximum: 45 },
+    temperatureUnit: { type: 'string', enum: ['C', 'F'] },
+
+    heartRate: { type: 'integer', minimum: 30, maximum: 220 },
+
+    bloodPressure: {
+      type: 'string',
+      pattern: '^\\d{2,3}/\\d{2,3}$'
+    },
+
+    respiratoryRate: { type: 'integer', minimum: 5, maximum: 60 },
+
+    weightKg: { type: 'number' },
+    weightUnit: { type: 'string', enum: ['kg', 'lb'] },
+
+    heightCm: { type: 'number' },
+    heightUnit: { type: 'string', enum: ['cm', 'm', 'ft', 'in'] },
+
+    spo2: { type: 'integer', minimum: 0, maximum: 100 },
+
+    painScale: { type: 'integer', minimum: 0, maximum: 10 },
+
+    source: {
+      type: 'string',
+      enum: ['NURSE', 'DEVICE', 'MANUAL']
+    },
+
+    consciousnessLevel: {
+      type: 'string',
+      enum: ['ALERT', 'VERBAL', 'PAIN', 'UNRESPONSIVE']
+    },
+
+    triageLevel: {
+      type: 'string',
+      enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+    },
+
+    notes: { type: 'string' }
+  }
         },
        /**
          * =========================
