@@ -38,11 +38,10 @@
 ---
 
 ## 🌍 Live System
-`
-- <a href="https://emrapi.busade.dev/api/health" target="_blank">Syste, Live Health Check</a>
-- <a href="https://emrapi.busade.dev/api/docs" target="_blank">Swagger API Documentation</a>
-- - <a href="https://emrapi.busade.dev/api/docs" target="_blank">Frontend</a>
-`
+
+- <a href="https://emrapi.busade.dev/api/health" target="_blank" rel="noopener noreferrer">System Live Health Check</a>
+- <a href="https://emrapi.busade.dev/api/docs" target="_blank" rel="noopener noreferrer">Swagger API Documentation</a>
+- <a href="https://emrapi.busade.dev/api/docs" target="_blank" rel="noopener noreferrer">Frontend</a>
 ---
 
 
