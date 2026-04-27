@@ -7,7 +7,7 @@ services:
     env_file:
       - ../.env.docker.dev
     ports:
-      - "6000:6000"
+      - "5000:5000"
     volumes:
       - ../src:/usr/src/app/src
       - ../package.json:/usr/src/app/package.json
