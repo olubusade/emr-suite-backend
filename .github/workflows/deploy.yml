@@ -21,6 +21,14 @@ jobs:
 
             git pull origin master
 
+            # Install deps only if needed (safe fallback)
+            npm install --omit=dev
+
+            # Restart app
+            pm2 restart emr-backend || pm2 start src/server.js --name emr-backend --env production
+
+            pm2 save
+
             docker-compose -f docker/docker-compose.prod.yml down
 
             docker-compose -f docker/docker-compose.prod.yml up -d --build
