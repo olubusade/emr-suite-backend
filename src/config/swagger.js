@@ -1186,6 +1186,10 @@ const options = {
               type: 'string',
               format: 'uuid'
             },
+            durationMinutes:{
+              type: 'integer',
+               example: 5
+            },
             reason: {
               type: 'string',
               example: 'Patient unconscious in ER, urgent access required'

@@ -95,6 +95,10 @@ export async function createBTGRequest({
     throw new ApiError(400, 'Reason is required');
   }
 
+  const request = await Patient.findByPk(patientId);
+
+  if (!request) throw new ApiError(404, 'Patient ID not found');
+
   const allowedDurations = [5, 10, 15, 30, 60];
 
   if (!allowedDurations.includes(durationMinutes)) {
