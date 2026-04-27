@@ -1,0 +1,26 @@
+name: Deploy to Droplet
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: root
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd emr-suite-backend
+            git pull origin master
+            # Using your package.json script to handle the heavy lifting
+            npm run docker:down:prod
+
+            npm run docker:up:prod
+            npm run docker:prune

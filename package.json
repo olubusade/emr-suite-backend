@@ -19,6 +19,7 @@
         "docker:logs:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env.docker.dev logs -f",
         "docker:logs:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env.prod logs -f",
         "docker:ps":"docker ps",
+        "docker:prune":"docker image prune -f",
         "migrate": "sequelize db:migrate",
         "migrate:undo": "sequelize db:migrate:undo",
         "migrate:undo:all": "sequelize db:migrate:undo:all",
