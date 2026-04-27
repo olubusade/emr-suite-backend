@@ -17,13 +17,19 @@ services:
     container_name: busade-emr-db-prod
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: super_secure_password
-      POSTGRES_DB: busade_emr_demo_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+     # - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     # Security: No port mapping here ensures DB is only accessible via internal Docker network
+    #server health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data_prod:

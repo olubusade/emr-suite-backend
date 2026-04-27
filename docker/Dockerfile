@@ -26,5 +26,5 @@ COPY . .
 COPY docker/entrypoint.sh /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
-EXPOSE 5000
+EXPOSE 6000
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

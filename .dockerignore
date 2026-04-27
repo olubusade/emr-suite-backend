@@ -1,0 +1,29 @@
+# Node / build
+node_modules
+dist
+coverage
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Env & secrets
+.env
+.env.prod
+.env.docker.dev
+.env.local
+!.env.example
+
+# Git / editor
+.git
+.gitignore
+.vscode
+.DS_Store
+
+# Tests
+src/tests
+
+# OS / misc
+*.swp
+*.swo
