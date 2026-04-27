@@ -17,10 +17,9 @@ jobs:
           username: root
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd emr-suite-backend
+            cd /home/obs/emr-suite-backend
             git pull origin master
             # Using your package.json script to handle the heavy lifting
-            npm run docker:down:prod
-
-            npm run docker:up:prod
-            npm run docker:prune
+            docker compose down -f
+            docker compose up -d --build
+            docker image prune -f
