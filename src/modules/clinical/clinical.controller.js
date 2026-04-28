@@ -16,8 +16,9 @@ import app from '../../app.js';
  */
 export async function listClinicalNotes(req, res) {
   
-    const limit = req.query.limit;
-    const result = await clinicalService.listClinicalNotes({ limit });
+  const limit = req.query.limit;
+  const user = req.user;
+    const result = await clinicalService.listClinicalNotes({ limit, user});
     return ok(res, result);
 }
 
@@ -26,10 +27,11 @@ export async function listClinicalNotes(req, res) {
  */
 export async function getClinicalNotes(req, res) {
   const noteId = req.params.id;
+  const user = req.user;
   if (!noteId) {
       throw new ApiError(400, 'Missing clinical note id');
   }
-  const clinical = await clinicalService.getClinicalNotesById(noteId);
+  const clinical = await clinicalService.getClinicalNotesById(noteId,user);
   if (!clinical) {
     throw new ApiError('Clinical note not found');
   }
@@ -41,7 +43,7 @@ export async function getClinicalNotes(req, res) {
  */
 export async function getClinicalNotesByPatientId(req, res) {
   const { patientId } = req.params;
-
+  const user  = req.user;
   if (!patientId) {
     throw new ApiError(400, 'Patient ID is required');
   }
@@ -57,7 +59,7 @@ export async function getClinicalNotesByPatientId(req, res) {
   }
 
   const history =
-    await clinicalService.getClinicalNotesByPatientId(patientId);
+    await clinicalService.getClinicalNotesByPatientId(patientId, user);
 
   return ok(
     res,
@@ -81,6 +83,7 @@ export async function getClinicalNotesByAppointment (req, res) {
    
   const { appointmentId } = req.params;
   const { patientId } = req.query;
+  const user  = req.user;
   if (!appointmentId) { 
     throw new ApiError('Appointment ID is required');
   }
@@ -89,7 +92,7 @@ export async function getClinicalNotesByAppointment (req, res) {
     return next(new Error('Patient ID is required'));
   } 
   const data = { appointmentId, patientId };
-  const history = await clinicalService.getClinicalNotesByAppointmentId(data);
+  const history = await clinicalService.getClinicalNotesByAppointmentId(data,user);
   return ok(res, history);
   
 }
@@ -125,11 +128,12 @@ export async function createClinicalNote(req, res) {
 export async function updateClinicalNote(req, res) {
   
   const noteId = req.params.id;
+  const user = req.user;
   if (!noteId) {
       throw new ApiError(400, 'Missing clinical note id');
   }
   const before = await clinicalService.getClinicalNotesById(noteId);
-  const clinical = await clinicalService.updateClinicalNote(noteId, req.body);
+  const clinical = await clinicalService.updateClinicalNote(noteId, req.body, user);
 
   //Audit Trail
   await attachAudit(req, {

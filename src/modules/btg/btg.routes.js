@@ -17,7 +17,8 @@ import {
   getActiveBTG,
   listBTGRequests,
   expireBTG,
-  rejectBTG
+  rejectBTG,
+  revokeBTG
 } from './btg.controller.js';
 
 import { PERMISSIONS } from '../../constants/index.js';
@@ -57,14 +58,14 @@ router.post(
 
 /**
  * @swagger
- * /btg/active:
+ * /btg/:patientId/active:
  *   get:
  *     summary: Get active Break Glass access for a patient
  *     tags: [Break Glass]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: patientId
  *         required: true
  *         schema:
@@ -74,8 +75,9 @@ router.post(
  *       200:
  *         description: Active BTG retrieved successfully
  */
+
 router.get(
-  '/active',
+  '/:patientId/active',
   authRequired,
   authorize([
     PERMISSIONS.BREAK_GLASS_REQUEST,
@@ -130,14 +132,28 @@ router.get(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/BreakGlassApprove'
+ *             type: object
+ *             required:
+ *               - decisionReason
+ *             properties:
+ *               decisionReason:
+ *                 type: string
+ *                 minLength: 5
+ *                 example: Access no longer clinically required
  *     responses:
  *       200:
- *         description: BTG request approved successfully
+ *         description: BTG expired successfully
+ *  
+ *       400:
+ *         description: Validation error
+ *
  *       403:
- *         $ref: '#/components/responses/Forbidden'
+ *         description: Unauthorized or insufficient permission
+ *
+ *       404:
+ *         description: BTG request not found
  */
-router.put(
+router.patch(
   '/:id/approve',
   authRequired,
   authorize(PERMISSIONS.BREAK_GLASS_APPROVE),
@@ -158,14 +174,81 @@ router.put(
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - decisionReason
+ *             properties:
+ *               decisionReason:
+ *                 type: string
+ *                 minLength: 5
+ *                 example: Access no longer clinically required
  *     responses:
  *       200:
  *         description: BTG rejected successfully
+ *  
+ *       400:
+ *         description: Validation error
+ *
+ *       403:
+ *         description: Unauthorized or insufficient permission
+ *
+ *       404:
+ *         description: BTG request not found
  */
-router.put('/:id/reject', authRequired,
+router.patch('/:id/reject', authRequired,
   authorize(PERMISSIONS.BREAK_GLASS_REJECT),
   validate(breakGlassApproveSchema),
   asyncHandler(rejectBTG));
+
+/**
+ * @swagger
+ * /btg/{id}/revoke:
+ *   put:
+ *     summary: Revoke Active Clinical Note Access
+ *     tags: [Break Glass]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - decisionReason
+ *             properties:
+ *               decisionReason:
+ *                 type: string
+ *                 minLength: 5
+ *                 example: Access no longer clinically required
+ *     responses:
+ *       200:
+ *         description: BTG revoked successfully
+ *  
+ *       400:
+ *         description: Validation error
+ *
+ *       403:
+ *         description: Unauthorized or insufficient permission
+ *
+ *       404:
+ *         description: BTG request not found
+ */
+router.patch('/:id/revoke', authRequired,
+  authorize(PERMISSIONS.BREAK_GLASS_REVOKE),
+  validate(breakGlassApproveSchema),
+  asyncHandler(revokeBTG));
 /**
  * @swagger
  * /btg/{id}/expire:
@@ -180,11 +263,33 @@ router.put('/:id/reject', authRequired,
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - decisionReason
+ *             properties:
+ *               decisionReason:
+ *                 type: string
+ *                 minLength: 5
+ *                 example: Access no longer clinically required
  *     responses:
  *       200:
  *         description: BTG expired successfully
+ *  
+ *       400:
+ *         description: Validation error
+ *
+ *       403:
+ *         description: Unauthorized or insufficient permission
+ *
+ *       404:
+ *         description: BTG request not found
  */
-router.put('/:id/expire', authRequired,
+router.patch('/:id/expire', authRequired,
   authorize(PERMISSIONS.BREAK_GLASS_EXPIRE),
   validate(breakGlassApproveSchema),
   asyncHandler(expireBTG));

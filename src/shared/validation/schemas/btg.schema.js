@@ -48,14 +48,19 @@ export const breakGlassRequestSchema = z.object({
 export const breakGlassApproveSchema = z.object({
   params: z.object({
     id: z.string().uuid('Invalid BTG request id')
+  }),
+  body: z.object({
+      decisionReason: z.string().min(5, 'Reason is required and must be meaningful')
   })
-});
+})
+
 /**
  * Get Active BTG for a patient
  */
 
 export const getActiveBTGSchema = z.object({
-  query: z.object({
-    patientId: uuid()
+  params: z.object({
+    patientId: uuid(),
   })
+  
 });

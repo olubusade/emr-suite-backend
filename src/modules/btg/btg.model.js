@@ -25,7 +25,7 @@ export const BTGRequestModel = (sequelize, DataTypes) => {
     },
 
     status: {
-      type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED','EXPIRED'),
+      type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED','EXPIRED','REVOKED'),
       defaultValue: 'PENDING'
     },
 
@@ -33,12 +33,25 @@ export const BTGRequestModel = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: true
     },
+     decisionReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Justification provided by the Auditor/Admin for the decision'
+    },
 
     approvedAt: {
       type: DataTypes.DATE,
       allowNull: true
     },
+    rejectedAt: {
+      type:  DataTypes.DATE,
+      format: 'date-time'
+    },
 
+    revokedAt: {
+      type:  DataTypes.DATE,
+      format: 'date-time'
+    },
     expiresAt: {
       type: DataTypes.DATE,
       allowNull: true

@@ -1178,6 +1178,9 @@ const options = {
          * =========================
          */
 
+        /**
+ * Break Glass Request (Nurse/Doctor)
+ */
         BreakGlassRequest: {
           type: 'object',
           required: ['patientId', 'reason'],
@@ -1186,35 +1189,30 @@ const options = {
               type: 'string',
               format: 'uuid'
             },
-            durationMinutes:{
+            durationMinutes: {
               type: 'integer',
-               example: 5
+              example: 5,
+              description: 'Optional duration override (default defined by system)'
             },
             reason: {
               type: 'string',
+              minLength: 5,
               example: 'Patient unconscious in ER, urgent access required'
             }
           }
         },
 
-        // OPTIONAL (only if you want audit comment on approve)
-        BreakGlassApprove: {
+        /**
+         * Admin Decision (Approve / Reject / Revoke)
+         */
+        BreakGlassDecision: {
           type: 'object',
+          required: ['decisionReason'],
           properties: {
-            comment: {
+            decisionReason: {
               type: 'string',
+              minLength: 5,
               example: 'Approved due to emergency ICU situation'
-            }
-          }
-        },
-
-        // OPTIONAL (reject reason override if not using path body)
-        BreakGlassReject: {
-          type: 'object',
-          properties: {
-            reason: {
-              type: 'string',
-              example: 'Not justified for emergency access'
             }
           }
         },
@@ -1235,6 +1233,7 @@ const options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             status: { type: 'string', example: 'APPROVED' },
+            decisionReason: { type: 'string' },
             approvedBy: { type: 'string', format: 'uuid' },
             approvedAt: { type: 'string', format: 'date-time' },
             expiresAt: { type: 'string', format: 'date-time' }

@@ -88,11 +88,12 @@ export async function listBTGRequests(req, res) {
  * GET ACTIVE BTG FOR PATIENT (CHECK CURRENT ACCESS)
  */
 export async function getActiveBTG(req, res) {
+  
   if (!req.user.id) {
     throw new ApiError(400, 'Missing user id');
   }
 
-  const { patientId } = req.query;
+  const { patientId } = req.params;
   if (!patientId) {
     throw new ApiError(400, 'Missing patientId');
   }
@@ -106,12 +107,12 @@ export async function getActiveBTG(req, res) {
   return ok(res, activeBTG, 'Active BTG retrieved successfully');
 }
 
-
 /**
  * APPROVE BREAK-GLASS (ADMIN)
  */
 export async function approveBTG(req, res) {
   const { id } = req.params;
+  const { decisionReason } = req.body;
   if (!id) {
       throw new ApiError(400, 'BTG ID is required');
   }
@@ -123,7 +124,8 @@ export async function approveBTG(req, res) {
 
   const btg = await btgService.approveBTGRequest(
     id,
-    req.user.id
+    req.user.id,
+    decisionReason
   );
 
   await attachAudit(req, {
@@ -133,7 +135,8 @@ export async function approveBTG(req, res) {
     before,
     after: btg,
     metadata: {
-      approvedBy: req.user.id
+      approvedBy: req.user.id,
+      decisionReason
     }
   });
 
@@ -148,7 +151,8 @@ export async function approveBTG(req, res) {
 
 export async function rejectBTG(req, res) {
   const { id } = req.params;
-  const { reason } = req.body;
+  const { decisionReason } = req.body;
+  const user  = req.user;
   
     if (!id) {
       throw new ApiError(400, 'BTG ID is required');
@@ -157,8 +161,8 @@ export async function rejectBTG(req, res) {
 
   const btg = await btgService.rejectBTGRequest(
     id,
-    req.user.id,
-    reason
+    user.id,
+    decisionReason
   );
 
   await attachAudit(req, {
@@ -167,15 +171,44 @@ export async function rejectBTG(req, res) {
     entityId: btg.id,
     before,
     after: btg,
-    metadata: { reason }
+    metadata: { decisionReason }
   });
 
   return ok(res, btg, 'BTG request rejected');
 }
 
+export async function revokeBTG(req, res) {
+  const { id } = req.params;
+  const { decisionReason } = req.body;
+  const user  = req.user;
+  
+    if (!id) {
+      throw new ApiError(400, 'BTG ID is required');
+    }
+  const before = await btgService.getBTGRequestById(id);
+
+  const btg = await btgService.revokeBTGRequest(
+    id,
+    user.id,
+    decisionReason
+  );
+
+  await attachAudit(req, {
+    action: AUDIT_ACTIONS.BREAK_GLASS_REVOKE,
+    entity: 'btg_request_revoke',
+    entityId: btg.id,
+    before,
+    after: btg,
+    metadata: { decisionReason }
+  });
+
+  return ok(res, btg, 'BTG request revoked');
+}
+
 
 export async function expireBTG(req, res) {
   const { id } = req.params;
+  const { decisionReason } = req.body;
   if (!id) {
       throw new ApiError(400, 'BTG ID is required');
   }
@@ -184,7 +217,8 @@ export async function expireBTG(req, res) {
 
   const btg = await btgService.expireBTGRequest(
     id,
-    req.user.id
+    req.user.id,
+    decisionReason
   );
 
   await attachAudit(req, {

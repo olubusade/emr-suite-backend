@@ -122,7 +122,7 @@ export async function createBTGRequest({
 }
 
 
-export async function approveBTGRequest(id, adminId) {
+export async function approveBTGRequest(id, adminId, decisionReason) {
   const request = await BTGRequest.findByPk(id);
 
   if (!request) throw new ApiError(404, 'BTG request not found');
@@ -138,6 +138,7 @@ export async function approveBTGRequest(id, adminId) {
   await request.update({
     status: 'APPROVED',
     approvedBy: adminId,
+    decisionReason,
     approvedAt: new Date(),
     expiresAt
   });
@@ -197,7 +198,7 @@ export async function getActiveBTG(patientId) {
   };
 }
 
-export async function rejectBTGRequest(id, adminId, reason = null) {
+export async function rejectBTGRequest(id, adminId, decisionReason) {
   const request = await BTGRequest.findByPk(id);
 
   if (!request) throw new ApiError(404, 'BTG request not found');
@@ -209,14 +210,33 @@ export async function rejectBTGRequest(id, adminId, reason = null) {
   await request.update({
     status: 'REJECTED',
     approvedBy: adminId,
-    approvedAt: new Date(),
-    rejectionReason: reason
+    rejectedAt: new Date(),
+    decisionReason
   });
 
   return request;
 }
 
-export async function expireBTGRequest(id, adminId) {
+export async function revokeBTGRequest(id, adminId, decisionReason) {
+  const request = await BTGRequest.findByPk(id);
+
+  if (!request) throw new ApiError(404, 'BTG request not found');
+
+  if (request.status !== 'APPROVED') {
+    throw new ApiError(409, 'Only approved requests can be revoked');
+  }
+
+  await request.update({
+    status: 'REVOKED',
+    approvedBy: adminId,
+    revokedAt: new Date(),
+    decisionReason
+  });
+
+  return request;
+}
+
+export async function expireBTGRequest(id, adminId, decisionReason) {
   const request = await BTGRequest.findByPk(id);
 
   if (!request) throw new ApiError(404, 'BTG request not found');
@@ -228,7 +248,8 @@ export async function expireBTGRequest(id, adminId) {
   await request.update({
     status: 'EXPIRED',
     approvedBy: adminId,
-    expiresAt: new Date()
+    expiresAt: new Date(),
+    decisionReason
   });
 
   return request;
@@ -251,6 +272,7 @@ function formatBTG(btg) {
     isExpired,
 
     reason: btg?.reason,
+    decisionReason:btg?.decisionReason,
     expiresAt: btg?.expiresAt,
     durationMinutes: btg?.durationMinutes,
     createdAt: btg?.createdAt,

@@ -16,6 +16,7 @@ export async function seedRolePermissions(roles, permissions, RolePermission) {
       'BREAK_GLASS_READ',  
       'BREAK_GLASS_REJECT',
       'BREAK_GLASS_EXPIRE',
+      'BREAK_GLASS_REVOKE',
       ''
     ],
     doctor: [

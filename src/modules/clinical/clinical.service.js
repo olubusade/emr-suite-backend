@@ -1,7 +1,7 @@
-import { ClinicalNote, Patient, User, Appointment, sequelize } from '../../config/associations.js';
+import { ClinicalNote, Patient, User, Appointment, sequelize, BTGRequest } from '../../config/associations.js';
 import { reportError } from '../../shared/utils/monitoring.js';
 import ApiError from '../../shared/utils/ApiError.js';
-
+import { Op } from 'sequelize';
 /**
  * CLINICAL SERVICE
  * The medical engine of the EMR. Handles SOAP notes, diagnoses, and encounter states.
@@ -11,32 +11,67 @@ import ApiError from '../../shared/utils/ApiError.js';
 /**
  * List clinical notes with pagination guardrails
  */
-export async function listClinicalNotes({ limit = 200 }) {
+export async function listClinicalNotes({ limit = 200, user }) {
   const safeLimit = Math.min(Number(limit) || 200, 1000);
+  
   try {
-      return ClinicalNote.findAll({
-        order: [['createdAt', 'DESC']],
-        limit: safeLimit,
-        include: [
-          {
-            model: Patient,
-            as:'patient',
-            attributes: ['id', 'firstName', 'lastName', 'fullName']
-          },
-          { model: User, as: 'doctor', attributes: ['id', 'full_name', 'email'] }
-        ]
-  });
+    let whereClause = {};
+    // Restrict non-privileged users
+    const roles = (user.roles || []).map(r => r);
+    const isPrivileged = roles.some(r =>
+      ['doctor', 'admin', 'super_admin'].includes(r)
+    );
+
+    if (!isPrivileged) {
+      
+      // BTG logic
+      const btgs = await BTGRequest.findAll({
+        where: {
+          requestedBy: user.id,
+          status: 'APPROVED',
+          expiresAt: { [Op.gt]: new Date() }
+        },
+        attributes: ['patientId']
+      });
+
+      const patientIds = btgs.map(b => b.patientId);
+
+      if (!patientIds.length) {
+        throw new ApiError(
+          403,
+          'Access denied: No active or valid Break-the-Glass request'
+        ); // no access
+      }
+      whereClause.patientId = { [Op.in]: patientIds };
+    }
+
+    return await ClinicalNote.findAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: safeLimit,
+      include: [
+        {
+          model: Patient,
+          as: 'patient',
+          attributes: ['id', 'firstName', 'lastName', 'fullName']
+        },
+        {
+          model: User,
+          as: 'doctor',
+          attributes: ['id', 'fullName', 'email']
+        }
+      ]
+    });
   } catch (err) {
     reportError(err, { service: 'ClinicalService', operation: 'listClinicalNotes' });
     throw err;
   }
-  
 }
 
 /**
  * Get single clinical note with full medical context
  */
-export async function getClinicalNotesById(id) {
+export async function getClinicalNotesById(id, user) {
   try {
     const note = await ClinicalNote.findByPk(id, {
       include: [
@@ -45,7 +80,36 @@ export async function getClinicalNotesById(id) {
         { model: Appointment, as: 'appointment', attributes: ['id', 'appointmentDate', 'reason'] }
       ]
     });
+
+    if (!note) return null;
+
+    // 🔒 Enforce BTG
+    const roles = (user.roles || []).map(r => r);
+    const isPrivileged = roles.some(r =>
+      ['doctor', 'admin', 'super_admin'].includes(r)
+    );
+
+    if (!isPrivileged) {
+      
+      const btg = await BTGRequest.findOne({
+        where: {
+          patientId: note.patientId,
+          requestedBy: user.id,
+          status: 'APPROVED',
+          expiresAt: { [Op.gt]: new Date() }
+        }
+      });
+
+      if (!btg) {
+        throw new ApiError(
+          403,
+          'Access denied: No active or valid Break-the-Glass request'
+        );
+      }
+    }
+
     return note;
+
   } catch (err) {
     reportError(err, { service: 'ClinicalService', operation: 'getClinicalNotesById', noteId: id });
     throw err;
@@ -55,8 +119,31 @@ export async function getClinicalNotesById(id) {
 /**
  * Get clinical notes by patient ID
  */
-export async function getClinicalNotesByPatientId(patientId) {
+export async function getClinicalNotesByPatientId(patientId,user) {
   try {
+    // Allow privileged roles
+    const roles = (user.roles || []).map(r => r);
+    const isPrivileged = roles.some(r =>
+      ['doctor', 'admin', 'super_admin'].includes(r)
+    );
+
+    if (!isPrivileged) {
+      
+      const btg = await BTGRequest.findOne({
+        where: {
+          patientId,
+          requestedBy: user.id,
+          status: 'APPROVED'
+        }
+      });
+
+      if (!btg) {
+        throw new ApiError(
+          403,
+          'Access denied: No active or valid Break-the-Glass request'
+        );
+      }
+    }
     const notes = await ClinicalNote.findAll({
       where: { patientId },
       include: [
@@ -81,30 +168,60 @@ export async function getClinicalNotesByPatientId(patientId) {
   
 }
 
-export async function getClinicalNotesByAppointmentId(data) {
+export async function getClinicalNotesByAppointmentId(data, user) {
   try {
-    const { appointmentId, patientId} = data;
-      return await ClinicalNote.findAll({
-        where: { appointmentId,patientId },
-        include: [
-          { 
-            model: User, 
-            as: 'doctor',
-            attributes: ['id', 'fName', 'lName'] 
-          },
-          { 
-            model: Appointment, 
-            as:'appointment',
-            attributes: ['id', 'appointmentDate', 'status'] 
-          }
-        ],
-        order: [['createdAt', 'DESC']]
+    const { appointmentId, patientId } = data;
+
+    // 🔒 BTG check
+    const roles = (user.roles || []).map(r => r);
+    const isPrivileged = roles.some(r =>
+      ['doctor', 'admin', 'super_admin'].includes(r)
+    );
+
+    if (!isPrivileged) {
+      
+      const btg = await BTGRequest.findOne({
+        where: {
+          patientId,
+          requestedBy: user.id,
+          status: 'APPROVED',
+          expiresAt: { [Op.gt]: new Date() }
+        }
+      });
+
+      if (!btg) {
+        throw new ApiError(
+          403,
+          'Access denied: No active or valid Break-the-Glass request'
+        );
+      }
+    }
+
+    return await ClinicalNote.findAll({
+      where: { appointmentId, patientId },
+      include: [
+        {
+          model: User,
+          as: 'doctor',
+          attributes: ['id', 'fName', 'lName']
+        },
+        {
+          model: Appointment,
+          as: 'appointment',
+          attributes: ['id', 'appointmentDate', 'status']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
     });
+
   } catch (err) {
-    reportError(err, { service: 'ClinicalService', operation: 'getClinicalNotesByAppointmentId', appointmentId: data.appointmentId });
+    reportError(err, {
+      service: 'ClinicalService',
+      operation: 'getClinicalNotesByAppointmentId',
+      appointmentId: data.appointmentId
+    });
     throw err;
   }
-  
 }
 
 /**
@@ -158,23 +275,56 @@ export async function createClinicalNote(data) {
 /**
  * Update Clinical Note with Finalization Safety
  */
-export async function updateClinicalNote(id, updates) {
+export async function updateClinicalNote(id, updates, user) {
   try {
     const clinical = await ClinicalNote.findByPk(id, {
       include: [{ model: Appointment, as: 'appointment' }]
     });
-    
+
     if (!clinical) throw new ApiError(404, 'Clinical note not found');
 
-    // 🛡️ COMPLIANCE GUARD: Prevent editing locked medical records
-    if (clinical.appointment?.status === 'finalized') {
+    // 🛡️ 1. COMPLIANCE GUARD (already correct)
+    if (clinical.appointment?.status === 'completed') {
       throw new ApiError(403, 'Legal Integrity: Cannot edit a finalized medical record.');
     }
 
+    // 🔒 2. BTG ENFORCEMENT
+    const roles = (user.roles || []).map(r => r);
+    const isPrivileged = roles.some(r =>
+      ['doctor', 'admin', 'super_admin'].includes(r)
+    );
+
+    if (!isPrivileged) {
+      
+      const btg = await BTGRequest.findOne({
+        where: {
+          patientId: clinical.patientId,
+          requestedBy: user.id,
+          status: 'APPROVED',
+          expiresAt: { [Op.gt]: new Date() }
+        }
+      });
+
+      if (!btg) {
+        throw new ApiError(
+          403,
+          'Access denied: No active or valid Break-the-Glass request'
+        );
+      }
+    }
+
+    // ✏️ 3. UPDATE
     await clinical.update(updates);
-    return getClinicalNotesById(clinical.id);
+
+    // 🔄 4. RETURN UPDATED RECORD (pass user again for safety)
+    return getClinicalNotesById(clinical.id, user);
+
   } catch (err) {
-    reportError(err, { service: 'ClinicalService', operation: 'updateClinicalNote', noteId: id });
+    reportError(err, {
+      service: 'ClinicalService',
+      operation: 'updateClinicalNote',
+      noteId: id
+    });
     throw err;
   }
 }
