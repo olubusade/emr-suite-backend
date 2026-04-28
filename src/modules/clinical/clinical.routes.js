@@ -234,7 +234,7 @@ router.get(
   authRequired,
   authorize(PERMISSIONS.CLINICAL_NOTE_READ),
   validate(getClinicalNotesSchema),
-  asyncHandler(clinicalController.getClinicalNotes)
+  asyncHandler(clinicalController.getClinicalNote)
 );
 
 /**

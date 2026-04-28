@@ -15,35 +15,21 @@ import app from '../../app.js';
  * List clinical notes with pagination
  */
 export async function listClinicalNotes(req, res) {
-  
+
   const limit = req.query.limit;
   const user = req.user;
-    const result = await clinicalService.listClinicalNotes({ limit, user});
-    return ok(res, result);
+  const result = await clinicalService.listClinicalNotes({ limit, user });
+  return ok(res, result);
 }
 
-/**
- * Get single clinical note by ID
- */
-export async function getClinicalNotes(req, res) {
-  const noteId = req.params.id;
-  const user = req.user;
-  if (!noteId) {
-      throw new ApiError(400, 'Missing clinical note id');
-  }
-  const clinical = await clinicalService.getClinicalNotesById(noteId,user);
-  if (!clinical) {
-    throw new ApiError('Clinical note not found');
-  }
-  return ok(res, clinical);
-}
+
 /**
  * Get all clinical notes for a specific patient (Medical History)
  * BTG + RBAC protected access
  */
 export async function getClinicalNotesByPatientId(req, res) {
   const { patientId } = req.params;
-  const user  = req.user;
+  const user = req.user;
   if (!patientId) {
     throw new ApiError(400, 'Patient ID is required');
   }
@@ -79,37 +65,46 @@ export async function getClinicalNotesByPatientId(req, res) {
 /**
  * Get clinical note for a specific appointment
  */
-export async function getClinicalNotesByAppointment (req, res) {
-   
+export async function getClinicalNotesByAppointment(req, res) {
+
   const { appointmentId } = req.params;
   const { patientId } = req.query;
-  const user  = req.user;
-  if (!appointmentId) { 
+  const user = req.user;
+  if (!appointmentId) {
     throw new ApiError('Appointment ID is required');
   }
 
-  if (!patientId) { 
+  if (!patientId) {
     return next(new Error('Patient ID is required'));
-  } 
+  }
   const data = { appointmentId, patientId };
-  const history = await clinicalService.getClinicalNotesByAppointmentId(data,user);
+  const history = await clinicalService.getClinicalNotesByAppointmentId(data, user);
   return ok(res, history);
-  
+
+}
+/**
+ * Get single clinical note by ID
+ */
+export async function getClinicalNote(req, res) {
+  const noteId = req.params.id;
+  const clinical = await clinicalService.getClinicalNotesById({ noteId, user: req.user });
+  return ok(res, clinical);
 }
 /**
  * Create clinical note (Doctor/Nurse Encounter)
  */
 export async function createClinicalNote(req, res) {
-  
-  // SECURITY: Inject staffId (Doctor/Clinician) from the authenticated user
-  const clinicalData = { 
-    ...req.body,
-    staffId:req.user.id,
-    createdBy: req.user.id 
-  };
-  
-  const clinical = await clinicalService.createClinicalNote(clinicalData);
 
+  // SECURITY: Inject staffId (Doctor/Clinician) from the authenticated user
+  const clinicalData = {
+    ...req.body,
+    staffId: req.user.id,
+    createdBy: req.user.id,
+    user: req.user
+  };
+
+  const clinical = await clinicalService.createClinicalNote(clinicalData);
+  console.log('clnic>>', clinical)
   // Audit Trail
   await attachAudit(req, {
     action: AUDIT_ACTIONS.CLINICAL_NOTE_CREATE,
@@ -119,30 +114,27 @@ export async function createClinicalNote(req, res) {
   });
 
   return created(res, clinical, 'Clinical note recorded successfully');
-  
+
 }
 
 /**
  * Update clinical note
  */
 export async function updateClinicalNote(req, res) {
-  
   const noteId = req.params.id;
-  const user = req.user;
-  if (!noteId) {
-      throw new ApiError(400, 'Missing clinical note id');
-  }
-  const before = await clinicalService.getClinicalNotesById(noteId);
-  const clinical = await clinicalService.updateClinicalNote(noteId, req.body, user);
+  
+  // Capture state 'before' for the audit delta
+  const before = await clinicalService.getClinicalNotesById({ noteId, user: req.user });
+  
+  const clinical = await clinicalService.updateClinicalNote(noteId, req.body, req.user);
 
-  //Audit Trail
   await attachAudit(req, {
     action: AUDIT_ACTIONS.CLINICAL_NOTE_UPDATE,
     entity: 'clinical',
     entityId: clinical.id,
-    metadata: { ...req.body, updatedBy: req.user.id },
-    before,
-    after:clinical
+    before: before.toJSON(), // Store snapshot
+    after: clinical.toJSON(),
+    metadata: { updatedBy: req.user.id }
   });
 
   return ok(res, clinical, 'Clinical note updated successfully');
@@ -154,10 +146,10 @@ export async function updateClinicalNote(req, res) {
 export async function deleteClinicalNote(req, res) {
   const noteId = req.params.id;
   if (!noteId) {
-      throw new ApiError(400, 'Missing clinical note id');
+    throw new ApiError(400, 'Missing clinical note id');
   }
   const clinical = await clinicalService.deleteClinicalNote(noteId);
-  
+
   // Audit Trail
   await attachAudit(req, {
     action: AUDIT_ACTIONS.CLINICAL_NOTE_DELETE,
@@ -167,5 +159,5 @@ export async function deleteClinicalNote(req, res) {
   });
 
   return ok(res, { id: clinical.id }, 'Clinical note REMOVED');
-  
+
 }
